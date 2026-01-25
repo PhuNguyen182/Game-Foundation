@@ -39,6 +39,7 @@ MonoBehaviour:
     - com.cysharp.r3
     - com.cysharp.messagepipe
     - jp.hadashikick.vcontainer
+    - com.cysharp.memorypack
     m_IsDefault: 0
     m_Capabilities: 0
     m_ConfigSource: 4
