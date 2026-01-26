@@ -1,0 +1,63 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/Foundations/DataFlow/Editor/PlayerPrefsDataTool.uss?fileID=7433441132597879392&amp;guid=42f79adf47ec44948acc55bee82b35ea&amp;type=3#PlayerPrefsDataTool" />
+    <ui:VisualElement class="header-container">
+        <ui:Label text="🎮 Local Data Manager" class="title-label" />
+        <ui:Label text="Manage your game data with ease" class="subtitle-label" />
+    </ui:VisualElement>
+    <ui:VisualElement class="controls-container">
+        <ui:VisualElement class="prefix-container">
+            <ui:Label text="📂 Local Data Folder Configuration" class="prefix-label" />
+            <ui:VisualElement class="prefix-row">
+                <ui:Label text="Folder:" class="prefix-text-label" />
+                <ui:TextField name="prefix-field" value="GameData" placeholder-text="Enter folder prefix..." class="prefix-field" />
+                <ui:Button name="refresh-files-button" text="🔄 Refresh Files" class="refresh-files-button" />
+                <ui:Button name="open-folder-button" text="📂 Open Folder" class="open-folder-button" />
+            </ui:VisualElement>
+            <ui:Label name="folder-path-label" text="📁 Path: [Application.persistentDataPath]/GameData" class="folder-path-label" />
+        </ui:VisualElement>
+        <ui:VisualElement class="search-container">
+            <ui:Label text="🔍 Search Data Entries" class="search-label" />
+            <ui:VisualElement class="search-row">
+                <ui:TextField name="search-field" placeholder-text="Enter key name to search..." class="search-field" style="opacity: 1; display: flex; visibility: visible; overflow: visible;" />
+                <ui:Button name="clear-search-button" text="✖" class="clear-search-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="button-row">
+            <ui:Button name="load-all-button" text="📥 Load All Data" class="primary-button" />
+            <ui:Button name="save-all-button" text="💾 Save All Data" class="success-button" />
+            <ui:Button name="delete-all-button" text="🗑️ Clear All Data" class="danger-button" />
+        </ui:VisualElement>
+        <ui:VisualElement class="info-row">
+            <ui:Label name="data-count-label" text="📊 Found 0 data types" class="info-label" />
+            <ui:Label name="last-action-label" text="Ready to load data" class="status-label" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement class="data-display-container">
+        <ui:ScrollView name="main-scroll-view" class="main-scroll-view">
+            <ui:VisualElement name="main-data-container" class="main-data-container">
+                <ui:VisualElement class="data-section">
+                    <ui:VisualElement class="section-header">
+                        <ui:Label text="🎮 PlayerPrefs Data" class="section-title" />
+                        <ui:Label name="playerprefs-count-label" text="0 entries" class="section-count" />
+                    </ui:VisualElement>
+                    <ui:ScrollView name="playerprefs-scroll-view" class="data-scroll-view playerprefs-scroll-view">
+                        <ui:VisualElement name="playerprefs-container" class="data-container" />
+                    </ui:ScrollView>
+                </ui:VisualElement>
+                <ui:VisualElement class="data-section">
+                    <ui:VisualElement class="section-header">
+                        <ui:Label text="📄 File Data" class="section-title" />
+                        <ui:Label name="file-count-label" text="0 entries" class="section-count" />
+                    </ui:VisualElement>
+                    <ui:ScrollView name="file-scroll-view" class="data-scroll-view file-scroll-view">
+                        <ui:VisualElement name="file-container" class="data-container" />
+                    </ui:ScrollView>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+    <ui:VisualElement name="empty-state" class="empty-state">
+        <ui:Label text="📁 No Data Found" class="empty-title" />
+        <ui:Label text="Click &apos;Load All Data&apos; to scan for IGameData implementations and JSON files" class="empty-description" />
+    </ui:VisualElement>
+</ui:UXML>

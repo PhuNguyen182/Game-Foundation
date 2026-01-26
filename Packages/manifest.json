@@ -4,6 +4,7 @@
     "com.cysharp.messagepipe": "1.8.1",
     "com.cysharp.r3": "1.3.0",
     "com.cysharp.unitask": "2.5.10",
+    "com.cysharp.zlinq": "https://github.com/Cysharp/ZLinq.git?path=src/ZLinq.Unity/Assets/ZLinq.Unity",
     "com.gilzoide.sqlite-net": "https://github.com/gilzoide/unity-sqlite-net.git#1.3.2",
     "com.github-glitchenzo.nugetforunity": "4.5.0",
     "com.unity.2d.sprite": "1.0.0",
