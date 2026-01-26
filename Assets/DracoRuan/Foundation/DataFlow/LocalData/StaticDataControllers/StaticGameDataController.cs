@@ -43,7 +43,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
                 this._dataSequenceProcessor.Append(processSequence);
             }
 
-            this._dataSequenceProcessor.Execute();
+            await this._dataSequenceProcessor.Execute();
             if (this._dataSequenceProcessor.LatestProcessSequence is IProcessSequenceData processSequenceData)
                 this.SourceData = processSequenceData.GameData as TData;
             
@@ -74,7 +74,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
             IProcessSequence processSequence = dataProcessSequence.DataProcessorType switch
             {
                 DataProcessorType.FirebaseRemoteConfig => new FirebaseRemoteConfigDataProcessor(dataKey, DataType),
-                DataProcessorType.ScriptableObjects => new ScriptableObjectDataProcessor(dataKey, DataType),
+                DataProcessorType.ResourceScriptableObjects => new ResourceScriptableObjectDataProcessor(dataKey, DataType),
                 _ => null    
             };
             

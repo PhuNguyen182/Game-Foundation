@@ -10,8 +10,8 @@ namespace DracoRuan.Foundation.DataFlow.TypeCreator
     /// Uses compiled expression trees to achieve 100x+ performance improvement over Activator.CreateInstance().
     /// </summary>
     /// <remarks>
-    /// This static factory compiles constructor delegates once and caches them for subsequent use.
-    /// The first creation of each type has a small overhead for compilation, but subsequent
+    /// This static factory compiles constructor delegates once and caches them for sub-sequent use.
+    /// The first creation of each type has a small overhead for compilation, but sub-sequent
     /// creations are extremely fast, making it ideal for pooling systems and frequent instantiation.
     /// 
     /// Performance characteristics:
@@ -45,8 +45,14 @@ namespace DracoRuan.Foundation.DataFlow.TypeCreator
     {
         // Use RuntimeTypeHandle instead of Type for 10-25% faster dictionary lookups
         // RuntimeTypeHandle is a struct with faster equality comparison than Type reference comparison
-        private static readonly Dictionary<RuntimeTypeHandle, Func<object>> ConstructorCache = new(capacity: 128);
-        private static readonly object CacheLock = new();
+        private static readonly object CacheLock;
+        private static readonly Dictionary<RuntimeTypeHandle, Func<object>> ConstructorCache;
+
+        static TypeFactory()
+        {
+            CacheLock = new object();
+            ConstructorCache = new Dictionary<RuntimeTypeHandle, Func<object>>(capacity: 128);
+        }
         
         /// <summary>
         /// Creates a new instance of the specified type using compiled expression delegates.
@@ -182,10 +188,14 @@ namespace DracoRuan.Foundation.DataFlow.TypeCreator
         /// <returns>Compiled constructor delegate or null if type cannot be instantiated</returns>
         private static Func<object> GetOrCompileConstructor(RuntimeTypeHandle typeHandle, Type type)
         {
+            Func<object> cachedConstructor;
             // Fast path: check cache without locking using RuntimeTypeHandle (faster equality check)
-            if (ConstructorCache.TryGetValue(typeHandle, out var cachedConstructor))
+            lock (CacheLock)
             {
-                return cachedConstructor;
+                if (ConstructorCache.TryGetValue(typeHandle, out cachedConstructor))
+                {
+                    return cachedConstructor;
+                }
             }
             
             // Slow path: compile constructor with locking

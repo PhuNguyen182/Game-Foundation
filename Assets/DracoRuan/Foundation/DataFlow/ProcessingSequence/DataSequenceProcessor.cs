@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 
 namespace DracoRuan.Foundation.DataFlow.ProcessingSequence
 {
@@ -13,13 +14,14 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence
             return this;
         }
         
-        public void Execute()
+        public async UniTask Execute()
         {
+            await UniTask.CompletedTask;
             foreach (IProcessSequence processSequence in _processSequences)
             {
-                processSequence.Process();
+                bool isSuccess = processSequence.Process();
                 this.LatestProcessSequence = processSequence;
-                if (processSequence.IsFinished)
+                if (isSuccess)
                     break;
             }
             

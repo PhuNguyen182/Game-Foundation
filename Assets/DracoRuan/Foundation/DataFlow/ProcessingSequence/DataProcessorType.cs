@@ -4,6 +4,6 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence
     {
         None = 0,
         FirebaseRemoteConfig = 1,
-        ScriptableObjects = 2,
+        ResourceScriptableObjects = 2,
     }
 }

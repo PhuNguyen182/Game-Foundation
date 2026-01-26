@@ -7,6 +7,8 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
 {
     public interface IMainDataManager : IDisposable
     {
+        public bool IsInitialized { get; }
+        
         public TStaticGameDataController GetStaticDataController<TStaticGameDataController>()
             where TStaticGameDataController : class, IStaticGameDataController;
 

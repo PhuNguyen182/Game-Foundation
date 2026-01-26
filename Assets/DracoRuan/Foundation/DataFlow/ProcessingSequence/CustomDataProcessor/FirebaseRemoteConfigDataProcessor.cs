@@ -17,12 +17,12 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
             this._desiredDataType = desiredDataType;
         }
 
-        public void Process()
+        public bool Process()
         {
             // To do: This part of the function should add logic to get remote data from Firebase Remote Config
             // If the remote config get the desired value from the passed key successfully, set the IsFinished to true 
             // Firebase remote config or any remote config always use JSON serializer, so does not matter what ICustomSerializer are using
-            //await UniTask.CompletedTask;
+            return true;
         }
 
     }
