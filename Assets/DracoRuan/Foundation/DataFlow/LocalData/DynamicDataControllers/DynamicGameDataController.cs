@@ -29,26 +29,26 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         /// </summary>
         protected abstract IDataSaveService<TData> DataSaveService { get; }
 
-        public Type DataType => typeof(TData);
+        private Type DataType => typeof(TData);
 
         public abstract event Action<TData> OnDataChanged;
 
         /// <summary>
         /// Retrieve the current data, used for other classes to access the data.
         /// </summary>
-        public TData ExposedSourceData => SourceData;
+        public TData ExposedSourceData => this.SourceData;
 
         public abstract void Initialize();
 
         public abstract void InjectDataManager(IMainDataManager mainDataManager);
 
-        public async UniTask LoadData() => SourceData = await DataSaveService.LoadData(DataType.Name);
+        public async UniTask LoadData() => this.SourceData = await this.DataSaveService.LoadData(DataType.Name);
 
-        public UniTask SaveDataAsync() => DataSaveService.SaveDataAsync(DataType.Name, SourceData);
+        public UniTask SaveDataAsync() => this.DataSaveService.SaveDataAsync(this.DataType.Name, this.SourceData);
 
-        public void SaveData() => DataSaveService.SaveData(DataType.Name, SourceData);
+        public void SaveData() => this.DataSaveService.SaveData(this.DataType.Name, this.SourceData);
 
-        public void DeleteData() => DataSaveService.DeleteData(DataType.Name);
+        public void DeleteData() => this.DataSaveService.DeleteData(this.DataType.Name);
         
         protected virtual void ReleaseManagedResources()
         {

@@ -19,18 +19,18 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         private bool _isDisposed;
         private IDataSequenceProcessor _dataSequenceProcessor;
         protected abstract TData SourceData { get; set; }
-        
-        public Type DataType => typeof(TData);
+
+        private Type DataType => typeof(TData);
         
         /// <summary>
         /// Retrieve the current data, used for other classes to access the data.
         /// </summary>
-        public TData ExposedSourceData => SourceData;
+        public TData ExposedSourceData => this.SourceData;
         
         /// <summary>
         /// Define how data is processed in the order that it is defined.
         /// </summary>
-        public abstract List<DataProcessSequence> DataProcessSequences { get; }
+        protected abstract List<DataProcessSequence> DataProcessSequences { get; }
         
         public async UniTask Initialize()
         {
