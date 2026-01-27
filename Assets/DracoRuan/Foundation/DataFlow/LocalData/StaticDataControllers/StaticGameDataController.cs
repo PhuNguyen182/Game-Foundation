@@ -16,6 +16,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
     /// <typeparam name="TData">Source Data is used to work with</typeparam>
     public abstract class StaticGameDataController<TData> : IStaticGameDataController where TData : class, IGameData
     {
+        private bool _isDisposed;
         private IDataSequenceProcessor _dataSequenceProcessor;
         protected abstract TData SourceData { get; set; }
         
@@ -48,7 +49,6 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
                 this.SourceData = processSequenceData.GameData as TData;
             
             this.OnDataInitialized();
-            await UniTask.CompletedTask;
         }
         
         public abstract void InjectDataManager(IMainDataManager mainDataManager);
@@ -75,10 +75,41 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
             {
                 DataProcessorType.FirebaseRemoteConfig => new FirebaseRemoteConfigDataProcessor(dataKey, DataType),
                 DataProcessorType.ResourceScriptableObjects => new ResourceScriptableObjectDataProcessor(dataKey, DataType),
+                DataProcessorType.AddressableScriptableObjects => new AddressableScriptableObjectDataProcessor(dataKey, DataType),
                 _ => null    
             };
             
             return processSequence;
         }
+        
+        protected virtual void ReleaseManagedResources()
+        {
+            
+        }
+
+        protected virtual void ReleaseUnmanagedResources()
+        {
+            
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (this._isDisposed)
+                return;
+            
+            this.ReleaseUnmanagedResources();
+            if (disposing)
+                this.ReleaseManagedResources();
+            
+            this._isDisposed = true;
+        }
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        ~StaticGameDataController() => this.Dispose(false);
     }
 }

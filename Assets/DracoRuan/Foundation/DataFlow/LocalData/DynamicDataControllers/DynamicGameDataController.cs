@@ -15,6 +15,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
     public abstract class DynamicGameDataController<TData> : IDynamicGameDataController,
         IDynamicGameDataControllerEvent<TData> where TData : IGameData
     {
+        private bool _isDisposed;
         protected abstract TData SourceData { get; set; }
 
         /// <summary>
@@ -48,5 +49,35 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         public void SaveData() => DataSaveService.SaveData(DataType.Name, SourceData);
 
         public void DeleteData() => DataSaveService.DeleteData(DataType.Name);
+        
+        protected virtual void ReleaseManagedResources()
+        {
+            
+        }
+
+        protected virtual void ReleaseUnmanagedResources()
+        {
+            
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (this._isDisposed)
+                return;
+            
+            this.ReleaseUnmanagedResources();
+            if (disposing)
+                this.ReleaseManagedResources();
+            
+            this._isDisposed = true;
+        }
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        ~DynamicGameDataController() => this.Dispose(false);
     }
 }

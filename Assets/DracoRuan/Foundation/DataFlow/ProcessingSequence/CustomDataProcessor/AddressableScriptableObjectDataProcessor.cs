@@ -1,11 +1,12 @@
-using System;
+﻿using System;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.LocalData;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
 {
-    public class ResourceScriptableObjectDataProcessor : IProcessSequence, IProcessSequenceData
+    public class AddressableScriptableObjectDataProcessor : IProcessSequence, IProcessSequenceData
     {
         private readonly Type _desiredDataType;
         private readonly string _dataConfigKey;
@@ -13,7 +14,7 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
         
         public IGameData GameData { get; private set; }
         
-        public ResourceScriptableObjectDataProcessor(string dataConfigKey, Type desiredDataType)
+        public AddressableScriptableObjectDataProcessor(string dataConfigKey, Type desiredDataType)
         {
             this._dataConfigKey = dataConfigKey;
             this._desiredDataType = desiredDataType;
@@ -22,17 +23,17 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
 
         public async UniTask<bool> Process()
         {
-            var loadedData = await Resources.LoadAsync<ScriptableObject>(this._dataConfigKey);
-            ScriptableObject data = loadedData as ScriptableObject;
-            if (!data || !this._desiredDataType.IsInstanceOfType(data) || !this._isAssignableFromDesiredType)
+            ScriptableObject result = await Addressables.LoadAssetAsync<ScriptableObject>(this._dataConfigKey);
+            if (result && this._desiredDataType.IsInstanceOfType(result) && this._isAssignableFromDesiredType)
             {
-                Debug.LogError($"Failed to load data from resource: {this._dataConfigKey}");
+                Debug.LogError($"Failed to load data from addressable: {this._dataConfigKey}");
                 return false;
             }
             
-            this.GameData = data as IGameData;
-            Debug.Log($"Loaded data from resource: {this._dataConfigKey}");
+            this.GameData = result as IGameData;
+            Debug.Log($"Loaded data from addressable: {this._dataConfigKey}");
             return true;
+
         }
     }
 }

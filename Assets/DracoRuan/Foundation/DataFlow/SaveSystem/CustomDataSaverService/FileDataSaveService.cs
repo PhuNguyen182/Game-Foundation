@@ -22,7 +22,7 @@ namespace DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService
         {
             this._dataSerializer = dataSerializer;
             this._filePath = Application.persistentDataPath;
-            this._fileExtension = _dataSerializer.FileExtension;
+            this._fileExtension = this._dataSerializer.FileExtension;
         }
 
         public async UniTask<T> LoadData(string name)
@@ -40,7 +40,7 @@ namespace DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService
         public async UniTask SaveDataAsync(string name, T data)
         {
             string dataPath = this.GetDataPath(name);
-            string directoryPath = GetDirectoryPath();
+            string directoryPath = this.GetDirectoryPath();
             
             if (!Directory.Exists(directoryPath))
                 Directory.CreateDirectory(directoryPath);
@@ -55,7 +55,7 @@ namespace DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService
         public void SaveData(string name, T data)
         {
             string dataPath = this.GetDataPath(name);
-            string directoryPath = GetDirectoryPath();
+            string directoryPath = this.GetDirectoryPath();
             
             if (!Directory.Exists(directoryPath))
                 Directory.CreateDirectory(directoryPath);

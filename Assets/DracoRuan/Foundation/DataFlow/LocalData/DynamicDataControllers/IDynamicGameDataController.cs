@@ -1,9 +1,10 @@
+using System;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.MasterDataController;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 {
-    public interface IDynamicGameDataController
+    public interface IDynamicGameDataController : IDisposable
     {
         public void Initialize();
         public void InjectDataManager(IMainDataManager mainDataManager);

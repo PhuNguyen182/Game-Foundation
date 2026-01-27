@@ -5,9 +5,7 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence
 {
     public interface IProcessSequence
     {
-        public bool IsFinished { get; }
-        
-        public bool Process();
+        public UniTask<bool> Process();
     }
     
     public interface IProcessSequenceData

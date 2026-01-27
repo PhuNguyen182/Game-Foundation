@@ -5,6 +5,6 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
 {
     public interface ICustomDataManager : IDisposable
     {
-        public UniTask InitializeDataHandlers(IMainDataManager mainDataManager);
+        public UniTask InitializeDataControllers(IMainDataManager mainDataManager);
     }
 }

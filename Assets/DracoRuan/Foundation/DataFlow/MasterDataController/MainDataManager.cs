@@ -23,11 +23,11 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
         {
             // Initialize static data first
             this._staticCustomDataManager = new StaticCustomDataManager();
-            await this._staticCustomDataManager.InitializeDataHandlers(this);
+            await this._staticCustomDataManager.InitializeDataControllers(this);
             
             // Then initialize dynamic data later
             this._dynamicCustomDataManager = new DynamicCustomDataManager();
-            await this._dynamicCustomDataManager.InitializeDataHandlers(this);
+            await this._dynamicCustomDataManager.InitializeDataControllers(this);
             this.IsInitialized = true;
         }
 
