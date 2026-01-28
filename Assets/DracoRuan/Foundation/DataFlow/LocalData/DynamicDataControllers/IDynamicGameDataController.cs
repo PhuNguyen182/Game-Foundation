@@ -6,9 +6,6 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 {
     public interface IDynamicGameDataController : IDisposable
     {
-        public SerializationType SerializationType { get; }
-        public DataStorageType DataStorageType { get; }
-        
         public void Initialize();
         public void RegisterDataService();
         public void InjectDataManager(IMainDataManager mainDataManager);

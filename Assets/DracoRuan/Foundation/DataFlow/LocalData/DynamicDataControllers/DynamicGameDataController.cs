@@ -15,7 +15,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
     /// </summary>
     /// <typeparam name="TData">Source Data is used to work with</typeparam>
     public abstract class DynamicGameDataController<TData> : IDynamicGameDataController,
-        IDynamicGameDataControllerEvent<TData> where TData : IGameData
+        IDynamicGameDataControllerEvent<TData> where TData : IGameData, IDisposable
     {
         private bool _isDisposed;
         private Type DataType => typeof(TData);
@@ -50,6 +50,10 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 
         #region Initialization
         
+        public abstract void InjectDataManager(IMainDataManager mainDataManager);
+
+        public abstract void Initialize();
+
         public void RegisterDataService()
         {
             this.DataSerializer = this.GetDataSerializer();
@@ -57,10 +61,6 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         }
 
         #endregion
-
-        public abstract void Initialize();
-
-        public abstract void InjectDataManager(IMainDataManager mainDataManager);
 
         #region Data Save And Load
 
@@ -108,6 +108,8 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         protected virtual void ReleaseManagedResources()
         {
             this.OnDataChangedInternal = null;
+            this.SourceData?.Dispose();
+            this.SourceData = default;
         }
 
         protected virtual void ReleaseUnmanagedResources()
