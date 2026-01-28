@@ -29,8 +29,14 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
                 Debug.LogError($"Failed to load data from resource: {this._dataConfigKey}");
                 return false;
             }
+
+            if (data is not IGameData gameData)
+            {
+                Debug.LogError($"This resource is not compatible with IGameData: {this._dataConfigKey}");
+                return false;
+            }
             
-            this.GameData = data as IGameData;
+            this.GameData = gameData;
             Debug.Log($"Loaded data from resource: {this._dataConfigKey}");
             return true;
         }

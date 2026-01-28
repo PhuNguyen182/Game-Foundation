@@ -15,6 +15,7 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
     {
         private bool _isDisposed;
         private bool _isInitialized;
+        
         private readonly object _lock = new();
         private readonly Dictionary<Type, IStaticGameDataController> _staticDataHandlers = new();
         

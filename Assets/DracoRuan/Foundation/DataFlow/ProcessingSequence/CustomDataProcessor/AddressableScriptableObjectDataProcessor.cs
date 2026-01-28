@@ -30,10 +30,15 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
                 return false;
             }
             
-            this.GameData = result as IGameData;
+            if (result is not IGameData gameData)
+            {
+                Debug.LogError($"This addressable asset is not compatible with IGameData: {this._dataConfigKey}");
+                return false;
+            }
+            
+            this.GameData = gameData;
             Debug.Log($"Loaded data from addressable: {this._dataConfigKey}");
             return true;
-
         }
     }
 }

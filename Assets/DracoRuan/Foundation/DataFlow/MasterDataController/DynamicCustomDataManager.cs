@@ -17,6 +17,7 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
     {
         private bool _isDisposed;
         private bool _isInitialized;
+        
         private readonly object _lock = new();
         private readonly Dictionary<Type, IDynamicGameDataController> _dynamicDataHandlers = new();
         
@@ -93,10 +94,11 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
                     }
 
                     dataHandler.InjectDataManager(mainDataManager);
+                    dataHandler.RegisterDataService();
                     await dataHandler.LoadData();
                     dataHandler.Initialize();
 
-                    lock (_lock)
+                    lock (this._lock)
                     {
                         this._dynamicDataHandlers[dataHandlerType] = dataHandler;
                     }
@@ -153,14 +155,16 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
         
         public async UniTask SaveAllDataAsync()
         {
-            using var listPool = ListPool<UniTask>.Get(out List<UniTask> saveDataTasks);
-            foreach (IDynamicGameDataController dynamicDataHandler in this._dynamicDataHandlers.Values)
+            using (ListPool<UniTask>.Get(out List<UniTask> saveDataTasks))
             {
-                UniTask saveDataTask = dynamicDataHandler.SaveDataAsync();
-                saveDataTasks.Add(saveDataTask);
+                foreach (IDynamicGameDataController dynamicDataHandler in this._dynamicDataHandlers.Values)
+                {
+                    UniTask saveDataTask = dynamicDataHandler.SaveDataAsync();
+                    saveDataTasks.Add(saveDataTask);
+                }
+
+                await UniTask.WhenAll(saveDataTasks);
             }
-            
-            await UniTask.WhenAll(saveDataTasks);
         }
 
         public void SaveAllData()
