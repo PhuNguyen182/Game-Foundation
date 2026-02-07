@@ -5,20 +5,20 @@ using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.LocalData;
 using UnityEngine;
 
-namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
+namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor.CSVs
 {
-    public class ResourceCsvDataProcessor<TData, TRecord> : IProcessSequence, IProcessSequenceData
+    public class AddressableCsvDataProcessor<TData, TRecord> : IProcessSequence, IProcessSequenceData
         where TData : SerializableRecordClass<TRecord>, IGameData, new()
     {
         private readonly string _dataConfigKey;
         private readonly IDataProvider _dataProvider;
-        
-        public IGameData GameData { get; private set; }
 
-        public ResourceCsvDataProcessor(string dataConfigKey, IDataProviderService dataProviderService)
+        public IGameData GameData { get; private set; }
+        
+        public AddressableCsvDataProcessor(string dataConfigKey, IDataProviderService dataProviderService)
         {
             this._dataConfigKey = dataConfigKey;
-            this._dataProvider = dataProviderService.GetDataProviderByType(DataProviderType.Resources);
+            this._dataProvider = dataProviderService.GetDataProviderByType(DataProviderType.Addressable);
         }
 
         public async UniTask<bool> Process()
