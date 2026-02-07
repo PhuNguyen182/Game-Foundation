@@ -2,8 +2,8 @@
 
 namespace DracoRuan.Foundation.DataFlow.LocalData
 {
-    public interface ISetCustomCsvRecordGameData
+    public interface ISetCustomCsvRecordGameData<in TData>
     {
-        public void SetCustomGameDataRecords<TData>(IEnumerable<TData> recordDataFromCsv);
+        public void SetCustomGameDataRecords(IEnumerable<TData> recordDataFromCsv);
     }
 }

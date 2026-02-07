@@ -8,12 +8,12 @@ using CsvHelper;
 
 namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
 {
-    public static class CsvHelperUtil<TData>
+    public static class CsvHelperUtil<TRecord>
     {
         private const string GetRecordsMethodName = "GetRecords";
 
         public static readonly CsvConfiguration CsvConfiguration;
-        public static readonly Func<CsvReader, IEnumerable<TData>> GetRecordsFunc;
+        public static readonly Func<CsvReader, IEnumerable<TRecord>> GetRecordsFunc;
 
         static CsvHelperUtil()
         {
@@ -23,19 +23,19 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
             };
 
             var method = typeof(CsvReader).GetMethod(GetRecordsMethodName, Type.EmptyTypes)
-                ?.MakeGenericMethod(typeof(TData));
+                ?.MakeGenericMethod(typeof(TRecord));
 
             if (method != null)
             {
-                GetRecordsFunc = (Func<CsvReader, IEnumerable<TData>>)
-                    Delegate.CreateDelegate(typeof(Func<CsvReader, IEnumerable<TData>>), method);
+                GetRecordsFunc = (Func<CsvReader, IEnumerable<TRecord>>)
+                    Delegate.CreateDelegate(typeof(Func<CsvReader, IEnumerable<TRecord>>), method);
             }
         }
         
-        public static IEnumerable<TData> ParseCsv(string csvText)
+        public static IEnumerable<TRecord> ParseCsv(string csvText)
         {
             if (string.IsNullOrEmpty(csvText) || GetRecordsFunc == null)
-                return Enumerable.Empty<TData>();
+                return Enumerable.Empty<TRecord>();
 
             using StringReader stringReader = new(csvText);
             using CsvReader csvReader = new(stringReader, CsvConfiguration);
