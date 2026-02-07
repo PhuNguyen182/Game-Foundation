@@ -32,7 +32,7 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor.C
             }
         }
         
-        public static IEnumerable<TRecord> GetRecordFromCsv(string csvText)
+        public static IEnumerable<TRecord> GetRecordsFromCsv(string csvText)
         {
             if (string.IsNullOrEmpty(csvText) || GetRecordsFunc == null)
                 return Enumerable.Empty<TRecord>();
