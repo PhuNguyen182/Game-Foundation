@@ -7,12 +7,12 @@ using Object = UnityEngine.Object;
 
 namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
 {
-    public class ResourceCsvDataProcessor<TData> : IProcessSequence, IProcessSequenceData
+    public class AddressableCsvDataProcessor<TData> : IProcessSequence, IProcessSequenceData
         where TData : class, IGameData, ISetCustomCsvRecordGameData, new()
     {
         private readonly string _dataConfigKey;
         
-        public ResourceCsvDataProcessor(string dataConfigKey)
+        public AddressableCsvDataProcessor(string dataConfigKey)
         {
             this._dataConfigKey = dataConfigKey;
         }

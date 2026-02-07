@@ -1,9 +1,9 @@
 using System;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.SaveSystem;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using DracoRuan.Foundation.DataFlow.Serialization;
 using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace DracoRuan.Foundation.DataFlow.DataProviders
 {
@@ -12,16 +12,16 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
         public async UniTask<TData> LoadDataAsync<TData>(string pathToData, 
             IDataSerializer<TData> serializer = null, IDataSaveService dataSaveService = null)
         {
+            AsyncOperationHandle<TData> operationHandle = default;
             try
             {
-                AsyncOperationHandle<TData> operationHandle = Addressables.LoadAssetAsync<TData>(pathToData);
+                operationHandle = Addressables.LoadAssetAsync<TData>(pathToData);
                 while (!operationHandle.IsDone)
                     await UniTask.NextFrame();
 
                 if (operationHandle.Status == AsyncOperationStatus.Succeeded)
                 {
                     TData result = operationHandle.Result;
-                    Addressables.Release(operationHandle);
                     Debug.Log(
                         $"[AddressableProvider] [{typeof(TData)}] Loaded data from path: {pathToData} successfully !!! Result: {result}");
                     return result;
@@ -31,6 +31,11 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
             {
                 Debug.LogError(
                     $"[AddressableProvider] [{typeof(TData)}] Failed to load data from path: {pathToData}. More info: {e.Message}");
+            }
+            finally
+            {
+                if (operationHandle.IsValid())
+                    Addressables.Release(operationHandle);
             }
 
             return default;

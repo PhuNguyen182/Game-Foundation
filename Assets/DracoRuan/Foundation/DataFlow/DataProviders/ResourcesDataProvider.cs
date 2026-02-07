@@ -12,22 +12,28 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
         public async UniTask<TData> LoadDataAsync<TData>(string pathToData, 
             IDataSerializer<TData> serializer = null, IDataSaveService dataSaveService = null)
         {
+            Object asset = null;
             try
             {
-                Object asset = await Resources.LoadAsync(pathToData);
+                asset = await Resources.LoadAsync(pathToData);
                 if (asset is TData result)
                 {
                     Debug.Log(
                         $"[ResourcesProvider] [{typeof(TData)}] Loaded data from path: {pathToData} successfully !!!");
                     return result;
                 }
-                
+
                 Debug.LogError($"[ResourcesProvider] [{typeof(TData)}] Data from {pathToData} is mismatched !!!");
             }
             catch (Exception e)
             {
                 Debug.LogError(
                     $"[ResourcesProvider] [{typeof(TData)}] Failed to loaded target data from {pathToData}. More info: {e.Message}");
+            }
+            finally
+            {
+                if (asset)
+                    Resources.UnloadAsset(asset);
             }
 
             return default;
