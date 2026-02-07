@@ -8,7 +8,7 @@ using UnityEngine;
 namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
 {
     public class ResourceCsvDataProcessor<TData, TRecord> : IProcessSequence, IProcessSequenceData
-        where TData : SerializableRecordClass<TRecord>, IGameData,  new()
+        where TData : SerializableRecordClass<TRecord>, IGameData, new()
     {
         private readonly string _dataConfigKey;
         private readonly IDataProvider _dataProvider;
