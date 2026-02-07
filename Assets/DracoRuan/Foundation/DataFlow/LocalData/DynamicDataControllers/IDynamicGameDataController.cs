@@ -7,7 +7,6 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
     public interface IDynamicGameDataController : IDisposable
     {
         public void Initialize();
-        public void RegisterDataService();
         public void InjectDataManager(IMainDataManager mainDataManager);
         public UniTask LoadData();
         public UniTask SaveDataAsync();

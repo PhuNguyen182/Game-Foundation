@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService;
 using DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.TimeScheduleService.Data;
 using DracoRuan.Foundation.DataFlow.SaveSystem;
-using DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService;
 
 namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.TimeScheduleService.Persistence
 {
@@ -15,13 +15,8 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.TimeScheduleServic
     {
         private const string SaveKey = "CountdownTimers";
         
-        private readonly IDataSaveService<List<CountdownTimerData>> _dataSaveService;
-
-        public PlayerPrefsTimerPersistence()
-        {
-            var serializer = new TimerDataSerializer();
-            this._dataSaveService = new PlayerPrefDataSaveService<List<CountdownTimerData>>(serializer);
-        }
+        private readonly TimerDataSerializer _serializer = new();
+        private readonly IDataSaveService _dataSaveService = new PlayerPrefDataSaveService();
 
         public bool SaveTimers(List<CountdownTimerData> timerDataList)
         {
@@ -48,13 +43,14 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.TimeScheduleServic
             try
             {
                 var loadTask = this._dataSaveService.LoadData(SaveKey);
-                var timerDataList = await loadTask;
+                var serializedTimerData = await loadTask;
                 
-                if (timerDataList is { Count: > 0 })
+                if (!string.IsNullOrEmpty(serializedTimerData))
                 {
-                    Debug.Log($"[PlayerPrefsTimerPersistence] Loaded {timerDataList.Count} timers from PlayerPrefs");
+                    Debug.Log($"[PlayerPrefsTimerPersistence] Loaded {serializedTimerData} timers from PlayerPrefs");
                 }
                 
+                List<CountdownTimerData> timerDataList = this._serializer.Deserialize(serializedTimerData);
                 return timerDataList ?? new List<CountdownTimerData>();
             }
             catch (Exception ex)

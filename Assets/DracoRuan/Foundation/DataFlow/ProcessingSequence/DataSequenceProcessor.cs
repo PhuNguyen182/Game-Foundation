@@ -26,5 +26,11 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence
             
             this._processSequences.Clear();
         }
+        
+        public void Clear()
+        {
+            this._processSequences.Clear();
+            this.LatestProcessSequence = null;
+        }
     }
 }

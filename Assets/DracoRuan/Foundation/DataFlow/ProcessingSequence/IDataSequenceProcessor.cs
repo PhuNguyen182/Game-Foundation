@@ -7,5 +7,6 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence
         public IProcessSequence LatestProcessSequence { get; }
         public IDataSequenceProcessor Append(IProcessSequence processSequence);
         public UniTask Execute();
+        public void Clear();
     }
 }

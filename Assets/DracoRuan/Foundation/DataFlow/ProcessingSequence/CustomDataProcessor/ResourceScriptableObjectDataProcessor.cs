@@ -1,44 +1,45 @@
 using System;
 using Cysharp.Threading.Tasks;
+using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.LocalData;
-using UnityEngine;
 
 namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
 {
-    public class ResourceScriptableObjectDataProcessor : IProcessSequence, IProcessSequenceData
+    public class ResourceScriptableObjectDataProcessor<TData> : IProcessSequence, IProcessSequenceData
+    where TData : IGameData
     {
-        private readonly Type _desiredDataType;
+        private readonly IDataProvider _dataProvider;
         private readonly string _dataConfigKey;
-        private readonly bool _isAssignableFromDesiredType;
         
         public IGameData GameData { get; private set; }
         
-        public ResourceScriptableObjectDataProcessor(string dataConfigKey, Type desiredDataType)
+        public ResourceScriptableObjectDataProcessor(string dataConfigKey, IDataProviderService dataProviderService)
         {
             this._dataConfigKey = dataConfigKey;
-            this._desiredDataType = desiredDataType;
-            this._isAssignableFromDesiredType = typeof(IGameData).IsAssignableFrom(desiredDataType);
+            this._dataProvider = dataProviderService.GetDataProviderByType(DataProviderType.Resources);
         }
 
         public async UniTask<bool> Process()
         {
-            var loadedData = await Resources.LoadAsync<ScriptableObject>(this._dataConfigKey);
-            ScriptableObject data = loadedData as ScriptableObject;
-            if (!data || !this._desiredDataType.IsInstanceOfType(data) || !this._isAssignableFromDesiredType)
+            try
             {
-                Debug.LogError($"Failed to load data from resource: {this._dataConfigKey}");
+                TData result = await this._dataProvider.LoadDataAsync<TData>(this._dataConfigKey);
+                if (result != null)
+                {
+                    this.GameData = result;
+                    Debug.Log($"[ResourceScriptableObjectDataProcessor] Loaded data from path: {_dataConfigKey} successfully !!! Result: {this.GameData}");
+                    return true;
+                }
+                
+                Debug.LogError($"[ResourceScriptableObjectDataProcessor] Failed to load data from path: {_dataConfigKey}");
                 return false;
             }
-
-            if (data is not IGameData gameData)
+            catch (Exception e)
             {
-                Debug.LogError($"This resource is not compatible with IGameData: {this._dataConfigKey}");
-                return false;
+                Debug.LogError($"[ResourceScriptableObjectDataProcessor] Failed to load data from path: {_dataConfigKey}. More info: {e.Message}");
             }
             
-            this.GameData = gameData;
-            Debug.Log($"Loaded data from resource: {this._dataConfigKey}");
-            return true;
+            return false;
         }
     }
 }

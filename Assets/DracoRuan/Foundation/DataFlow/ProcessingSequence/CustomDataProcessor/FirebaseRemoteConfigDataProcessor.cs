@@ -1,20 +1,22 @@
-using System;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.LocalData;
+using DracoRuan.Foundation.DataFlow.Serialization;
+using DracoRuan.Foundation.DataFlow.Serialization.CustomDataSerializerServices;
 
 namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
 {
-    public class FirebaseRemoteConfigDataProcessor : IProcessSequence, IProcessSequenceData
+    public class FirebaseRemoteConfigDataProcessor<TData> : IProcessSequence, IProcessSequenceData
+    where TData : IGameData
     {
-        private readonly Type _desiredDataType;
         private readonly string _remoteConfigKey;
+        private readonly IDataSerializer<TData> _dataSerializer;
         
         public IGameData GameData { get; private set; }
 
-        public FirebaseRemoteConfigDataProcessor(string remoteConfigKey, Type desiredDataType)
+        public FirebaseRemoteConfigDataProcessor(string remoteConfigKey)
         {
             this._remoteConfigKey = remoteConfigKey;
-            this._desiredDataType = desiredDataType;
+            this._dataSerializer = new JsonDataSerializer<TData>();
         }
 
         public async UniTask<bool> Process()

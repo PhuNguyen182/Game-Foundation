@@ -1,5 +1,6 @@
 using System;
 using Cysharp.Threading.Tasks;
+using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers;
 using DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers;
 
@@ -12,14 +13,9 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
         private IDynamicCustomDataManager _dynamicCustomDataManager;
         
         public bool IsInitialized { get; private set; }
-        
-        public MainDataManager()
-        {
-            this.IsInitialized = false;
-            this.InitializeDataHandlers().Forget();
-        }
-        
-        private async UniTask InitializeDataHandlers()
+        public IDataProviderService DataProviderService { get; } = new DataProviderService();
+
+        public async UniTask InitializeDataHandlers()
         {
             // Initialize static data first
             this._staticCustomDataManager = new StaticCustomDataManager();

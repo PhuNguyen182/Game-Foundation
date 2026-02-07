@@ -1,44 +1,45 @@
 ﻿using System;
 using Cysharp.Threading.Tasks;
+using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.LocalData;
-using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
 {
-    public class AddressableScriptableObjectDataProcessor : IProcessSequence, IProcessSequenceData
+    public class AddressableScriptableObjectDataProcessor<TData> : IProcessSequence, IProcessSequenceData
+    where TData : IGameData
     {
-        private readonly Type _desiredDataType;
         private readonly string _dataConfigKey;
-        private readonly bool _isAssignableFromDesiredType;
+        private readonly IDataProvider _dataProvider;
         
         public IGameData GameData { get; private set; }
         
-        public AddressableScriptableObjectDataProcessor(string dataConfigKey, Type desiredDataType)
+        public AddressableScriptableObjectDataProcessor(string dataConfigKey, IDataProviderService dataProviderService)
         {
             this._dataConfigKey = dataConfigKey;
-            this._desiredDataType = desiredDataType;
-            this._isAssignableFromDesiredType = typeof(IGameData).IsAssignableFrom(desiredDataType);
+            this._dataProvider = dataProviderService.GetDataProviderByType(DataProviderType.Addressable);
         }
 
         public async UniTask<bool> Process()
         {
-            ScriptableObject result = await Addressables.LoadAssetAsync<ScriptableObject>(this._dataConfigKey);
-            if (result && this._desiredDataType.IsInstanceOfType(result) && this._isAssignableFromDesiredType)
+            try
             {
-                Debug.LogError($"Failed to load data from addressable: {this._dataConfigKey}");
+                TData result = await this._dataProvider.LoadDataAsync<TData>(this._dataConfigKey);
+                if (result != null)
+                {
+                    this.GameData = result;
+                    Debug.Log($"[AddressableScriptableObjectDataProcessor] Loaded data from path: {_dataConfigKey} successfully !!! Result: {this.GameData}");
+                    return true;
+                }
+
+                Debug.LogError($"[AddressableScriptableObjectDataProcessor] Failed to load data from path: {_dataConfigKey}");
                 return false;
             }
-            
-            if (result is not IGameData gameData)
+            catch (Exception e)
             {
-                Debug.LogError($"This addressable asset is not compatible with IGameData: {this._dataConfigKey}");
-                return false;
+                Debug.LogError($"[AddressableScriptableObjectDataProcessor] Failed to load data from path: {_dataConfigKey}. More info: {e.Message}");
             }
             
-            this.GameData = gameData;
-            Debug.Log($"Loaded data from addressable: {this._dataConfigKey}");
-            return true;
+            return false;
         }
     }
 }

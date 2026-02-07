@@ -1,64 +1,49 @@
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.MasterDataController;
 using DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor;
 using DracoRuan.Foundation.DataFlow.ProcessingSequence;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 {
-    /// <summary>
-    /// This class is the base class for all static data type handlers.
-    /// Usually use this class to handle data that does not change in the whole game cycle, like configuration data, etc.
-    /// IMPORTANCE: The SourceData class and GameDataHandler class should (or must) be split into 2 individual .cs files
-    /// to ensure in the case of using ScriptableObject as the SourceData class will work properly.
-    /// </summary>
-    /// <typeparam name="TData">Source Data is used to work with</typeparam>
     public abstract class StaticGameDataController<TData> : IStaticGameDataController where TData : class, IGameData
     {
         private bool _isDisposed;
-        private IDataSequenceProcessor _dataSequenceProcessor;
+        private IDataProviderService _dataProviderService;
+        
         protected abstract TData SourceData { get; set; }
-
-        private Type DataType => typeof(TData);
-        
-        /// <summary>
-        /// Retrieve the current data, used for other classes to access the data.
-        /// </summary>
-        public TData ExposedSourceData => this.SourceData;
-        
-        /// <summary>
-        /// Define how data is processed in the order that it is defined.
-        /// </summary>
         protected abstract List<DataProcessSequence> DataProcessSequences { get; }
         
-        public async UniTask Initialize()
+        public TData ExposedSourceData => this.SourceData;
+        
+        public async UniTask InitializeData(IDataSequenceProcessor dataSequenceProcessor)
         {
-            this._dataSequenceProcessor = new DataSequenceProcessor();
+            dataSequenceProcessor.Clear();
             foreach (DataProcessSequence dataProcessSequence in this.DataProcessSequences)
             {
                 IProcessSequence processSequence = GetDataProcessorByType(dataProcessSequence);
                 if (processSequence == null)
                     continue;
 
-                this._dataSequenceProcessor.Append(processSequence);
+                dataSequenceProcessor.Append(processSequence);
             }
 
-            await this._dataSequenceProcessor.Execute();
-            if (this._dataSequenceProcessor.LatestProcessSequence is IProcessSequenceData processSequenceData)
+            await dataSequenceProcessor.Execute();
+            if (dataSequenceProcessor.LatestProcessSequence is IProcessSequenceData processSequenceData)
                 this.SourceData = processSequenceData.GameData as TData;
             
             this.OnDataInitialized();
         }
-        
-        public abstract void InjectDataManager(IMainDataManager mainDataManager);
+
+        public virtual void InjectDataManager(IMainDataManager mainDataManager)
+        {
+            this._dataProviderService = mainDataManager.DataProviderService;
+        }
         
         protected abstract void OnDataInitialized();
 
-        /// <summary>
-        /// Get the data key from the GameDataAttribute. If not found, use the type name.
-        /// </summary>
-        /// <returns>Return the data key</returns>
         protected string GetDataKey()
         {
             GameDataAttribute attribute = GetAttribute<TData>();
@@ -73,9 +58,12 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
             string dataKey = dataProcessSequence.DataKey;
             IProcessSequence processSequence = dataProcessSequence.DataProcessorType switch
             {
-                DataProcessorType.FirebaseRemoteConfig => new FirebaseRemoteConfigDataProcessor(dataKey, DataType),
-                DataProcessorType.ResourceScriptableObjects => new ResourceScriptableObjectDataProcessor(dataKey, DataType),
-                DataProcessorType.AddressableScriptableObjects => new AddressableScriptableObjectDataProcessor(dataKey, DataType),
+                DataProcessorType.FirebaseRemoteConfig 
+                    => new FirebaseRemoteConfigDataProcessor<TData>(dataKey),
+                DataProcessorType.ResourceScriptableObjects 
+                    => new ResourceScriptableObjectDataProcessor<TData>(dataKey, this._dataProviderService),
+                DataProcessorType.AddressableScriptableObjects 
+                    => new AddressableScriptableObjectDataProcessor<TData>(dataKey, this._dataProviderService),
                 _ => null    
             };
             

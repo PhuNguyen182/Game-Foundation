@@ -15,13 +15,8 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.TimeScheduleServic
     {
         private const string SaveFileName = "TimerData";
         
-        private readonly IDataSaveService<List<CountdownTimerData>> _dataSaveService;
-
-        public FileTimerPersistence()
-        {
-            var serializer = new TimerDataSerializer();
-            this._dataSaveService = new FileDataSaveService<List<CountdownTimerData>>(serializer);
-        }
+        private readonly TimerDataSerializer _serializer = new();
+        private readonly IDataSaveService _dataSaveService = new FileDataSaveService();
 
         public bool SaveTimers(List<CountdownTimerData> timerDataList)
         {
@@ -48,13 +43,14 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.TimeScheduleServic
             try
             {
                 var loadTask = this._dataSaveService.LoadData(SaveFileName);
-                var timerDataList = await loadTask;
+                var serializedTimerData = await loadTask;
                 
-                if (timerDataList is { Count: > 0 })
+                if (!string.IsNullOrEmpty(serializedTimerData))
                 {
-                    Debug.Log($"[FileTimerPersistence] Loaded {timerDataList.Count} timers from file");
+                    Debug.Log($"[FileTimerPersistence] Loaded {serializedTimerData} timers from file");
                 }
                 
+                List<CountdownTimerData> timerDataList = this._serializer.Deserialize(serializedTimerData);
                 return timerDataList ?? new List<CountdownTimerData>();
             }
             catch (Exception ex)

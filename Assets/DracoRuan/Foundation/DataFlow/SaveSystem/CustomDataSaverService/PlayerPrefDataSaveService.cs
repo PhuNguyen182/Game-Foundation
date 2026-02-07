@@ -1,6 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DracoRuan.Foundation.DataFlow.Serialization;
-using DracoRuan.Foundation.DataFlow.TypeCreator;
 using UnityEngine;
 
 namespace DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService
@@ -8,38 +6,29 @@ namespace DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService
     /// <summary>
     /// Use this class to save data to PlayerPrefs.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class PlayerPrefDataSaveService<T> : IDataSaveService<T>
+    public class PlayerPrefDataSaveService : IDataSaveService
     {
-        private readonly IDataSerializer<T> _dataSerializer;
-
-        public PlayerPrefDataSaveService(IDataSerializer<T> dataSerializer)
-        {
-            this._dataSerializer = dataSerializer;
-        }
-
-        public async UniTask<T> LoadData(string name)
+        public async UniTask<string> LoadData(string name)
         {
             if (!PlayerPrefs.HasKey(name))
-                return TypeFactory.Create<T>();
+                return null;
 
             await UniTask.CompletedTask;
             string serializedData = PlayerPrefs.GetString(name);
-            T data = this._dataSerializer.Deserialize(serializedData);
-            return data;
+            return serializedData;
         }
 
-        public UniTask SaveDataAsync(string name, T data)
+        public UniTask SaveDataAsync(string name, object serializedData)
         {
-            string serializedData = this._dataSerializer.Serialize(data) as string;
-            PlayerPrefs.SetString(name, serializedData);
+            string saveData = serializedData as string;
+            PlayerPrefs.SetString(name, saveData);
             return UniTask.CompletedTask;
         }
 
-        public void SaveData(string name, T data)
+        public void SaveData(string name, object serializedData)
         {
-            string serializedData = this._dataSerializer.Serialize(data) as string;
-            PlayerPrefs.SetString(name, serializedData);
+            string saveData = serializedData as string;
+            PlayerPrefs.SetString(name, saveData);
         }
 
         public void DeleteData(string name) => PlayerPrefs.DeleteKey(name);

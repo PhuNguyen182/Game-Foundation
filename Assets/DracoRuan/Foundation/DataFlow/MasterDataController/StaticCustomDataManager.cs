@@ -1,11 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using System.Collections.Generic;
 using System.Reflection;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.LocalData;
 using DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers;
+using DracoRuan.Foundation.DataFlow.ProcessingSequence;
 using DracoRuan.Foundation.DataFlow.TypeCreator;
 using ZLinq;
 
@@ -18,11 +18,11 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
         
         private readonly object _lock = new();
         private readonly Dictionary<Type, IStaticGameDataController> _staticDataHandlers = new();
+        private readonly IDataSequenceProcessor _dataSequenceProcessor = new DataSequenceProcessor();
         
         private static readonly string[] AssemblyPrefixesToScan =
         {
             "Assembly-CSharp", // Main game code
-            // Không scan Unity, System, etc.
         };
 
         public async UniTask InitializeDataControllers(IMainDataManager mainDataManager)
@@ -35,11 +35,8 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
                     return;
                 }
             }
-
-            Stopwatch stopwatch = Stopwatch.StartNew();
+            
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-            // Chỉ scan assemblies liên quan
             var relevantAssemblies = assemblies.AsValueEnumerable()
                 .Where(assembly => AssemblyPrefixesToScan.Any(prefix => assembly.GetName().Name.StartsWith(prefix)));
 
@@ -51,26 +48,21 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
                     var types = assembly.GetTypes()
                         .Where(type => (type.IsClass && !type.IsAbstract) || type.IsValueType)
                         .Where(type => type.GetCustomAttribute<StaticGameDataControllerAttribute>() != null);
-
                     dataHandlerTypes.AddRange(types);
                 }
                 catch (ReflectionTypeLoadException e)
                 {
                     Debug.LogError($"Failed to load types from {assembly.GetName().Name}: {e.Message}");
-
-                    // Log loader exceptions để debug
                     foreach (Exception loaderEx in e.LoaderExceptions)
                     {
                         if (loaderEx != null)
                             Debug.LogError($"  - {loaderEx.Message}");
                     }
-
-                    // Vẫn lấy types load được
+                    
                     var loadedTypes = e.Types
                         .Where(type => type != null)
                         .Where(type => (type.IsClass && !type.IsAbstract) || type.IsValueType)
                         .Where(type => type.GetCustomAttribute<StaticGameDataControllerAttribute>() != null);
-
                     dataHandlerTypes.AddRange(loadedTypes);
                 }
                 catch (Exception e)
@@ -78,8 +70,7 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
                     Debug.LogError($"Unexpected error scanning {assembly.GetName().Name}: {e}");
                 }
             }
-
-            Debug.Log($"Found {dataHandlerTypes.Count} data handler types in {stopwatch.ElapsedMilliseconds}ms");
+            
             var initializationErrors = new List<(Type type, Exception error)>();
             foreach (Type dataHandlerType in dataHandlerTypes)
             {
@@ -92,7 +83,7 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
                     }
 
                     dataHandler.InjectDataManager(mainDataManager);
-                    await dataHandler.Initialize();
+                    await dataHandler.InitializeData(this._dataSequenceProcessor);
 
                     lock (_lock)
                     {
@@ -113,10 +104,6 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
                 this._isInitialized = true;
             }
 
-            stopwatch.Stop();
-            Debug.Log($"StaticCustomDataManager initialized {_staticDataHandlers.Count} handlers " +
-                      $"in {stopwatch.ElapsedMilliseconds}ms with {initializationErrors.Count} errors");
-            
             if (initializationErrors.Count > 0)
             {
                 throw new AggregateException("Failed to initialize some handlers",
@@ -161,6 +148,7 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
         
         private void ReleaseManagedResources()
         {
+            this._dataSequenceProcessor.Clear();
             lock (this._lock)
             {
                 foreach (IStaticGameDataController handler in this._staticDataHandlers.Values)
