@@ -30,7 +30,7 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
             try
             {
                 string output = textAsset.text ?? string.Empty;
-                IEnumerable<TRecord> dataRecords = CsvHelperUtil<TRecord>.ParseCsv(output);
+                IEnumerable<TRecord> dataRecords = CsvHelperUtil<TRecord>.GetRecordFromCsv(output);
                 if (dataRecords == null)
                     return false;
 

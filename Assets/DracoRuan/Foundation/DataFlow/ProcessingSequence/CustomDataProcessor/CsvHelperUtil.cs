@@ -12,8 +12,8 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
     {
         private const string GetRecordsMethodName = "GetRecords";
 
-        public static readonly CsvConfiguration CsvConfiguration;
-        public static readonly Func<CsvReader, IEnumerable<TRecord>> GetRecordsFunc;
+        private static readonly CsvConfiguration CsvConfiguration;
+        private static readonly Func<CsvReader, IEnumerable<TRecord>> GetRecordsFunc;
 
         static CsvHelperUtil()
         {
@@ -32,7 +32,7 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
             }
         }
         
-        public static IEnumerable<TRecord> ParseCsv(string csvText)
+        public static IEnumerable<TRecord> GetRecordFromCsv(string csvText)
         {
             if (string.IsNullOrEmpty(csvText) || GetRecordsFunc == null)
                 return Enumerable.Empty<TRecord>();
