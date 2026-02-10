@@ -11,6 +11,8 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
 {
     public class AddressableAssetBundleResourceLocator : IAssetBundleResourceLocator
     {
+        private const string LogTag = "AddressableAssetBundleResourceLocator";
+        
         public async UniTask<bool> IsKeyValid(string key)
         {
             bool exists = await KeyOrLabelExistsAsync(key);
@@ -28,7 +30,7 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
             bool keyExists = await IsKeyValid(key);
             if (!keyExists)
             {
-                Debug.LogError($"Addressable key '{key}' does not exist.");
+                Debug.LogError($"[{LogTag}] Addressable key '{key}' does not exist.");
                 return -1;
             }
             
@@ -41,7 +43,7 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
             bool keyExists = await IsKeyValid(keys);
             if (!keyExists)
             {
-                Debug.LogError($"Addressable key '{string.Join(", ", keys)}' does not exist.");
+                Debug.LogError($"[{LogTag}] Addressable key '{string.Join(", ", keys)}' does not exist.");
                 return -1;
             }
             
@@ -51,53 +53,67 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
 
         private static async UniTask<long> GetDownloadSizeAsync(object key)
         {
+            AsyncOperationHandle<long> sizeHandle = default;
+            AsyncOperationHandle<IList<IResourceLocation>> locationHandle = default;
             try
             {
-                AsyncOperationHandle<IList<IResourceLocation>> locationsHandle =
-                    Addressables.LoadResourceLocationsAsync(key);
-                IList<IResourceLocation> locations = await locationsHandle;
+                locationHandle = Addressables.LoadResourceLocationsAsync(key);
+                IList<IResourceLocation> locations = await locationHandle;
 
-                if (locationsHandle.Status != AsyncOperationStatus.Succeeded || locations is not { Count: > 0 })
+                if (locationHandle.Status != AsyncOperationStatus.Succeeded || locations is not { Count: > 0 })
                 {
-                    Debug.LogError($"Failed to get resource locations for {key}");
-                    Addressables.Release(locationsHandle);
+                    Debug.LogError($"[{LogTag}] Failed to get resource locations for {key}");
                     return -1;
                 }
 
-                AsyncOperationHandle<long> sizeHandle = Addressables.GetDownloadSizeAsync(locations);
+                sizeHandle = Addressables.GetDownloadSizeAsync(locations);
                 long sizeToDownload = await sizeHandle;
-                Addressables.Release(locationsHandle);
-                Addressables.Release(sizeHandle);
+                if (sizeHandle.Status != AsyncOperationStatus.Succeeded) 
+                    return -1;
+                
+                Debug.Log($"[{LogTag}] Download size for {key}: {sizeToDownload}");
                 return sizeToDownload;
+
             }
             catch (Exception e)
             {
-                Debug.LogError($"Exception during download size calculation: {e.Message}");
+                Debug.LogError($"[{LogTag}] Exception during download size calculation: {e.Message}");
                 return -1;
+            }
+            finally
+            {
+                if (locationHandle.IsValid())
+                    Addressables.Release(locationHandle);
+                if (sizeHandle.IsValid())
+                    Addressables.Release(sizeHandle);
             }
         }
 
         private static async UniTask<bool> KeyOrLabelExistsAsync(object keyOrLabel)
         {
+            AsyncOperationHandle<IList<IResourceLocation>> handle = default;
             try
             {
-                AsyncOperationHandle<IList<IResourceLocation>> handle =
-                    Addressables.LoadResourceLocationsAsync(keyOrLabel);
+                handle = Addressables.LoadResourceLocationsAsync(keyOrLabel);
                 await handle;
                 bool exists = handle is { Status: AsyncOperationStatus.Succeeded, Result: { Count: > 0 } };
 
                 if (!exists)
-                    Debug.LogError($"Addressable key or label {keyOrLabel} not exist!");
+                    Debug.LogError($"[{LogTag}] Addressable key or label {keyOrLabel} not exist!");
                 else
-                    Debug.Log($"Addressable key or label {keyOrLabel} exist!");
-
-                Addressables.Release(handle);
+                    Debug.Log($"[{LogTag}] Addressable key or label {keyOrLabel} exist!");
+                
                 return exists;
             }
             catch (Exception e)
             {
-                Debug.LogError($"Exception during key or label existence check: {e.Message}");
+                Debug.LogError($"[{LogTag}] Exception during key or label existence check: {e.Message}");
                 return false;
+            }
+            finally
+            {
+                if (handle.IsValid())
+                    Addressables.Release(handle);
             }
         }
     }

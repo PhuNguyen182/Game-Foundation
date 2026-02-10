@@ -1,17 +1,18 @@
 #if USE_EXTENDED_ADDRESSABLE
 using System;
+using Cysharp.Threading.Tasks;
+using DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime;
+using DracoRuan.CoreSystems.AssetBundleSystem.Runtime.Interfaces;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using Cysharp.Threading.Tasks;
-using DracoRuan.CoreSystems.AssetBundleSystem.Runtime;
-using DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime;
-using DracoRuan.CoreSystems.AssetBundleSystem.Runtime.Interfaces;
 
-namespace PracticalModules.ModulableAssets.ExtendedAddressable.Runtime
+namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime
 {
     public class AssetBundleService : IAssetBundleService
     {
+        private const string LogTag = "AssetBundleService";
+        
         private AsyncOperationHandle<IResourceLocator> _initializeHandle;
 
         public IAssetBundleLoader AssetBundleLoader { get; }
@@ -40,18 +41,18 @@ namespace PracticalModules.ModulableAssets.ExtendedAddressable.Runtime
 
                 if (this._initializeHandle.Status == AsyncOperationStatus.Succeeded)
                 {
-                    Debug.Log("Addressable initialized successfully.");
+                    Debug.Log($"[{LogTag}] Addressable initialized successfully.");
                     onInitializationComplete?.Invoke();
                     return true;
                 }
 
-                Debug.LogError("Addressable initialization failed.");
+                Debug.LogError($"[{LogTag}] Addressable initialization failed.");
                 onInitializationFailed?.Invoke();
                 return false;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Exception during Addressable initialization: {ex.Message}");
+                Debug.LogError($"[{LogTag}] Exception during Addressable initialization: {ex.Message}");
                 onInitializationFailed?.Invoke();
                 return false;
             }
@@ -67,18 +68,18 @@ namespace PracticalModules.ModulableAssets.ExtendedAddressable.Runtime
 
                 if (this._initializeHandle.Status == AsyncOperationStatus.Succeeded)
                 {
-                    Debug.Log("Addressable initialized successfully.");
+                    Debug.Log($"[{LogTag}] Addressable initialized successfully.");
                     await onInitializationComplete;
                     return true;
                 }
 
-                Debug.LogError("Addressable initialization failed.");
+                Debug.LogError($"[{LogTag}] Addressable initialization failed.");
                 await onInitializationFailed;
                 return false;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Exception during Addressable initialization: {ex.Message}");
+                Debug.LogError($"[{LogTag}] Exception during Addressable initialization: {ex.Message}");
                 await onInitializationFailed;
                 return false;
             }

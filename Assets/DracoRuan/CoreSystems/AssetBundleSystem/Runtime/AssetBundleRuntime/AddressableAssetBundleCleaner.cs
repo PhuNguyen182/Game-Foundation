@@ -1,17 +1,19 @@
 #if USE_EXTENDED_ADDRESSABLE
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using Cysharp.Threading.Tasks;
-using DracoRuan.CoreSystems.AssetBundleSystem.Runtime.Interfaces;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using DracoRuan.CoreSystems.AssetBundleSystem.Runtime.Interfaces;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using Cysharp.Threading.Tasks;
 
 namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
 {
     public class AddressableAssetBundleCleaner : IAssetBundleCleaner
     {
+        private const string LogTag = "AddressableAssetBundleCleaner";
+        
         private readonly IAssetBundleResourceLocator _resourceLocator;
         
         public AddressableAssetBundleCleaner(IAssetBundleResourceLocator resourceLocator)
@@ -19,40 +21,51 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
 
         public bool ClearAll()
         {
-            bool isClearAll = Caching.ClearCache();
-            if (isClearAll)
-                Debug.Log("Cleared all cached asset bundles!");
-            else
-                Debug.LogError("Failed to clear all cached asset bundles!");
+            try
+            {
+                bool isClearAll = Caching.ClearCache();
+                if (isClearAll)
+                    Debug.Log($"[{LogTag}] Cleared all cached asset bundles!");
+                else
+                    Debug.LogError($"[{LogTag}] Failed to clear all cached asset bundles!");
             
-            return isClearAll;
+                return isClearAll;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[{LogTag}] Exception during cache clear: {e.Message}");
+            }
+
+            return false;
         }
 
         public async UniTask ClearDependencyCacheBundles(string key, bool autoRelease = true)
         {
             if (!await this._resourceLocator.IsKeyValid(key))
             {
-                Debug.LogError($"Addressable key or label '{key}' does not exist.");
+                Debug.LogError($"[{LogTag}] Addressable key or label '{key}' does not exist.");
                 return;
             }
 
+            AsyncOperationHandle<bool> clearDependencyCacheAsync = default;
             try
             {
-                AsyncOperationHandle<bool> clearDependencyCacheAsync =
-                    Addressables.ClearDependencyCacheAsync(key, autoRelease);
+                clearDependencyCacheAsync = Addressables.ClearDependencyCacheAsync(key, autoRelease);
                 bool result = await clearDependencyCacheAsync;
 
                 if (result)
-                    Debug.Log($"Cleared cache for {key}!");
+                    Debug.Log($"[{LogTag}] Cleared cache for {key}!");
                 else
-                    Debug.LogError($"Failed to clear cache for {key}!");
-
-                if (!autoRelease)
-                    Addressables.Release(clearDependencyCacheAsync);
+                    Debug.LogError($"[{LogTag}] Failed to clear cache for {key}!");
             }
             catch (Exception e)
             {
-                Debug.LogError($"Exception during cache clear: {e.Message}");
+                Debug.LogError($"[{LogTag}] Exception during cache clear: {e.Message}");
+            }
+            finally
+            {
+                if (!autoRelease && clearDependencyCacheAsync.IsValid())
+                    Addressables.Release(clearDependencyCacheAsync);
             }
         }
 
@@ -61,49 +74,58 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
             List<string> keysList = keys.ToList();
             if (!await this._resourceLocator.IsKeyValid(keysList))
             {
-                Debug.LogError($"Addressable key or label '{keysList}' does not exist.");
+                Debug.LogError($"[{LogTag}] Addressable key or label '{keysList}' does not exist.");
                 return;
             }
 
+            AsyncOperationHandle<bool> clearDependencyCacheAsync = default;
             try
             {
-                AsyncOperationHandle<bool> clearDependencyCacheAsync =
-                    Addressables.ClearDependencyCacheAsync(keysList, autoRelease);
+                clearDependencyCacheAsync = Addressables.ClearDependencyCacheAsync(keysList, autoRelease);
                 bool result = await clearDependencyCacheAsync;
 
                 if (result)
-                    Debug.Log($"Cleared cache for {string.Join(", ", keysList)}!");
+                    Debug.Log($"[{LogTag}] Cleared cache for {string.Join(", ", keysList)}!");
                 else
-                    Debug.LogError($"Failed to clear cache for {string.Join(", ", keysList)}!");
+                    Debug.LogError($"[{LogTag}] Failed to clear cache for {string.Join(", ", keysList)}!");
 
                 if (!autoRelease)
                     Addressables.Release(clearDependencyCacheAsync);
             }
             catch (Exception e)
             {
-                Debug.LogError($"Exception during cache clear: {e.Message}");
+                Debug.LogError($"[{LogTag}] Exception during cache clear: {e.Message}");
+            }
+            finally
+            {
+                if (!autoRelease && clearDependencyCacheAsync.IsValid())
+                    Addressables.Release(clearDependencyCacheAsync);
             }
         }
 
         public async UniTask ClearCachedAssetBundles(IEnumerable<string> catalogIds = null)
         {
+            AsyncOperationHandle<bool> clearDependencyCacheAsync = default;
             try
             {
-                AsyncOperationHandle<bool> clearDependencyCacheAsync = catalogIds != null
+                clearDependencyCacheAsync = catalogIds != null
                     ? Addressables.CleanBundleCache(catalogIds)
                     : Addressables.CleanBundleCache();
                 bool result = await clearDependencyCacheAsync;
 
                 if (result)
-                    Debug.Log("Cleared all cached asset bundles.");
+                    Debug.Log($"[{LogTag}] Cleared all cached asset bundles.");
                 else
-                    Debug.LogError("Failed to clear all cached asset bundles.");
-
-                Addressables.Release(clearDependencyCacheAsync);
+                    Debug.LogError($"[{LogTag}] Failed to clear all cached asset bundles.");
             }
             catch (Exception e)
             {
-                Debug.LogError($"Exception during cache clear: {e.Message}");
+                Debug.LogError($"[{LogTag}] Exception during cache clear: {e.Message}");
+            }
+            finally
+            {
+                if (clearDependencyCacheAsync.IsValid())
+                    Addressables.Release(clearDependencyCacheAsync);
             }
         }
     }

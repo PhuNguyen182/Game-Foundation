@@ -10,6 +10,8 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
 {
     public class AddressableAssetBundleDownloader : IAssetBundleDownloader
     {
+        private const string LogTag = "AddressableAssetBundleDownloader";
+        
         private readonly IAssetBundleCleaner _bundleCleaner;
         private readonly IAssetBundleResourceLocator _bundleResourceLocator;
 
@@ -24,11 +26,11 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
             , Action<float> onProgression = null, Action onDownloadComplete = null, Action onDownloadFailed = null)
         {
             long downloadSize = await this._bundleResourceLocator.GetDownloadSize(key);
-            Debug.Log($"Download size: {downloadSize}");
+            Debug.Log($"[{LogTag}] Download size: {downloadSize}");
 
             if (downloadSize <= 0)
             {
-                Debug.LogError($"There is nothing to download for key: {key}.");
+                Debug.LogError($"[{LogTag}] There is nothing to download for key: {key}.");
                 return;
             }
 
@@ -40,11 +42,11 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
             Action<float> onProgression = null, Action onDownloadComplete = null, Action onDownloadFailed = null)
         {
             long downloadSize = await this._bundleResourceLocator.GetDownloadSize(keys);
-            Debug.Log($"Download size: {downloadSize} bytes");
+            Debug.Log($"[{LogTag}] Download size: {downloadSize} bytes");
 
             if (downloadSize <= 0)
             {
-                Debug.LogError($"There is nothing to download for key: {string.Join(", ", keys)}.");
+                Debug.LogError($"[{LogTag}] There is nothing to download for key: {string.Join(", ", keys)}.");
                 return;
             }
 
@@ -55,9 +57,10 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
         private async UniTask DownloadBundleAsync(object key, bool autoRelease = true, bool clearCacheAfterDownload = true,
             Action<float> onProgression = null, Action onDownloadComplete = null, Action onDownloadFailed = null)
         {
+            AsyncOperationHandle downloadHandle = default;
             try
             {
-                AsyncOperationHandle downloadHandle = Addressables.DownloadDependenciesAsync(key, autoRelease);
+                downloadHandle = Addressables.DownloadDependenciesAsync(key, autoRelease);
                 while (!downloadHandle.IsDone)
                 {
                     onProgression?.Invoke(downloadHandle.PercentComplete);
@@ -66,12 +69,11 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
 
                 if (downloadHandle.Status == AsyncOperationStatus.Succeeded)
                 {
-                    Debug.Log($"Downloaded remote bundle(s) for {key} successfully.");
+                    Debug.Log($"[{LogTag}] Downloaded remote bundle(s) for {key} successfully.");
                     onProgression?.Invoke(1.0f);
                     onDownloadComplete?.Invoke();
-
-                    // Clear cache after download
-                    if (clearCacheAfterDownload)
+                    
+                    if (clearCacheAfterDownload) // Clear cache after download
                     {
                         switch (key)
                         {
@@ -86,17 +88,19 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
                 }
                 else
                 {
-                    Debug.LogError($"Failed to download remote bundle(s) for {key}.");
+                    Debug.LogError($"[{LogTag}] Failed to download remote bundle(s) for {key}.");
                     onDownloadFailed?.Invoke();
                 }
-
-                if (!autoRelease)
-                    Addressables.Release(downloadHandle);
             }
             catch (Exception e)
             {
-                Debug.LogError($"Exception during bundle download: {e.Message}");
+                Debug.LogError($"[{LogTag}] Exception during bundle download: {e.Message}");
                 onDownloadFailed?.Invoke();
+            }
+            finally
+            {
+                if (!autoRelease && downloadHandle.IsValid())
+                    Addressables.Release(downloadHandle);
             }
         }
     }

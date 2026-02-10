@@ -1,4 +1,5 @@
 #if USE_EXTENDED_ADDRESSABLE
+using System;
 using Cysharp.Threading.Tasks;
 using DracoRuan.CoreSystems.AssetBundleSystem.Runtime.Interfaces;
 using UnityEngine;
@@ -6,83 +7,154 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
 
 namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
 {
     public class AddressableAssetBundleLoader : IAssetBundleLoader
     {
-        private AsyncOperationHandle<GameObject> _loadRequest;
-        private AsyncOperationHandle<SceneInstance> _sceneLoadRequest;
-
+        private const string LogTag = "AddressableAssetBundleLoader";
+        
         public async UniTask LoadScene(string key, LoadSceneMode mode = LoadSceneMode.Single,
             bool activateOnLoad = true)
         {
-            this._sceneLoadRequest = Addressables.LoadSceneAsync(key, mode, activateOnLoad);
-            await this._sceneLoadRequest;
+            AsyncOperationHandle<SceneInstance> handle = default;
+            try
+            {
+                handle = Addressables.LoadSceneAsync(key, mode, activateOnLoad);
+                await handle;
+                Debug.Log($"[{LogTag}] Loaded scene {key} successfully !!!");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[{LogTag}] Error loading scene {key}: {e.Message}");
+            }
+            finally
+            {
+                if (handle.IsValid())
+                    Addressables.Release(handle);
+            }
         }
 
-        public async UniTask UnloadScene(UnloadSceneOptions options = UnloadSceneOptions.UnloadAllEmbeddedSceneObjects,
+        public async UniTask UnloadScene(SceneInstance sceneInstance, UnloadSceneOptions options = UnloadSceneOptions.UnloadAllEmbeddedSceneObjects,
             bool autoReleaseHandle = true)
         {
-            if (this._sceneLoadRequest.IsValid())
+            AsyncOperationHandle<SceneInstance> handle = default;
+            try
             {
-                var sceneOperation = Addressables.UnloadSceneAsync(this._sceneLoadRequest, options, autoReleaseHandle);
-                await sceneOperation;
+                handle = Addressables.UnloadSceneAsync(sceneInstance, options, autoReleaseHandle);
+                await handle;
+                Debug.Log($"[{LogTag}] Unloaded scene {sceneInstance.Scene.name} successfully !!!");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[{LogTag}] Error unloading scene {sceneInstance.Scene.name}: {e.Message}");
+            }
+            finally
+            {
+                if (handle.IsValid())
+                    Addressables.Release(handle);
             }
         }
 
         public async UniTask<GameObject> LoadAsset(string key)
         {
-            this._loadRequest = Addressables.LoadAssetAsync<GameObject>(key);
-            GameObject asset = await _loadRequest;
+            AsyncOperationHandle<GameObject> handle = default;
+            try
+            {
+                handle = Addressables.LoadAssetAsync<GameObject>(key);
+                GameObject asset = await handle;
 
-            if (this._loadRequest.Status == AsyncOperationStatus.Succeeded)
-                return asset;
+                if (handle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    Debug.Log($"[{LogTag}] Loaded GameObject {key} successfully !!!");
+                    return asset;
+                }
+                
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[{LogTag}] Error loading Game Object {key}: {e.Message}");
+            }
+            finally
+            {
+                if (handle.IsValid())
+                    Addressables.Release(handle);
+            }
 
-            Addressables.Release(this._loadRequest);
             return null;
         }
 
         public async UniTask<T> LoadAsset<T>(string key)
         {
-            AsyncOperationHandle<T> loadRequest = Addressables.LoadAssetAsync<T>(key);
-            T asset = await loadRequest;
-            
-            if (loadRequest.Status == AsyncOperationStatus.Succeeded)
-                return asset;
-            
-            Addressables.Release(loadRequest);
-            return default;
-        }
-
-        public async UniTask<T> LoadComponentAsset<T>(string key) where T : Component
-        {
-            this._loadRequest = Addressables.LoadAssetAsync<GameObject>(key);
-            GameObject gameObject = await this._loadRequest;
-
-            if (this._loadRequest.Status == AsyncOperationStatus.Succeeded)
+            AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(key);
+            try
             {
-                gameObject.TryGetComponent(out T asset);
-                return asset;
+                handle = Addressables.LoadAssetAsync<T>(key);
+                T asset = await handle;
+
+                if (handle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    Debug.Log($"[{LogTag}] Loaded asset {key} successfully !!!");
+                    return asset;
+                }
+                
+                Debug.LogError($"[{LogTag}] Error loading asset {key}: {handle.Status}");
+                return default;
             }
-            
-            Addressables.Release(this._loadRequest);
-            return null;
+            catch (Exception e)
+            {
+                Debug.LogError($"[{LogTag}] Error loading asset {key}: {e.Message}");
+                return default;
+            }
+            finally
+            {
+                if (handle.IsValid())
+                    Addressables.Release(handle);
+            }
         }
 
-        public void UnloadAsset<T>(T asset) where T : Component
+        public async UniTask<T> LoadComponentAsset<T>(string key) where T : Object
         {
-            if (asset)
+            AsyncOperationHandle<T> handle = default;
+            try
+            {
+                handle = Addressables.LoadAssetAsync<T>(key);
+                T instance = await handle;
+
+                if (handle.Status == AsyncOperationStatus.Succeeded)
+                    return instance;
+
+                Debug.LogError($"[{LogTag}] Error loading component {key}: {handle.Status}");
+                return null;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[{LogTag}] Error loading component {key}: {e.Message}");
+                return null;
+            }
+            finally
+            {
+                if (handle.IsValid())
+                    Addressables.Release(handle);
+            }
+        }
+
+        public void UnloadAsset<T>(T asset) where T : Object
+        {
+            try
+            {
                 Addressables.Release(asset);
+                Debug.Log($"[{LogTag}] [{typeof(T)}] Unloaded asset {asset.GetType().Name} successfully !!!");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[{LogTag}] Error unloading asset {asset}: {e.Message}");
+            }
         }
 
         public void Dispose()
         {
-            if (this._loadRequest.IsValid())
-                Addressables.Release(this._loadRequest);
-
-            if (this._sceneLoadRequest.IsValid())
-                Addressables.Release(this._sceneLoadRequest);
         }
     }
 }

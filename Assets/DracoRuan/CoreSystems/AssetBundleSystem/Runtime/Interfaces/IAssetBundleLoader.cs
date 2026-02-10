@@ -2,7 +2,9 @@
 using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
 
 namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.Interfaces
 {
@@ -10,13 +12,14 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.Interfaces
     {
         public UniTask LoadScene(string key, LoadSceneMode mode = LoadSceneMode.Single, bool activateOnLoad = true);
 
-        public UniTask UnloadScene(UnloadSceneOptions options = UnloadSceneOptions.UnloadAllEmbeddedSceneObjects,
+        public UniTask UnloadScene(SceneInstance sceneInstance, 
+            UnloadSceneOptions options = UnloadSceneOptions.UnloadAllEmbeddedSceneObjects, 
             bool autoReleaseHandle = true);
 
         public UniTask<GameObject> LoadAsset(string key);
         public UniTask<T> LoadAsset<T>(string key);
-        public UniTask<T> LoadComponentAsset<T>(string key) where T : Component;
-        public void UnloadAsset<T>(T asset) where T : Component;
+        public UniTask<T> LoadComponentAsset<T>(string key) where T : Object;
+        public void UnloadAsset<T>(T asset) where T : Object;
     }
 }
 #endif

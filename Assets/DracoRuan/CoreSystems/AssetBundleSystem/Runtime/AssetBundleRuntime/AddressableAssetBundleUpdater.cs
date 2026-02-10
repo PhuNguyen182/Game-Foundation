@@ -11,33 +11,54 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
 {
     public class AddressableAssetBundleUpdater : IAssetBundleUpdater
     {
+        private const string LogTag = "AddressableAssetBundleUpdater";
+        
         private readonly IAssetBundleCleaner _assetBundleCleaner;
-        private AsyncOperationHandle<List<string>> _catalogUpdates;
-        private AsyncOperationHandle<List<IResourceLocator>> _bundleUpdates;
 
         public AddressableAssetBundleUpdater(IAssetBundleCleaner assetBundleCleaner)
             => _assetBundleCleaner = assetBundleCleaner;
 
         public async UniTask<List<string>> CheckForUpdates()
         {
-            this._catalogUpdates = Addressables.CheckForCatalogUpdates();
-            List<string> catalogUpdateKeys = await this._catalogUpdates;
-            return catalogUpdateKeys;
+            AsyncOperationHandle<List<string>> handle = default;
+            try
+            {
+                handle = Addressables.CheckForCatalogUpdates();
+                List<string> catalogUpdateKeys = await handle;
+                if (handle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    Debug.Log($"[{LogTag}] Catalog update check completed successfully. Updated catalog keys: {catalogUpdateKeys}");
+                    return catalogUpdateKeys;
+                }
+                
+                Debug.LogError($"[{LogTag}] Catalog update check failed or nothing to update.");
+                return null;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[{LogTag}] Exception during catalog update check: {e.Message}");
+                return null;
+            }
+            finally
+            {
+                if (handle.IsValid())
+                    Addressables.Release(handle);
+            }
         }
 
         public async UniTask UpdateCatalogs(bool autoCleanBundleCached = true, bool autoRelease = true,
             bool wantToPreserve = false, Action onUpdateComplete = null, Action onUpdateFailed = null)
         {
+            AsyncOperationHandle<List<IResourceLocator>> handle = default;
             try
             {
                 List<string> catalogUpdateKeys = await this.CheckForUpdates();
-                this._bundleUpdates =
-                    Addressables.UpdateCatalogs(autoCleanBundleCached, catalogUpdateKeys, autoRelease);
-                await this._bundleUpdates;
+                handle = Addressables.UpdateCatalogs(autoCleanBundleCached, catalogUpdateKeys, autoRelease);
+                await handle;
 
-                if (this._bundleUpdates.Status == AsyncOperationStatus.Succeeded)
+                if (handle.Status == AsyncOperationStatus.Succeeded)
                 {
-                    Debug.Log("Updated catalogs successfully.");
+                    Debug.Log($"[{LogTag}] Updated catalogs successfully.");
                     if (!autoCleanBundleCached)
                     {
                         List<string> preserveUpdateKeys = wantToPreserve ? catalogUpdateKeys : null;
@@ -48,24 +69,24 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime.AssetBundleRuntime
                 }
                 else
                 {
-                    Debug.Log("Failed to update catalogs.");
+                    Debug.Log($"[{LogTag}] Failed to update catalogs or nothing to update.");
                     onUpdateFailed?.Invoke();
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"Exception during catalog update: {e.Message}");
+                Debug.LogError($"[{LogTag}] Exception during catalog update: {e.Message}");
                 onUpdateFailed?.Invoke();
+            }
+            finally
+            {
+                if (!autoRelease && handle.IsValid())
+                    Addressables.Release(handle);
             }
         }
 
         public void Dispose()
         {
-            if (this._catalogUpdates.IsValid())
-                Addressables.Release(this._catalogUpdates);
-
-            if (this._bundleUpdates.IsValid())
-                Addressables.Release(this._bundleUpdates);
         }
     }
 }
