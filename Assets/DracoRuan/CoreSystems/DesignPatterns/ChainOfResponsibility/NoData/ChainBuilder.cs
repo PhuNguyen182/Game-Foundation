@@ -15,26 +15,24 @@ namespace DracoRuan.CoreSystems.DesignPatterns.ChainOfResponsibility.NoData
             return this;
         }
 
-        private void Build()
+        public ChainBuilder Build()
         {
             this._isBuilt = false;
             if (this._handlers.Count == 0)
             {
                 Debug.LogWarning("No handlers added to the chain");
-                return;
+                return this;
             }
 
             for (int i = 0; i < this._handlers.Count - 1; i++)
                 this._handlers[i].SetNext(this._handlers[i + 1]);
 
             this._isBuilt = true;
+            return this;
         }
 
         public void Start()
         {
-            if (!this._isBuilt)
-                this.Build();
-            
             if (this._isBuilt)
                 this._handlers[0].Handle();
         }
