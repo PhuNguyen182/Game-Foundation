@@ -46,6 +46,15 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         
         protected abstract void OnDataInitialized();
         
+        protected string GetDataKey()
+        {
+            GameDataAttribute attribute = GetAttribute<TData>();
+            return attribute?.DataKey ?? typeof(TData).Name;
+        }
+
+        private static GameDataAttribute GetAttribute<T>() where T : IGameData =>
+            (GameDataAttribute)Attribute.GetCustomAttribute(typeof(T), typeof(GameDataAttribute));
+        
         private IProcessSequence GetDataProcessorByType(DataProcessSequence dataProcessSequence)
         {
             string dataKey = dataProcessSequence.DataKey;
