@@ -2,7 +2,7 @@ using DracoRuan.Foundation.UISystem.UIElements;
 using DracoRuan.Foundation.UISystem.Views;
 using UnityEngine;
 
-namespace DracoRuan.Foundation.UISystem.Popups
+namespace DracoRuan.Foundation.UISystem.Popups.PopupInstance
 {
     public abstract class BaseUIPopup : BaseUIView
     {
