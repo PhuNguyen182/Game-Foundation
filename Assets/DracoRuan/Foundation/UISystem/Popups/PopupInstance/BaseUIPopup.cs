@@ -6,6 +6,7 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupInstance
 {
     public abstract class BaseUIPopup : BaseUIView
     {
+        [SerializeField] public bool forceDestroyOnClose;
         [SerializeField] protected BaseUIButton closeButton;
 
         protected virtual void Awake()
@@ -16,7 +17,7 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupInstance
 
         protected virtual void OnCloseButtonClicked()
         {
-            this.Hide();
+            this.Hide(); // To do: Use popup manager to close popup properly and thoroughly
         }
 
         protected virtual void OnDestroy()
