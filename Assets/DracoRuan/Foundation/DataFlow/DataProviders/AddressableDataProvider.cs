@@ -9,7 +9,7 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
 {
     public class AddressableDataProvider : IDataProvider
     {
-        public async UniTask<TData> LoadDataAsync<TData>(string pathToData, 
+        public async UniTask<TData> LoadDataAsync<TData>(string pathToData,
             IDataSerializer<TData> serializer = null, IDataSaveService dataSaveService = null)
         {
             AsyncOperationHandle<TData> operationHandle = default;
@@ -26,19 +26,20 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
                         $"[AddressableProvider] [{typeof(TData)}] Loaded data from path: {pathToData} successfully !!! Result: {result}");
                     return result;
                 }
+
+                return default;
             }
             catch (Exception e)
             {
                 Debug.LogError(
                     $"[AddressableProvider] [{typeof(TData)}] Failed to load data from path: {pathToData}. More info: {e.Message}");
+                return default;
             }
             finally
             {
                 if (operationHandle.IsValid())
                     Addressables.Release(operationHandle);
             }
-
-            return default;
         }
 
         public void UnloadData<TData>(TData data)

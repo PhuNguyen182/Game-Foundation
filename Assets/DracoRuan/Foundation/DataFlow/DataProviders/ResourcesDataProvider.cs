@@ -24,19 +24,19 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
                 }
 
                 Debug.LogError($"[ResourcesProvider] [{typeof(TData)}] Data from {pathToData} is mismatched !!!");
+                return default;
             }
             catch (Exception e)
             {
                 Debug.LogError(
                     $"[ResourcesProvider] [{typeof(TData)}] Failed to loaded target data from {pathToData}. More info: {e.Message}");
+                return default;
             }
             finally
             {
                 if (asset)
                     Resources.UnloadAsset(asset);
             }
-
-            return default;
         }
 
         public void UnloadData<TData>(TData data)
