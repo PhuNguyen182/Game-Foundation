@@ -1,19 +1,32 @@
 using System;
+using Cysharp.Threading.Tasks;
+using DracoRuan.Foundation.UISystem.Views;
 
-namespace DracoRuan.Foundation.UISystem.Views
+namespace DracoRuan.Foundation.UISystem.Popups
 {
-    public abstract class BaseUIView<TModel> : BaseUIView, IUIModel<TModel>
+    public abstract class GeneralPopupWithModel<TModel> : BaseUIPopup, IUIModel<TModel>
     {
-        private event Action OnModelUpdatedInternal; 
+        private event Action OnModelUpdatedInternal;
         
         public TModel Model { get; private set; }
-        
         public event Action OnModelUpdated
         {
             add => this.OnModelUpdatedInternal += value;
             remove => this.OnModelUpdatedInternal -= value;
         }
         
+        public override async UniTask Show(Action onShown = null)
+        {
+            // To do: Migrate this function to base class with animation system for UI instance
+            await UniTask.CompletedTask;
+        }
+
+        public override async UniTask Hide(Action onHidden = null)
+        {
+            // To do: Migrate this function to base class with animation system for UI instance
+            await UniTask.CompletedTask;
+        }
+
         public void BindModelData(TModel model)
         {
             this.Model = model;
@@ -31,11 +44,5 @@ namespace DracoRuan.Foundation.UISystem.Views
         public abstract void OnModelDataBound(TModel model);
 
         public abstract void OnModelDataUnbound();
-
-        protected virtual void OnDestroy()
-        {
-            this.UnbindModelData();
-            this.OnModelUpdatedInternal = null;
-        }
     }
 }
