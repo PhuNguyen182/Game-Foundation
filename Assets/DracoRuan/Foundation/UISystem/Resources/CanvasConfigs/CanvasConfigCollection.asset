@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 413f9d46cafbfb741b85585b2bb56efd, type: 3}
+  m_Name: CanvasConfigCollection
+  m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.Foundation.UISystem.Canvases.CanvasConfigCollection
+  canvasConfigs:
+  - {fileID: 11400000, guid: fe7e320ae49077041995d6b50af75c9c, type: 2}
+  - {fileID: 11400000, guid: 62c64845bf0f72149b0cd2dc58de43ed, type: 2}
+  - {fileID: 11400000, guid: 09f5fa7db12772043b8a4da38f4ed24c, type: 2}
+  - {fileID: 11400000, guid: 603094df40e67f7469ea63cb4ab5e336, type: 2}
+  - {fileID: 11400000, guid: f6c04cca579da6041b836af51b656808, type: 2}
+  - {fileID: 11400000, guid: 567b6742ecad51e43a8f58f8c7d6831c, type: 2}
+  - {fileID: 11400000, guid: 9721388c5a4744045911a411523b74d9, type: 2}
+  - {fileID: 11400000, guid: b9502accc4d36a24f8350b156decc08e, type: 2}
