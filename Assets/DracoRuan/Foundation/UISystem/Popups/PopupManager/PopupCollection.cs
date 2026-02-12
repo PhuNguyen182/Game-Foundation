@@ -14,7 +14,8 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
 
         public void Initialize()
         {
-            this._popupDictionary = new Dictionary<string, BaseUIPopup>();
+            this._popupDictionary ??= new Dictionary<string, BaseUIPopup>();
+            this._popupDictionary.Clear();
             foreach (PopupEntry entry in this.popupEntries)
             {
                 this._popupDictionary.Add(entry.popupName, entry.popupPrefab);

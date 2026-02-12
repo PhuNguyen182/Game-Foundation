@@ -9,28 +9,43 @@ namespace DracoRuan.Foundation.DataFlow.Serialization.CustomDataSerializerServic
     /// <typeparam name="T"></typeparam>
     public class JsonDataSerializer<T> : IDataSerializer<T>
     {
+        private const int SafeJsonLength = 1000;
+        
         public string FileExtension => ".json";
-
-        public object Serialize(T data)
+        private static readonly JsonSerializer JsonSerializer;
+        private static readonly JsonSerializerSettings JsonSerializerSettings;
+        
+        static JsonDataSerializer()
         {
-            JsonSerializerSettings settings = new()
+            JsonSerializer = new JsonSerializer();
+            JsonSerializerSettings = new JsonSerializerSettings()
             {
                 Formatting = Formatting.Indented,
             };
+        }
 
-            string json = JsonConvert.SerializeObject(data, settings);
+        public object Serialize(T data)
+        {
+            string json = JsonConvert.SerializeObject(data, JsonSerializerSettings);
             return json;
         }
 
         public T Deserialize(object name)
         {
-            // Use using-statement for reading and deserializing can help prevent memory leaks in case of large data
+            T data;
             string nameString = name as string ?? string.Empty;
-            using StringReader stringReader = new(nameString);
-            using JsonTextReader jsonReader = new(stringReader);
             
-            JsonSerializer jsonSerializer = new();
-            T data = jsonSerializer.Deserialize<T>(jsonReader);
+            if (nameString.Length >= SafeJsonLength)
+            {
+                using StringReader stringReader = new(nameString);
+                using JsonTextReader jsonReader = new(stringReader);
+                data = JsonSerializer.Deserialize<T>(jsonReader);
+            }
+            else
+            {
+                data = JsonConvert.DeserializeObject<T>(nameString);
+            }
+
             return data;
         }
     }

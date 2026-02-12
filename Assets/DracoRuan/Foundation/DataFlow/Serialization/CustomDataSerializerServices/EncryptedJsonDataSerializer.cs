@@ -12,16 +12,24 @@ namespace DracoRuan.Foundation.DataFlow.Serialization.CustomDataSerializerServic
     /// <typeparam name="T"></typeparam>
     public class EncryptedJsonDataSerializer<T> : IDataSerializer<T>
     {
+        private const int SafeJsonLength = 1000;
+        
         public string FileExtension => ".jsonaes";
+        private static readonly JsonSerializer JsonSerializer;
+        private static readonly JsonSerializerSettings JsonSerializerSettings;
 
-        public object Serialize(T data)
+        static EncryptedJsonDataSerializer()
         {
-            JsonSerializerSettings settings = new()
+            JsonSerializer = new JsonSerializer();
+            JsonSerializerSettings = new JsonSerializerSettings()
             {
                 Formatting = Formatting.Indented,
             };
+        }
 
-            string json = JsonConvert.SerializeObject(data, settings);
+        public object Serialize(T data)
+        {
+            string json = JsonConvert.SerializeObject(data, JsonSerializerSettings);
             byte[] cipheredJson = AesEncryptor.Encrypt(json);
             string encryptedJson = $"{BitConverter.ToDouble(cipheredJson)}";
             return encryptedJson;
@@ -34,11 +42,18 @@ namespace DracoRuan.Foundation.DataFlow.Serialization.CustomDataSerializerServic
             byte[] cipheredArray = BitConverter.GetBytes(cipheredValue);
             string decryptedJson = AesEncryptor.Decrypt(cipheredArray);
 
-            using StringReader stringReader = new(decryptedJson);
-            using JsonTextReader jsonReader = new(stringReader);
-            
-            JsonSerializer jsonSerializer = new();
-            T data = jsonSerializer.Deserialize<T>(jsonReader);
+            T data;
+            if (decryptedJson.Length >= SafeJsonLength)
+            {
+                using StringReader stringReader = new(decryptedJson);
+                using JsonTextReader jsonReader = new(stringReader);
+                data = JsonSerializer.Deserialize<T>(jsonReader);
+            }
+            else
+            {
+                data = JsonConvert.DeserializeObject<T>(decryptedJson);
+            }
+
             return data;
         }
     }

@@ -36,16 +36,20 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
                 }
             }
         }
-        
+
         public TPopup ShowPopup<TPopup>(string popupName, Transform parent) where TPopup : BaseUIPopup
         {
             BaseUIPopup popupPrefab = this._popupCollection.GetPopupByKey(popupName);
-            if (!popupPrefab || popupPrefab is not TPopup targetPopup) 
+            if (!popupPrefab || popupPrefab is not TPopup targetPopup)
                 return null;
-            
+
             TPopup result = GameObjectPoolManager.SpawnInstance(targetPopup, Vector3.zero, Quaternion.identity, parent);
             result.transform.SetAsLastSibling();
-            this._popupDictionary.Add(popupName, result);
+            
+            if (!this._popupDictionary.TryAdd(popupName, result))
+                this._popupDictionary[popupName] = result;
+            
+            result.Show();
             return result;
         }
 
@@ -59,7 +63,10 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
             TPopup result = GameObjectPoolManager.SpawnInstance(targetPopup, Vector3.zero, Quaternion.identity, parent);
             result.transform.SetAsLastSibling();
             result.BindModelData(model);
-            this._popupDictionary.Add(popupName, result);
+            
+            if (!this._popupDictionary.TryAdd(popupName, result))
+                this._popupDictionary[popupName] = result;
+            
             result.Show();
             return result;
         }
@@ -69,7 +76,7 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
             if (!this._popupDictionary.Remove(popupName, out BaseUIPopup popupInstance)) 
                 return;
 
-            popupInstance.Hide(); // To do: update the Hide function for Popup instance in case of disable or destroy
+            popupInstance.Hide();
         }
 
         public void ClosePopupByType<TPopup>() where TPopup : BaseUIPopup

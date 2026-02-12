@@ -14,18 +14,6 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupInstance
             add => this.OnModelUpdatedInternal += value;
             remove => this.OnModelUpdatedInternal -= value;
         }
-        
-        public override async UniTask Show(Action onShown = null)
-        {
-            // To do: Migrate this function to base class with animation system for UI instance
-            await UniTask.CompletedTask;
-        }
-
-        public override async UniTask Hide(Action onHidden = null)
-        {
-            // To do: Migrate this function to base class with animation system for UI instance
-            await UniTask.CompletedTask;
-        }
 
         public void BindModelData(TModel model)
         {
