@@ -33,19 +33,38 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
         {
             using (ListPool<UniTask>.Get(out List<UniTask> showAnimationTasks))
             {
-                if (this.showSubjectConfig.animationType == AnimationType.Animator)
-                    showAnimationTasks.Add(this.PlayShowSubjectAnimationByAnimator());
-                
-                if (this.showSubjectConfig.animationType == AnimationType.DOTween)
-                    showAnimationTasks.Add(this.PlayShowSubjectAnimationByDoTween());
-                
-                if (this.showBackgroundConfig.animationType == AnimationType.Animator)
-                    showAnimationTasks.Add(this.PlayShowBackgroundAnimationByAnimator());
-                
-                if (this.showBackgroundConfig.animationType == AnimationType.DOTween)
-                    showAnimationTasks.Add(this.PlayShowBackgroundAnimationByDoTween());
-
+                showAnimationTasks.Add(this.PlayShowSubject());
+                showAnimationTasks.Add(this.PlayShowBackground());
                 await UniTask.WhenAll(showAnimationTasks);
+            }
+        }
+
+        private async UniTask PlayShowSubject()
+        {
+            this.animatableSubject.interactable = false;
+            switch (this.showSubjectConfig.animationType)
+            {
+                case AnimationType.Animator:
+                    await this.PlayShowSubjectAnimationByAnimator();
+                    break;
+                case AnimationType.DOTween:
+                    await this.PlayShowSubjectAnimationByDoTween();
+                    break;
+            }
+
+            this.animatableSubject.interactable = true;
+        }
+
+        private async UniTask PlayShowBackground()
+        {
+            switch (this.showBackgroundConfig.animationType)
+            {
+                case AnimationType.Animator:
+                    await this.PlayShowBackgroundAnimationByAnimator();
+                    break;
+                case AnimationType.DOTween:
+                    await this.PlayShowBackgroundAnimationByDoTween();
+                    break;
             }
         }
 
@@ -71,22 +90,7 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
 
         private async UniTask PlayShowSubjectAnimationByDoTween()
         {
-            using (ListPool<UniTask>.Get(out List<UniTask> showAnimationTasks))
-            {
-                if (this.hideSubjectConfig.animationType == AnimationType.Animator)
-                    showAnimationTasks.Add(this.PlayHideSubjectAnimationByAnimator());
-                
-                if (this.hideSubjectConfig.animationType == AnimationType.DOTween)
-                    showAnimationTasks.Add(this.PlayHideSubjectAnimationByDoTween());
-                
-                if (this.hideBackgroundConfig.animationType == AnimationType.Animator)
-                    showAnimationTasks.Add(this.PlayHideBackgroundAnimationByAnimator());
-                
-                if (this.hideBackgroundConfig.animationType == AnimationType.DOTween)
-                    showAnimationTasks.Add(this.PlayHideBackgroundAnimationByDoTween());
-
-                await UniTask.WhenAll(showAnimationTasks);
-            }
+            await UniTask.CompletedTask;
         }
 
         private async UniTask PlayShowBackgroundAnimationByDoTween()
@@ -100,7 +104,40 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
 
         public async UniTask PlayHideAnimation()
         {
-            await UniTask.CompletedTask;
+            using (ListPool<UniTask>.Get(out List<UniTask> showAnimationTasks))
+            {
+                showAnimationTasks.Add(this.PlayHideSubject());
+                showAnimationTasks.Add(this.PlayHideBackground());
+                await UniTask.WhenAll(showAnimationTasks);
+            }
+        }
+        
+        private async UniTask PlayHideSubject()
+        {
+            this.animatableSubject.interactable = false;
+            switch (this.hideSubjectConfig.animationType)
+            {
+                case AnimationType.Animator:
+                    await this.PlayHideSubjectAnimationByAnimator();
+                    break;
+                case AnimationType.DOTween:
+                    await this.PlayHideSubjectAnimationByDoTween();
+                    break;
+            }
+        }
+        
+        private async UniTask PlayHideBackground()
+        {
+            this.animatableBackground.interactable = true;
+            switch (this.hideBackgroundConfig.animationType)
+            {
+                case AnimationType.Animator:
+                    await this.PlayHideBackgroundAnimationByAnimator();
+                    break;
+                case AnimationType.DOTween:
+                    await this.PlayHideBackgroundAnimationByDoTween();
+                    break;
+            }
         }
         
         private async UniTask PlayHideSubjectAnimationByAnimator()

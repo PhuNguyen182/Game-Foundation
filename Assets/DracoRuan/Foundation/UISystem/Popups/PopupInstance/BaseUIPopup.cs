@@ -1,3 +1,4 @@
+using DracoRuan.Foundation.UISystem.Popups.PopupManager;
 using DracoRuan.Foundation.UISystem.UIElements;
 using DracoRuan.Foundation.UISystem.Views;
 using UnityEngine;
@@ -6,8 +7,9 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupInstance
 {
     public abstract class BaseUIPopup : BaseUIView
     {
-        [SerializeField] public bool forceDestroyOnClose;
         [SerializeField] protected BaseUIButton closeButton;
+        
+        private IUIPopupManager _popupManager;
 
         protected virtual void Awake()
         {
@@ -17,7 +19,12 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupInstance
 
         protected virtual void OnCloseButtonClicked()
         {
-            this.Hide(); // To do: Use popup manager to close popup properly and thoroughly
+            this._popupManager?.ClosePopup(this);
+        }
+        
+        public void SetPopupManager(IUIPopupManager popupManager)
+        {
+            this._popupManager = popupManager;
         }
 
         protected virtual void OnDestroy()

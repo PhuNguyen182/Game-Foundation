@@ -45,6 +45,7 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
 
             TPopup result = GameObjectPoolManager.SpawnInstance(targetPopup, Vector3.zero, Quaternion.identity, parent);
             result.transform.SetAsLastSibling();
+            result.SetPopupManager(this);
             
             if (!this._popupDictionary.TryAdd(popupName, result))
                 this._popupDictionary[popupName] = result;
@@ -62,6 +63,7 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
             
             TPopup result = GameObjectPoolManager.SpawnInstance(targetPopup, Vector3.zero, Quaternion.identity, parent);
             result.transform.SetAsLastSibling();
+            result.SetPopupManager(this);
             result.BindModelData(model);
             
             if (!this._popupDictionary.TryAdd(popupName, result))

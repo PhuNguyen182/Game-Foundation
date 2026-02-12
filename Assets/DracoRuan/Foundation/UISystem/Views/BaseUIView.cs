@@ -8,18 +8,25 @@ namespace DracoRuan.Foundation.UISystem.Views
     [RequireComponent(typeof(AnimationMachine))]
     public abstract class BaseUIView : MonoBehaviour, IUIView
     {
+        [SerializeField] private bool forceDestroyOnClose;
         [SerializeField] private AnimationMachine animationMachine;
 
-        public virtual async UniTask Show(Action onShown = null)
+        public virtual void Show(Action onShown = null)
         {
-            await this.animationMachine.PlayShowAnimation();
-            onShown?.Invoke();
+            this.animationMachine.PlayShowAnimation()
+                .ContinueWith(() => onShown?.Invoke())
+                .Forget();
         }
 
-        public virtual async UniTask Hide(Action onHidden = null)
+        public virtual void Hide(Action onHidden = null)
         {
-            await this.animationMachine.PlayHideAnimation();
-            onHidden?.Invoke();
+            this.animationMachine.PlayHideAnimation()
+                .ContinueWith(() =>
+                {
+                    onHidden?.Invoke();
+                    if (this.forceDestroyOnClose)
+                        Destroy(this.gameObject);
+                }).Forget();
         }
 
 #if UNITY_EDITOR
