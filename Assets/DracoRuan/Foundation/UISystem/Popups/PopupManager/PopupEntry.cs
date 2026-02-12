@@ -8,5 +8,6 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
     {
         public string popupName;
         public BaseUIPopup popupPrefab;
+        public bool shouldPreload;
     }
 }

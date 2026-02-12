@@ -10,6 +10,7 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
         [SerializeField] private List<PopupEntry> popupEntries;
         
         private Dictionary<string, BaseUIPopup> _popupDictionary;
+        public List<PopupEntry> PopupEntries => this.popupEntries;
 
         public void Initialize()
         {
