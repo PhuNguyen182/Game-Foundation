@@ -11,14 +11,14 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
         [Header("Main Subject")] 
         [SerializeField] private Animator subjectAnimator;
         [SerializeField] private CanvasGroup animatableSubject;
-        [SerializeField] private BaseAnimationConfig showSubjectConfig;
-        [SerializeField] private BaseAnimationConfig hideSubjectConfig;
+        [SerializeField] private AnimationConfig showSubjectConfig;
+        [SerializeField] private AnimationConfig hideSubjectConfig;
 
         [Header("Background")] 
         [SerializeField] private Animator backgroundAnimator;
         [SerializeField] private CanvasGroup animatableBackground;
-        [SerializeField] private BaseAnimationConfig showBackgroundConfig;
-        [SerializeField] private BaseAnimationConfig hideBackgroundConfig;
+        [SerializeField] private AnimationConfig showBackgroundConfig;
+        [SerializeField] private AnimationConfig hideBackgroundConfig;
         
         private CancellationToken _cancellationToken;
 
@@ -90,12 +90,16 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
 
         private async UniTask PlayShowSubjectAnimationByDoTween()
         {
-            await UniTask.CompletedTask;
+            await showSubjectConfig.dotweenAnimationConfig
+                .PlayAnimation(this.animatableSubject)
+                .WithCancellation(this._cancellationToken);
         }
 
         private async UniTask PlayShowBackgroundAnimationByDoTween()
         {
-            await UniTask.CompletedTask;
+            await showBackgroundConfig.dotweenAnimationConfig
+                .PlayAnimation(this.animatableSubject)
+                .WithCancellation(this._cancellationToken);
         }
 
         #endregion
@@ -162,12 +166,16 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
 
         private async UniTask PlayHideSubjectAnimationByDoTween()
         {
-            await UniTask.CompletedTask;
+            await hideSubjectConfig.dotweenAnimationConfig
+                .PlayAnimation(this.animatableSubject)
+                .WithCancellation(this._cancellationToken);
         }
 
         private async UniTask PlayHideBackgroundAnimationByDoTween()
         {
-            await UniTask.CompletedTask;
+            await hideBackgroundConfig.dotweenAnimationConfig
+                .PlayAnimation(this.animatableSubject)
+                .WithCancellation(this._cancellationToken);
         }
 
         #endregion

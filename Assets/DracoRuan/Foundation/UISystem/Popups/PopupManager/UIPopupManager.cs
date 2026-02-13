@@ -142,9 +142,6 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
             GC.SuppressFinalize(this);
         }
 
-        ~UIPopupManager()
-        {
-            this.Dispose(false);
-        }
+        ~UIPopupManager() => this.Dispose(false);
     }
 }
