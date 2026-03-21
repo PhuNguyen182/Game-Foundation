@@ -39,7 +39,7 @@ namespace DracoRuan.Foundation.UISystem.UIElements
             this.OnClickInternal?.Invoke();
         }
 
-        public void SetInteractable(bool interactable)
+        public virtual void SetInteractable(bool interactable)
         {
             this.uiButton.interactable = interactable;
         }
