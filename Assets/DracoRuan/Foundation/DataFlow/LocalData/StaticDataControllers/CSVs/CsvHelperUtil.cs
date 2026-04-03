@@ -1,11 +1,11 @@
-using System.IO;
-using System.Linq;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using CsvHelper;
 using CsvHelper.Configuration;
 
-namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor.CSVs
+namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers.CSVs
 {
     public static class CsvHelperUtil<TRecord, TRecordMap>
         where TRecord : class

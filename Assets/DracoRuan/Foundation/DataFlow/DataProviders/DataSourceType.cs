@@ -7,5 +7,6 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
         Addressable = 2,
         PlayerPrefs = 3,
         File = 4,
+        FirebaseRemoteConfig = 5,
     }
 }

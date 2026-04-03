@@ -30,6 +30,7 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
                 DataSourceType.Addressable => this._addressableDataProvider,
                 DataSourceType.PlayerPrefs => this._playerPrefDataProvider,
                 DataSourceType.File => this._fileDataProvider,
+                DataSourceType.FirebaseRemoteConfig => this._firebaseRemoteConfigDataProvider,
                 _ => null
             };
             

@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using DracoRuan.Foundation.DataFlow.DataProcessors;
 using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.MasterDataController;
-using DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor;
-using DracoRuan.Foundation.DataFlow.ProcessingSequence;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 {
@@ -56,17 +55,9 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         private IProcessSequence GetDataProcessorByType(DataProcessSequence dataProcessSequence)
         {
             string dataKey = dataProcessSequence.DataKey;
-            IProcessSequence processSequence = dataProcessSequence.DataProcessorType switch
-            {
-                DataProcessorType.FirebaseRemoteConfig 
-                    => new FirebaseRemoteConfigDataProcessor<TData>(dataKey),
-                DataProcessorType.ResourceScriptableObjects 
-                    => new ResourceScriptableObjectDataProcessor<TData>(dataKey, this._dataProviderService),
-                DataProcessorType.AddressableScriptableObjects 
-                    => new AddressableScriptableObjectDataProcessor<TData>(dataKey, this._dataProviderService),
-                _ => null    
-            };
-            
+            IDataProvider dataProvider =
+                this._dataProviderService.GetDataProviderByType(dataProcessSequence.DataSourceType);
+            IProcessSequence processSequence = new DataProcessor<TData>(dataKey, dataProvider);
             return processSequence;
         }
         

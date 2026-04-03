@@ -1,6 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 
-namespace DracoRuan.Foundation.DataFlow.ProcessingSequence
+namespace DracoRuan.Foundation.DataFlow.DataProcessors
 {
     public interface IDataSequenceProcessor
     {

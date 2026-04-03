@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using CsvHelper.Configuration;
 using Cysharp.Threading.Tasks;
+using DracoRuan.Foundation.DataFlow.DataProcessors;
 using DracoRuan.Foundation.DataFlow.DataProviders;
+using DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers.CSVs;
 using DracoRuan.Foundation.DataFlow.MasterDataController;
-using DracoRuan.Foundation.DataFlow.ProcessingSequence;
-using DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor.CSVs;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 {
     public abstract class StaticGameDataControllerWithRecord<TData, TRecord, TRecordMap> : IStaticGameDataController 
-        where TData : SerializableRecordClass<TRecord>, IGameData, new()
+        where TData : CustomRecordData<TRecord>, IGameData, new()
         where TRecord : class
         where TRecordMap : ClassMap<TRecord>
     {
@@ -57,22 +57,17 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 
         private static GameDataAttribute GetAttribute<T>() where T : IGameData =>
             (GameDataAttribute)Attribute.GetCustomAttribute(typeof(T), typeof(GameDataAttribute));
-        
+
         private IProcessSequence GetDataProcessorByType(DataProcessSequence dataProcessSequence)
         {
             string dataKey = dataProcessSequence.DataKey;
-            IProcessSequence processSequence = dataProcessSequence.DataProcessorType switch
-            {
-                DataProcessorType.ResourceCsv 
-                    => new ResourceCsvDataProcessor<TData, TRecord, TRecordMap>(dataKey, this._dataProviderService),
-                DataProcessorType.AddressableCsv 
-                    => new AddressableCsvDataProcessor<TData, TRecord, TRecordMap>(dataKey, this._dataProviderService),
-                _ => null    
-            };
-            
+            IDataProvider dataProvider =
+                this._dataProviderService.GetDataProviderByType(dataProcessSequence.DataSourceType);
+            IProcessSequence processSequence =
+                new DataProcessorWithRecord<TData, TRecord, TRecordMap>(dataKey, dataProvider);
             return processSequence;
         }
-        
+
         protected virtual void ReleaseManagedResources()
         {
             

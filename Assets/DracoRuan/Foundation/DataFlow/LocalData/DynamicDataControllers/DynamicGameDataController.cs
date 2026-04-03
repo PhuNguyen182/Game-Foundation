@@ -50,7 +50,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 
         public async UniTask LoadData()
         {
-            this.SourceData = await this._dataProvider.LoadDataAsync<TData>(DataType.Name);
+            this.SourceData = await this._dataProvider.LoadDataAsync(DataType.Name, this.DataSerializer, this.DataSaveService);
             this.OnDataChangedInternal?.Invoke(this.SourceData);
         }
 

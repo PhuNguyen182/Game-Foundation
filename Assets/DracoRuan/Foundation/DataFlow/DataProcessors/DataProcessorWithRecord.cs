@@ -4,24 +4,25 @@ using CsvHelper.Configuration;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.LocalData;
+using DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers.CSVs;
 using UnityEngine;
 
-namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor.CSVs
+namespace DracoRuan.Foundation.DataFlow.DataProcessors
 {
-    public class AddressableCsvDataProcessor<TData, TRecord, TRecordMap> : IProcessSequence, IProcessSequenceData
-        where TData : SerializableRecordClass<TRecord>, IGameData, new()
+    public class DataProcessorWithRecord<TData, TRecord, TRecordMap> : IProcessSequence, IProcessSequenceData
+        where TData : CustomRecordData<TRecord>, IGameData, new()
         where TRecord : class
         where TRecordMap : ClassMap<TRecord>
     {
         private readonly string _dataConfigKey;
         private readonly IDataProvider _dataProvider;
-
+        
         public IGameData GameData { get; private set; }
         
-        public AddressableCsvDataProcessor(string dataConfigKey, IDataProviderService dataProviderService)
+        public DataProcessorWithRecord(string dataConfigKey, IDataProvider dataProvider)
         {
             this._dataConfigKey = dataConfigKey;
-            this._dataProvider = dataProviderService.GetDataProviderByType(DataSourceType.Addressable);
+            this._dataProvider = dataProvider;
         }
 
         public async UniTask<bool> Process()
@@ -46,7 +47,7 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor.C
             }
             catch (Exception e)
             {
-                Debug.LogError($"[ResourceCsvDataProcessor] Failed to load data from path: {_dataConfigKey}. More info: {e.Message}");
+                Debug.LogError($"Failed to load data from path: {_dataConfigKey}. More info: {e.Message}");
             }
             
             return false;

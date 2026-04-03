@@ -4,7 +4,7 @@ namespace DracoRuan.Foundation.DataFlow.Serialization.CustomDataSerializerServic
 {
     public class BinaryDataSerializer<T> : IDataSerializer<T>
     {
-        public string FileExtension => ".bin";
+        public string FileExtension => ".binpackmem";
         
         public object Serialize(T data)
         {
