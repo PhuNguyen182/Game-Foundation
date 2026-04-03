@@ -14,6 +14,7 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
         
         #region Data Providers
         
+        private readonly IDataProvider _firebaseRemoteConfigDataProvider = new FirebaseRemoteConfigDataProvider();
         private readonly IDataProvider _resourcesDataProvider = new ResourcesDataProvider();
         private readonly IDataProvider _addressableDataProvider = new AddressableDataProvider();
         private readonly IDataProvider _playerPrefDataProvider = new PlayerPrefDataProvider();
@@ -21,26 +22,26 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
 
         #endregion
 
-        public IDataProvider GetDataProviderByType(DataProviderType dataProviderType)
+        public IDataProvider GetDataProviderByType(DataSourceType dataSourceType)
         {
-            IDataProvider dataProvider = dataProviderType switch
+            IDataProvider dataProvider = dataSourceType switch
             {
-                DataProviderType.Resources => this._resourcesDataProvider,
-                DataProviderType.Addressable => this._addressableDataProvider,
-                DataProviderType.PlayerPrefs => this._playerPrefDataProvider,
-                DataProviderType.File => this._fileDataProvider,
+                DataSourceType.Resources => this._resourcesDataProvider,
+                DataSourceType.Addressable => this._addressableDataProvider,
+                DataSourceType.PlayerPrefs => this._playerPrefDataProvider,
+                DataSourceType.File => this._fileDataProvider,
                 _ => null
             };
             
             return dataProvider;
         }
 
-        public IDataSaveService GetDataSaveServiceByType(DataProviderType dataProviderType)
+        public IDataSaveService GetDataSaveServiceByType(DataSourceType dataSourceType)
         {
-            IDataSaveService dataSaveService = dataProviderType switch
+            IDataSaveService dataSaveService = dataSourceType switch
             {
-                DataProviderType.PlayerPrefs => this._playerPrefDataSaveService,
-                DataProviderType.File => this._fileDataSaveService,
+                DataSourceType.PlayerPrefs => this._playerPrefDataSaveService,
+                DataSourceType.File => this._fileDataSaveService,
                 _ => null
             };
             

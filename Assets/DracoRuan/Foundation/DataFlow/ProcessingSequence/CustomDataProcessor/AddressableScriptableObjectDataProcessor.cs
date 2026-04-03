@@ -16,7 +16,7 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor
         public AddressableScriptableObjectDataProcessor(string dataConfigKey, IDataProviderService dataProviderService)
         {
             this._dataConfigKey = dataConfigKey;
-            this._dataProvider = dataProviderService.GetDataProviderByType(DataProviderType.Addressable);
+            this._dataProvider = dataProviderService.GetDataProviderByType(DataSourceType.Addressable);
         }
 
         public async UniTask<bool> Process()

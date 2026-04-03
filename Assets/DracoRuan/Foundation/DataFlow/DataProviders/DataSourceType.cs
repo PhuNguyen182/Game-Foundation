@@ -1,6 +1,6 @@
 namespace DracoRuan.Foundation.DataFlow.DataProviders
 {
-    public enum DataProviderType
+    public enum DataSourceType
     {
         None = 0,
         Resources = 1,

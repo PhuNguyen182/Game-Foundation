@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using CsvHelper.Configuration;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.MasterDataController;
@@ -8,8 +9,10 @@ using DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor.CSVs;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 {
-    public abstract class StaticGameDataControllerWithRecord<TData, TRecord> : IStaticGameDataController 
+    public abstract class StaticGameDataControllerWithRecord<TData, TRecord, TRecordMap> : IStaticGameDataController 
         where TData : SerializableRecordClass<TRecord>, IGameData, new()
+        where TRecord : class
+        where TRecordMap : ClassMap<TRecord>
     {
         private bool _isDisposed;
         
@@ -61,9 +64,9 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
             IProcessSequence processSequence = dataProcessSequence.DataProcessorType switch
             {
                 DataProcessorType.ResourceCsv 
-                    => new ResourceCsvDataProcessor<TData, TRecord>(dataKey, this._dataProviderService),
-                DataProcessorType.AddressableScriptableObjects 
-                    => new AddressableCsvDataProcessor<TData, TRecord>(dataKey, this._dataProviderService),
+                    => new ResourceCsvDataProcessor<TData, TRecord, TRecordMap>(dataKey, this._dataProviderService),
+                DataProcessorType.AddressableCsv 
+                    => new AddressableCsvDataProcessor<TData, TRecord, TRecordMap>(dataKey, this._dataProviderService),
                 _ => null    
             };
             

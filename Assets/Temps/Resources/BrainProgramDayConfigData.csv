@@ -1,0 +1,168 @@
+Id,Code,Day,DayTarget,Game,GameTarget,0–20%,21–40%,41–60%,61–75%,76–90%,91–99%,100%
+FocusLikeALaser,OBR-2a,1,Focus skill: Focus Stability,DrawOneLine,Builds sustained attention through continuous tracing,"It's okay if your attention jumped around today. Just take it slow and follow the line all the way next time. You're showing up, and that's what matters!
+","You're starting to hold focus a little longer. Some parts of the trace were smoother. Keep going! Your brain's learning how to stay with it.
+","You’re building steadiness. Your tracing is more controlled now. Each try helps your attention last longer!
+","You held focus for a good stretch~ That kind of steady tracing shows your mind is settling in. Great momentum!
+","You're tracing with real focus. Smooth lines most of the way mean your attention stayed right where it needed to be!
+","Just a tiny slip, but your focus was almost unbroken. You're really strengthening that sustained attention!
+","That was full focus from start to finish. You stayed with the line the whole way. Calm, steady, and locked in! Beautiful work!
+"
+,,,,MiniChess,Trains step-by-step thinking and focus under planning,"That’s okay! Chess is tricky when your mind wants to jump ahead. Try slowing it down and focusing on just one move at a time.
+","You’re starting to plan your moves better. Some decisions felt more thought-out! Keep practicing that step-by-step focus.
+","You’re thinking ahead more with each turn! Your brain is learning to hold the plan in place as you go!
+","You followed your thinking through! That shows real progress in slowing down and making thoughtful moves.
+","Great job! Your planning was clear, and your focus stayed on track most of the way.
+","So clos!. Just one small shift, but your planning and attention were nearly spot on!
+","That was calm and focused decision-making from start to finish! Every move had intention, amazing work!
+
+"
+,,,,ConnectTheDots,Enckiourages completion and visual tracking,It’s okay if you lost track today. Try following each number slowly and see it through to the end.,"You're connecting more steps now! Keep your eyes on the sequence, you're getting there!
+","You’re starting to complete more paths. Your tracking is improving with each try!
+","Nice job! You're staying with the task longer and spotting the right order better.
+","Strong tracking! You followed most of the sequence all the way through!
+","So close to a perfect line! You’re nearly there, great follow-through!
+","Perfect tracking and full completion! You stayed focused from start to finish!
+
+"
+,,2,Focus skill: Memory,IdenticalItem,Sharpens short-term visual memory,Don’t worry. Try to slow down and really look at the patterns next round. Your memory will catch on.,"You’re starting to notice more details. Keep watching and matching, your memory’s warming up.
+","You’re catching more pairs. Your short-term memory is getting stronger!
+","Nice! You remembered more this time! You're holding images in your mind better!
+","Strong memory work! You spotted most pairs quickly and accurately!
+","Nearly flawless~ Your visual memory is right on the edge of perfect!
+","You nailed every pair!  Your memory is sharp and fast today!
+
+"
+,,,,IdenticalItem,Trains working memory under distraction,It’s okay if things got jumbled. Try to picture the items clearly next time.,"You remembered a few! That’s a good start under pressure. Keep practicing!
+","You held on to more items this round. Your brain’s handling the noise better!
+","Great! You stayed focused even with distractions. Your working memory is improving!
+","Sharp recall! You remembered most of the list under pressure!
+","You barely missed anything~ Your memory held strong even with interference!
+","Full list recall~ distraction didn’t slow you down one bit~ Amazing control!
+"
+,,,,MergeNumber,Supports sequencing and recall,"It’s okay to feel lost at first~ Focus on the order and patterns, it’ll click soon.
+",You’re starting to follow the number flow better. Keep watching the sequence!,"You’re organizing the numbers more clearly now! Your brain’s syncing up!
+","Nice! You’re recalling and merging more smoothly with each try!
+","Great sequencing! You followed the order and matched well!
+","Just a small slip~ Your recall and logic were nearly spot on!
+","Every move was in order! You planned, recalled, and merged perfectly!
+
+"
+,,3,Focus skill: Task Switching,WaterSort,Trains flexible thinking across tasks,"No worries~ It takes time to juggle shifting patterns. Try moving one color at a time.
+","You’re starting to think more flexibly! Keep trying new moves, your brain’s adjusting.
+","You’re handling more sorting steps now! Your thinking is getting quicker!
+","Nice flow1 You’re switching approaches and adjusting better.
+","Great flexibility! You solved most of the puzzle with smart shifts! 
+","So close! Your flexible thinking is nearly seamless!
+","Every color sorted with clear thinking! That was smooth and adaptive!
+
+"
+,,,,ArrowDirection,Builds fast attention-shifting skills,"It’s okay if you missed a few~ Try focusing on just one arrow at a time.
+","You’re starting to catch the changes! Your attention is shifting more quickly!
+","You’re reacting faster and making fewer misses! Keep at it!
+","Solid performance! You’re switching focus more accurately now!
+","Great speed! You moved through the task with sharp reactions!
+","Nearly perfect shifts! You kept up with almost every change!
+","Lightning focus! You nailed every switch with speed and precision!
+
+"
+,,,,PetSorting,Reinforces switching between cues,"It’s okay if the categories got mixed. Try noticing one cue at a time next round~
+","You’re starting to separate the cues better! Keep sorting step by step!
+","You’re switching between categories more smoothly now!
+","Nice sorting! You followed the cues and adjusted well!
+","Great switching! You caught the patterns and sorted with control!
+","Nearly flawless sorting! Your brain handled the shifts really well!
+","Every piece in place! You tracked, switched, and sorted like a pro!
+
+"
+,,4,Focus skill: Impulsivity Control,SecretCode,"Slows actions, improves self-regulation","It’s okay if you got stuck. Try slowing down and reading patterns closely.
+","You’re beginning to track the logic better. Keep it steady and patient.
+","You’re following the code more clearly now! Your focus is catching the logic.
+","Nice decoding! You’re tracking letters and logic more smoothly.
+","Your mind stayed on the pattern! Great attention through every step.
+","So close! You followed the logic with nearly full focus.
+","Perfect crack! Your logic and attention were totally in sync!
+"
+,,,,MissingOperator,Promotes pause-before-responding,"It’s okay if you rushed a bit. Try taking a breath before answering next time.
+","You’re starting to slow down and think a little more. Keep pausing before you respond.
+","You're taking more thoughtful pauses! Your brain is learning to wait just a second longer.
+","Nice work! You’re not rushing through. You’re responding with more control.
+","Great pacing! You’re thinking before reacting and it really shows.
+","Just a small slip! You held your focus and stayed calm through most of it.
+","Perfect tempo! You paused, thought clearly, and answered with full control!
+"
+,,,,ColorBlock,Calms brain after high-control games,"That’s okay. Let the colors guide you gently. Breathe and try again.
+","You’re settling in. Let your mind relax and follow the shapes.
+","Your focus is calming down nicely! You flowed through most of the colors.
+","Nice and steady! You moved with the visuals and kept a smooth rhythm.
+","You were relaxed but alert! Great flow through the color blocks.
+","Almost seamless! You stayed present and followed the flow well.
+","Calm, clear, and fully in the zone! That was a perfect visual reset!
+"
+,,5,Focus skill: Verbal Logic,SpyAnagrams,Boosts focus in word recognition,It’s okay if the words didn’t click today. Try spotting small patterns and build from there.,"You’re starting to catch pieces of words. Keep going! Your brain is warming up.
+",You’re spotting more anagrams! Word focus is building nicely.,Great effort! You’re recognizing words faster and staying more focused.,Strong word sense! You kept your attention sharp through the puzzles.,Almost nailed it! Your word focus and speed are really shining.,"Every word found! You were locked in and decoding like a pro!
+
+"
+,,,,SecretCode,Reinforces attention in verbal logic,"It’s okay if you got stuck. Try slowing down and reading patterns closely.
+","You’re beginning to track the logic better. Keep it steady and patient.
+","You’re following the code more clearly now! Your focus is catching the logic.
+","Nice decoding! You’re tracking letters and logic more smoothly.
+","Your mind stayed on the pattern! Great attention through every step.
+","So close! You followed the logic with nearly full focus.
+","Perfect crack! Your logic and attention were totally in sync!
+"
+,,,,ColorBlock,Offers a visual break after language tasks,"That’s okay. Let the colors guide you gently. Breathe and try again.
+","You’re settling in. Let your mind relax and follow the shapes.
+","Your focus is calming down nicely! You flowed through most of the colors.
+","Nice and steady! You moved with the visuals and kept a smooth rhythm.
+","You were relaxed but alert! Great flow through the color blocks.
+","Almost seamless! You stayed present and followed the flow well.
+","Calm, clear, and fully in the zone! That was a perfect visual reset!
+"
+,,6,Focus skill: Selective Attention,AncientNumber,Trains filtering key signals from clutter,"It’s okay to feel overwhelmed. Focus on one number at a time.
+","You’re beginning to separate the noise. Keep narrowing your focus.
+","You're filtering better now! The clutter’s not tricking you as much.
+","Great job! You spotted the key signals and stayed on task.
+","Nice focus! You ignored distractions and kept your eyes on the goal.
+","Almost flawless! You filtered the right details with sharp attention.
+","Perfect filter! You stayed locked in on the signal the whole time!
+"
+,,,,HiddenGhost,Boosts visual alertness and scanning,"It’s okay if a few ghosts slipped by. Try scanning slowly next time.
+","You’re noticing more. Keep scanning! It gets sharper.
+","Your eyes are waking up! You caught more this time.
+","Great scan! You reacted faster and saw more clearly.
+","Sharp eyes! You stayed alert and quick on the screen.
+","Nearly perfect vision! You missed almost nothing.
+","Ghosts beware! You were scanning like a hawk!
+"
+,,,,MergeNumber,Smooth flow for brain cooldown,"It’s okay to feel lost at first~ Focus on the order and patterns, it’ll click soon.
+","You’re starting to follow the number flow better. Keep watching the sequence!
+","You’re organizing the numbers more clearly now! Your brain’s syncing up!
+","Nice! You’re recalling and merging more smoothly with each try!
+","Great sequencing! You followed the order and matched well!
+","Just a small slip~ Your recall and logic were nearly spot on!
+","Every move was in order! You planned, recalled, and merged perfectly!
+
+"
+,,7,Reflection,ConnectTheDots,Retest visual focus from Day 1,"It’s okay. Even Day 7 can feel off. You’ve made progress, don’t stop now.
+","You're reconnecting the focus. Look how far you’ve come since Day 1.
+","You stayed on track better today! Your visual focus is holding stronger.
+",Great improvement! Your tracking is more confident than before.,"Smooth focus! You followed through like a pro.
+","So close to full flow! Your visual attention is sharp.
+","Full circle! You closed the loop with perfect tracking!
+"
+,,,,ArrowDirection,Re-measure task switching,"That’s okay. Try to stay with one arrow at a time. You’ve got this.
+","You’re shifting better than Day 1. Keep it going.
+","Your switching is faster now! You’re catching up with the changes.
+","Great job! You’re switching focus more confidently than before.
+","Strong improvement! You handled the shifts with sharp reactions.
+","Nearly perfect! You’ve grown in speed and control.
+","Incredible switch power! Your brain adapted fast and flawlessly!
+"
+,,,,FruitMerge,"Satisfying, relaxing end-game","No worries. Let the colors and motion ease your mind.
+","You're getting into the flow. Keep stacking at your pace.
+","You’re merging more smoothly now! It's starting to click.
+","Nice work! That was calm, focused, and relaxing.
+","Smooth flow! You stacked and merged with great rhythm.
+","Almost a full chain! You kept it steady and focused.
+","Perfect merge! That was clean, calm, and satisfying!
+"

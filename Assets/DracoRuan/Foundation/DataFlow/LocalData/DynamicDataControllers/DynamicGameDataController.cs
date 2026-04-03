@@ -23,7 +23,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         protected abstract IDataSaveService DataSaveService { get; set; }
 
         protected abstract SerializationType SerializationType { get; }
-        protected abstract DataProviderType DataProviderType { get; }
+        protected abstract DataSourceType DataSourceType { get; }
 
         public event Action<TData> OnDataChanged
         {
@@ -38,8 +38,8 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         public virtual void InjectDataManager(IMainDataManager mainDataManager)
         {
             this.DataSerializer = this.GetDataSerializer();
-            this.DataSaveService = mainDataManager.DataProviderService.GetDataSaveServiceByType(this.DataProviderType);
-            this._dataProvider = mainDataManager.DataProviderService.GetDataProviderByType(this.DataProviderType);
+            this.DataSaveService = mainDataManager.DataProviderService.GetDataSaveServiceByType(this.DataSourceType);
+            this._dataProvider = mainDataManager.DataProviderService.GetDataProviderByType(this.DataSourceType);
         }
 
         public abstract void Initialize();

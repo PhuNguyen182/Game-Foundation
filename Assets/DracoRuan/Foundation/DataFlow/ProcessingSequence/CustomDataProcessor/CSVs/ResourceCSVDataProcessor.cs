@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CsvHelper.Configuration;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.LocalData;
@@ -7,8 +8,10 @@ using UnityEngine;
 
 namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor.CSVs
 {
-    public class ResourceCsvDataProcessor<TData, TRecord> : IProcessSequence, IProcessSequenceData
+    public class ResourceCsvDataProcessor<TData, TRecord, TRecordMap> : IProcessSequence, IProcessSequenceData
         where TData : SerializableRecordClass<TRecord>, IGameData, new()
+        where TRecord : class
+        where TRecordMap : ClassMap<TRecord>
     {
         private readonly string _dataConfigKey;
         private readonly IDataProvider _dataProvider;
@@ -18,19 +21,19 @@ namespace DracoRuan.Foundation.DataFlow.ProcessingSequence.CustomDataProcessor.C
         public ResourceCsvDataProcessor(string dataConfigKey, IDataProviderService dataProviderService)
         {
             this._dataConfigKey = dataConfigKey;
-            this._dataProvider = dataProviderService.GetDataProviderByType(DataProviderType.Resources);
+            this._dataProvider = dataProviderService.GetDataProviderByType(DataSourceType.Resources);
         }
 
         public async UniTask<bool> Process()
         {
-            TextAsset textAsset = await this._dataProvider.LoadDataAsync<TextAsset>(_dataConfigKey);
+            TextAsset textAsset = await this._dataProvider.LoadDataAsync<TextAsset>(this._dataConfigKey);
             if (!textAsset || string.IsNullOrEmpty(textAsset.text))
                 return false;
 
             try
             {
                 string output = textAsset.text ?? string.Empty;
-                IEnumerable<TRecord> dataRecords = CsvHelperUtil<TRecord>.GetRecordsFromCsv(output);
+                IEnumerable<TRecord> dataRecords = CsvHelperUtil<TRecord, TRecordMap>.GetRecordsFromCsv(output);
                 if (dataRecords == null)
                     return false;
 

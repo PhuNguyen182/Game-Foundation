@@ -4,8 +4,8 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
 {
     public interface IDataProviderService
     {
-        public IDataProvider GetDataProviderByType(DataProviderType dataProviderType);
+        public IDataProvider GetDataProviderByType(DataSourceType dataSourceType);
         
-        public IDataSaveService GetDataSaveServiceByType(DataProviderType dataProviderType);
+        public IDataSaveService GetDataSaveServiceByType(DataSourceType dataSourceType);
     }
 }
