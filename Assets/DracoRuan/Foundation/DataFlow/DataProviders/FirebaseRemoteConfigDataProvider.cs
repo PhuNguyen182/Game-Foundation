@@ -20,7 +20,8 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
                     return default;
                 }
                     
-                TData data = serializer.Deserialize(pathToData);
+                string remoteConfigPath = ""; // TODO: This value would be fetch from firebase remote config later
+                TData data = serializer.Deserialize(remoteConfigPath);
                 return data;
             }
             catch (Exception e)

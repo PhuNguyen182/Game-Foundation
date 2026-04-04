@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -27,10 +28,26 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers.CSVs
             if (string.IsNullOrEmpty(csvText))
                 return Enumerable.Empty<TRecord>();
 
-            using StringReader stringReader = new(csvText);
-            using CsvReader csvReader = new(stringReader, CsvConfiguration);
-            csvReader.Context.RegisterClassMap<TRecordMap>();
-            return csvReader.GetRecords<TRecord>();
+            StringReader stringReader = new StringReader(csvText);
+            CsvReader csvReader = new CsvReader(stringReader, CsvConfiguration);
+
+            try
+            {
+                csvReader.Context.RegisterClassMap<TRecordMap>();
+                IEnumerable<TRecord> records = csvReader.GetRecords<TRecord>().ToArray();
+                return records;
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            finally
+            {
+                stringReader.Dispose();
+                csvReader.Dispose();
+            }
+
+            return Enumerable.Empty<TRecord>();
         }
     }
 }
