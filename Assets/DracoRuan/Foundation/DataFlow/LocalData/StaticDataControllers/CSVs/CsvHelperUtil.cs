@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using CsvHelper;
 using CsvHelper.Configuration;
+using ZLinq;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers.CSVs
 {
@@ -33,7 +34,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers.CSVs
                 using StringReader stringReader = new StringReader(csvText);
                 using CsvReader csvReader = new CsvReader(stringReader, CsvConfiguration);
                 csvReader.Context.RegisterClassMap<TRecordMap>();
-                IEnumerable<TRecord> records = csvReader.GetRecords<TRecord>().ToArray();
+                IEnumerable<TRecord> records = csvReader.GetRecords<TRecord>().AsValueEnumerable().ToArray();
                 return records;
             }
             catch (Exception e)
