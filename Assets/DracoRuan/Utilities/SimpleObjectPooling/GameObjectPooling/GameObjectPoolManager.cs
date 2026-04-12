@@ -95,7 +95,7 @@ public static class GameObjectPoolManager
     public static T Spawn<T>(T prefab, string tag, Vector3 position = default, Quaternion rotation = default) where T : Component
     {
         InitializeObjectPools(prefab);
-        BaseGameObjectPool pool = Pools[prefab.gameObject.GetInstanceID()];
+        BaseGameObjectPool pool = Pools[prefab.GetInstanceID()];
         if (pool is not GenericGameObjectPool<T> genericPool) 
             return null;
         
@@ -108,7 +108,7 @@ public static class GameObjectPoolManager
         Transform parent = null, bool worldPositionStay = true) where T : Component
     {
         InitializeObjectPools(prefab);
-        BaseGameObjectPool pool = Pools[prefab.gameObject.GetInstanceID()];
+        BaseGameObjectPool pool = Pools[prefab.GetInstanceID()];
         if (pool is not GenericGameObjectPool<T> genericPool) 
             return null;
         
@@ -129,7 +129,7 @@ public static class GameObjectPoolManager
     private static T Spawn<T>(T prefab, Vector3 position, Quaternion rotation) where T : Component
     {
         InitializeObjectPools(prefab);
-        BaseGameObjectPool pool = Pools[prefab.gameObject.GetInstanceID()];
+        BaseGameObjectPool pool = Pools[prefab.GetInstanceID()];
         if (pool is not GenericGameObjectPool<T> genericPool) 
             return null;
         
