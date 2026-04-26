@@ -11,11 +11,13 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
     {
         private bool _isDisposed;
         private IDataProviderService _dataProviderService;
+        private IDataProvider _dataProvider;
         
         protected abstract TData SourceData { get; set; }
         protected abstract List<DataProcessSequence> DataProcessSequences { get; }
         
         public TData ExposedSourceData => this.SourceData;
+        public int DataVersion => this.SourceData?.Version ?? 0;
         
         public async UniTask InitializeData(IDataSequenceProcessor dataSequenceProcessor)
         {
@@ -43,6 +45,11 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         
         protected abstract void OnDataInitialized();
 
+        protected void CleanupUnusedData()
+        {
+            this._dataProvider?.UnloadData(this.SourceData);
+        }
+
         protected string GetDataKey()
         {
             GameDataAttribute attribute = GetAttribute<TData>();
@@ -55,9 +62,8 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         private IProcessSequence GetDataProcessorByType(DataProcessSequence dataProcessSequence)
         {
             string dataKey = dataProcessSequence.DataKey;
-            IDataProvider dataProvider =
-                this._dataProviderService.GetDataProviderByType(dataProcessSequence.DataSourceType);
-            IProcessSequence processSequence = new DataProcessor<TData>(dataKey, dataProvider);
+            this._dataProvider = this._dataProviderService.GetDataProviderByType(dataProcessSequence.DataSourceType);
+            IProcessSequence processSequence = new DataProcessor<TData>(dataKey, this._dataProvider);
             return processSequence;
         }
         

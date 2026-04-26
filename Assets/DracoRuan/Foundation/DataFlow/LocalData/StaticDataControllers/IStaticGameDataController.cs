@@ -7,6 +7,8 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 {
     public interface IStaticGameDataController : IDisposable
     {
+        public int DataVersion { get; }
+        
         public UniTask InitializeData(IDataSequenceProcessor dataSequenceProcessor);
         public void InjectDataManager(IMainDataManager mainDataManager);
     }

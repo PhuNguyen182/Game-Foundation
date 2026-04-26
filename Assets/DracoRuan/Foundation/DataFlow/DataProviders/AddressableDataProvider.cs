@@ -35,11 +35,6 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
                     $"[AddressableProvider] [{typeof(TData)}] Failed to load data from path: {pathToData}. More info: {e.Message}");
                 return default;
             }
-            finally
-            {
-                if (operationHandle.IsValid())
-                    Addressables.Release(operationHandle);
-            }
         }
 
         public void UnloadData<TData>(TData data)

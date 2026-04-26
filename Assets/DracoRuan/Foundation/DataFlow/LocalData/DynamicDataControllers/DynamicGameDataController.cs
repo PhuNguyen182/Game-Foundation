@@ -5,6 +5,7 @@ using DracoRuan.Foundation.DataFlow.MasterDataController;
 using DracoRuan.Foundation.DataFlow.Serialization.CustomDataSerializerServices;
 using DracoRuan.Foundation.DataFlow.Serialization;
 using DracoRuan.Foundation.DataFlow.SaveSystem;
+using DracoRuan.Foundation.DataFlow.TypeCreator;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 {
@@ -24,6 +25,8 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 
         protected abstract SerializationType SerializationType { get; }
         protected abstract DataSourceType DataSourceType { get; }
+        
+        public int DataVersion => this.SourceData?.Version ?? 0;
 
         public event Action<TData> OnDataChanged
         {
@@ -51,6 +54,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         public async UniTask LoadData()
         {
             this.SourceData = await this._dataProvider.LoadDataAsync(DataType.Name, this.DataSerializer, this.DataSaveService);
+            this.SourceData ??= TypeFactory.Create<TData>();
             this.OnDataChangedInternal?.Invoke(this.SourceData);
         }
 

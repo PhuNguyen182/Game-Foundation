@@ -32,11 +32,6 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
                     $"[ResourcesProvider] [{typeof(TData)}] Failed to loaded target data from {pathToData}. More info: {e.Message}");
                 return default;
             }
-            finally
-            {
-                if (asset)
-                    Resources.UnloadAsset(asset);
-            }
         }
 
         public void UnloadData<TData>(TData data)
