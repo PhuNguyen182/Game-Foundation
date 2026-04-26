@@ -5,13 +5,21 @@ namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
     [AttributeUsage(AttributeTargets.Class)]
     public class RegisterInstallerAttribute : Attribute
     {
-        public readonly string InstallerName;
+        private readonly Type _installerDataType;
+        
+        public readonly string InstallerKey;
+        public readonly string InstallerDataType;
         public readonly string LifetimeScopeName;
+        public readonly string InstallerInstanceType;
 
-        public RegisterInstallerAttribute(string installerName = null, string lifetimeScopeName = null)
+        public RegisterInstallerAttribute(string installerKey, Type installerDataType, string lifetimeScopeName = null,
+            InstallerType installerType = InstallerType.PlainCSharp)
         {
-            this.InstallerName = installerName;
+            this.InstallerKey = installerKey;
+            this._installerDataType = installerDataType;
+            this.InstallerDataType = nameof(this._installerDataType);
             this.LifetimeScopeName = lifetimeScopeName;
+            this.InstallerInstanceType = $"{installerType}";
         }
     }
 }
