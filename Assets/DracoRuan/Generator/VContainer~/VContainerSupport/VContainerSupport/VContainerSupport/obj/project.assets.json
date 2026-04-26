@@ -1756,11 +1756,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "E:\\Projects\\Draco Ruan Game Foundation\\Game-Foundation\\Assets\\DracoRuan\\Foundation\\Initializers\\SourceGenerator\\VContainerSupport~\\VContainerSupport\\VContainerSupport\\VContainerSupport\\VContainerSupport.csproj",
+      "projectUniqueName": "E:\\Projects\\Draco Ruan Game Foundation\\Game-Foundation\\Assets\\DracoRuan\\Generator\\VContainer~\\VContainerSupport\\VContainerSupport\\VContainerSupport\\VContainerSupport.csproj",
       "projectName": "VContainerSupport",
-      "projectPath": "E:\\Projects\\Draco Ruan Game Foundation\\Game-Foundation\\Assets\\DracoRuan\\Foundation\\Initializers\\SourceGenerator\\VContainerSupport~\\VContainerSupport\\VContainerSupport\\VContainerSupport\\VContainerSupport.csproj",
+      "projectPath": "E:\\Projects\\Draco Ruan Game Foundation\\Game-Foundation\\Assets\\DracoRuan\\Generator\\VContainer~\\VContainerSupport\\VContainerSupport\\VContainerSupport\\VContainerSupport.csproj",
       "packagesPath": "C:\\Users\\nguye\\.nuget\\packages\\",
-      "outputPath": "E:\\Projects\\Draco Ruan Game Foundation\\Game-Foundation\\Assets\\DracoRuan\\Foundation\\Initializers\\SourceGenerator\\VContainerSupport~\\VContainerSupport\\VContainerSupport\\VContainerSupport\\obj\\",
+      "outputPath": "E:\\Projects\\Draco Ruan Game Foundation\\Game-Foundation\\Assets\\DracoRuan\\Generator\\VContainer~\\VContainerSupport\\VContainerSupport\\VContainerSupport\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "E:\\Projects\\Draco Ruan Game Foundation\\Game-Foundation\\Assets\\NuGet.Config",
