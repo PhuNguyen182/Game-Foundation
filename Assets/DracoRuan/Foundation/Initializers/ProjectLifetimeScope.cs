@@ -7,6 +7,7 @@ namespace DracoRuan.Foundation.Initializers
     {
         protected override void Configure(IContainerBuilder builder)
         {
+            builder.RegisterEntryPoint<int>(Lifetime.Scoped);
         }
     }
 }
