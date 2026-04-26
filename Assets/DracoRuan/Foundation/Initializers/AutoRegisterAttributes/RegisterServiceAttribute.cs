@@ -7,7 +7,7 @@ namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
     public class RegisterServiceAttribute : Attribute
     {
         public readonly string ServiceName;
-        public readonly Lifetime LifetimeScope;
+        public readonly string LifetimeScope;
         public readonly string LifetimeScopeName;
         public readonly string InstallerName;
         public readonly bool AsImplementInterfaces;
@@ -20,7 +20,7 @@ namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
             bool asSelf = false, string withKey = null)
         {
             this.ServiceName = serviceName;
-            this.LifetimeScope = lifetime;
+            this.LifetimeScope = $"{lifetime}";
             this.LifetimeScopeName = lifetimeScopeName;
             this.InstallerName = installerName;
             this.AsImplementInterfaces = asImplementInterfaces;
