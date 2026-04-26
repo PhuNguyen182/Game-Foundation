@@ -29,15 +29,15 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         string installerName = null;
         string lifetimeScopeName = "ProjectLifetimeScope";
 
-        foreach (var namedArg in attributeData.NamedArguments)
+        foreach (var kvp in attributeData.NamedArguments)
         {
-            switch (namedArg.Key)
+            switch (kvp.Key)
             {
                 case "InstallerName":
-                    installerName = namedArg.Value.Value?.ToString();
+                    installerName = kvp.Value.Value?.ToString();
                     break;
                 case "LifetimeScopeName":
-                    lifetimeScopeName = namedArg.Value.Value?.ToString();
+                    lifetimeScopeName = kvp.Value.Value?.ToString();
                     break;
             }
         }

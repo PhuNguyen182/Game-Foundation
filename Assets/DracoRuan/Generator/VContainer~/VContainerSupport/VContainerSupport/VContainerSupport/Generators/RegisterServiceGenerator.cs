@@ -35,34 +35,34 @@ public class RegisterServiceGenerator : IIncrementalGenerator
         bool asSelf = false;
         string withKey = null;
 
-        foreach (var namedArg in attributeData.NamedArguments)
+        foreach (var kvp in attributeData.NamedArguments)
         {
             bool isTargetValueNull;
-            switch (namedArg.Key)
+            switch (kvp.Key)
             {
                 case "LifetimeScope":
-                    lifetimeScope = namedArg.Value.Value?.ToString();
+                    lifetimeScope = kvp.Value.Value?.ToString();
                     break;
                 case "LifetimeScopeName":
-                    lifetimeScopeName = namedArg.Value.Value?.ToString();
+                    lifetimeScopeName = kvp.Value.Value?.ToString();
                     break;
                 case "InstallerName":
-                    installerName = namedArg.Value.Value?.ToString();
+                    installerName = kvp.Value.Value?.ToString();
                     break;
                 case "AsImplementedInterfaces":
-                    isTargetValueNull = namedArg.Value.Value == null;
-                    asImplementInterfaces = !isTargetValueNull && (bool)namedArg.Value.Value;
+                    isTargetValueNull = kvp.Value.Value == null;
+                    asImplementInterfaces = !isTargetValueNull && (bool)kvp.Value.Value;
                     break;
                 case "IsEntryPoint":
-                    isTargetValueNull = namedArg.Value.Value == null;
-                    isEntryPoint = !isTargetValueNull && (bool)namedArg.Value.Value;
+                    isTargetValueNull = kvp.Value.Value == null;
+                    isEntryPoint = !isTargetValueNull && (bool)kvp.Value.Value;
                     break;
                 case "AsSelf":
-                    isTargetValueNull = namedArg.Value.Value == null;
-                    asSelf = !isTargetValueNull && (bool)namedArg.Value.Value;
+                    isTargetValueNull = kvp.Value.Value == null;
+                    asSelf = !isTargetValueNull && (bool)kvp.Value.Value;
                     break;
                 case "WithKey":
-                    withKey = namedArg.Value.Value?.ToString();
+                    withKey = kvp.Value.Value?.ToString();
                     break;
             }
         }
