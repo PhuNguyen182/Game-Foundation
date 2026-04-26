@@ -8,6 +8,7 @@ using ZLinq;
 
 namespace DracoRuan.CoreSystems.MessageBrokers.Core
 {
+    [Obsolete]
     public class MessageBrokerInitializer
     {
         private readonly BuiltinContainerBuilder _containerBuilder;

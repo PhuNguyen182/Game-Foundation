@@ -2,6 +2,7 @@
   "dependencies": {
     "com.cysharp.memorypack": "1.21.4",
     "com.cysharp.messagepipe": "1.8.1",
+    "com.cysharp.messagepipe.vcontainer": "https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe.VContainer",
     "com.cysharp.r3": "1.3.0",
     "com.cysharp.unitask": "2.5.10",
     "com.cysharp.zlinq": "https://github.com/Cysharp/ZLinq.git?path=src/ZLinq.Unity/Assets/ZLinq.Unity",
