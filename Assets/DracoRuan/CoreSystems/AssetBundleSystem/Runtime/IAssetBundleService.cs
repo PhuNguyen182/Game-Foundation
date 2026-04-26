@@ -7,6 +7,8 @@ namespace DracoRuan.CoreSystems.AssetBundleSystem.Runtime
 {
     public interface IAssetBundleService : IDisposable
     {
+        public bool IsInitialized { get; }
+        
         public IAssetBundleLoader AssetBundleLoader { get; }
         public IAssetBundleCleaner AssetBundleCleaner { get; }
         public IAssetBundleUpdater AssetBundleUpdater { get; }
