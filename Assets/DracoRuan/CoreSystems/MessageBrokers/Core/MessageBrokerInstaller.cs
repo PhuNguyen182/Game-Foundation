@@ -1,9 +1,12 @@
 using VContainer;
 using VContainer.Unity;
+using DracoRuan.Foundation.Initializers;
+using DracoRuan.Foundation.Initializers.AutoRegisterAttributes;
 using MessagePipe;
 
 namespace DracoRuan.CoreSystems.MessageBrokers.Core
 {
+    [RegisterInstaller(nameof(MessageBrokerInstaller), nameof(ProjectLifetimeScope))]
     public class MessageBrokerInstaller : IInstaller
     {
         public void Install(IContainerBuilder builder)
