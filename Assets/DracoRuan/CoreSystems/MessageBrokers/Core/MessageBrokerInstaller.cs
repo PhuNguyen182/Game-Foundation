@@ -1,5 +1,4 @@
 using VContainer;
-using VContainer.Unity;
 using DracoRuan.Foundation.Initializers;
 using DracoRuan.Foundation.Initializers.AutoRegisterAttributes;
 using MessagePipe;
@@ -7,12 +6,15 @@ using MessagePipe;
 namespace DracoRuan.CoreSystems.MessageBrokers.Core
 {
     [RegisterInstaller(nameof(MessageBrokerInstaller), nameof(ProjectLifetimeScope))]
-    public class MessageBrokerInstaller : IInstaller
+    public class MessageBrokerInstaller : IAsyncInstallable
     {
+        public bool IsInstalled { get; private set; }
+
         public void Install(IContainerBuilder builder)
         {
             builder.RegisterMessagePipe(this.OnMessagePipeRegisterOption);
             builder.RegisterBuildCallback(resolver => GlobalMessagePipe.SetProvider(resolver.AsServiceProvider()));
+            this.IsInstalled = true;
         }
 
         private void OnMessagePipeRegisterOption(MessagePipeOptions options)
