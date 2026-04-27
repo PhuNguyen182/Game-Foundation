@@ -39,6 +39,7 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
 
         string installerKey = null;
         string fullInstallerName = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        string minimalInstallerName = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         string lifetimeScopeName = "ProjectLifetimeScope";
         string installerInstanceType = "PlainCSharp";
 
@@ -58,7 +59,8 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
             }
         }
 
-        return new InstallerRegistrationModel(installerKey, fullInstallerName, lifetimeScopeName, installerInstanceType);
+        return new InstallerRegistrationModel(installerKey, fullInstallerName, minimalInstallerName, lifetimeScopeName,
+            installerInstanceType);
     }
     
     private static void Execute(ImmutableArray<InstallerRegistrationModel> models, SourceProductionContext context)
@@ -106,15 +108,15 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("");
         stringBuilder.AppendLine($"namespace DracoRuan.VContainer{registrationModel.LifetimeScopeName}Support.Generated");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine($"    public static class VContainer{registrationModel.LifetimeScopeName}MonoBehaviourInstallerExtensions");
+        stringBuilder.AppendLine($"    public static class VContainer{registrationModel.LifetimeScopeName}{registrationModel.MinimalInstallerName}InstallerExtensions");
         stringBuilder.AppendLine("    {");
         stringBuilder.AppendLine($"        public static async UniTask RegisterInstallerAuto{registrationModel.LifetimeScopeName}(this IContainerBuilder builder)");
         stringBuilder.AppendLine("        {");
         stringBuilder.AppendLine($"              {registrationModel.FullInstallerName} installer = await InitializeInstaller(\"{registrationModel.InstallerKey}\");");
         stringBuilder.AppendLine("              if (installer != null)");
         stringBuilder.AppendLine("              {");
-        stringBuilder.AppendLine("                  installer.Install(builder);");
-        stringBuilder.AppendLine($"                 installer.transform.SetParent(DracoRuan.Foundation.Initializers.{registrationModel.LifetimeScopeName}.LifetimeScopeInstallerRoot);");
+        stringBuilder.AppendLine("                   installer.Install(builder);");
+        stringBuilder.AppendLine($"                   installer.transform.SetParent(DracoRuan.Foundation.Initializers.{registrationModel.LifetimeScopeName}.LifetimeScopeInstallerRoot);");
         stringBuilder.AppendLine("              }");
         stringBuilder.AppendLine("        }");
         stringBuilder.AppendLine("");
@@ -126,8 +128,8 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("              if (handle.Status == AsyncOperationStatus.Succeeded)");
         stringBuilder.AppendLine("              {");
         stringBuilder.AppendLine("                  GameObject instance = Object.Instantiate(handle.Result);");
-        stringBuilder.AppendLine($"                 if (instance.TryGetComponent(out {registrationModel.FullInstallerName} installer))");
-        stringBuilder.AppendLine("                      return installer;");
+        stringBuilder.AppendLine($"                  if (instance.TryGetComponent(out {registrationModel.FullInstallerName} installer))");
+        stringBuilder.AppendLine("                       return installer;");
         stringBuilder.AppendLine("              }");
         stringBuilder.AppendLine("              return null;");
         stringBuilder.AppendLine("        }");
@@ -153,13 +155,13 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("");
         stringBuilder.AppendLine($"namespace DracoRuan.VContainer{registrationModel.LifetimeScopeName}Support.Generated");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine($"    public static class VContainer{registrationModel.LifetimeScopeName}ScriptableObjectInstallerExtensions");
+        stringBuilder.AppendLine($"    public static class VContainer{registrationModel.LifetimeScopeName}{registrationModel.MinimalInstallerName}ScriptableObjectInstallerExtensions");
         stringBuilder.AppendLine("    {");
         stringBuilder.AppendLine($"        public static async UniTask RegisterInstallerAuto{registrationModel.LifetimeScopeName}(this IContainerBuilder builder)");
         stringBuilder.AppendLine("        {");
         stringBuilder.AppendLine($"              {registrationModel.FullInstallerName} installer = await InitializeInstaller(\"{registrationModel.InstallerKey}\");");
-        stringBuilder.AppendLine("              if (installer != null)");
-        stringBuilder.AppendLine("                  installer.Install(builder);");
+        stringBuilder.AppendLine("               if (installer != null)");
+        stringBuilder.AppendLine("                   installer.Install(builder);");
         stringBuilder.AppendLine("        }");
         stringBuilder.AppendLine("");
         
@@ -198,7 +200,7 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine($"        public static void RegisterInstallerAuto{registrationModel.LifetimeScopeName}(this IContainerBuilder builder)");
         stringBuilder.AppendLine("        {");
         stringBuilder.AppendLine($"              {registrationModel.FullInstallerName} installer = new {registrationModel.InstallerKey}();");
-        stringBuilder.AppendLine("                installer.Install(builder);");
+        stringBuilder.AppendLine("              installer.Install(builder);");
         stringBuilder.AppendLine("        }");
         stringBuilder.AppendLine("    }");
         stringBuilder.AppendLine("}");

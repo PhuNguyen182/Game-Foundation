@@ -5,9 +5,9 @@ using VContainer;
 
 namespace Test
 {
-    [RegisterInstaller(InstallerKey = nameof(SampleMonoInstaller), LifetimeScopeName = nameof(ProjectLifetimeScope), 
+    [RegisterInstaller(InstallerKey = nameof(SampleMonoInstaller2), LifetimeScopeName = nameof(ProjectLifetimeScope), 
         InstallerInstanceType = nameof(InstallerType.MonoBehaviour))]
-    public class SampleMonoInstaller : MonoBehaviour, IAsyncInstallable
+    public class SampleMonoInstaller2 : MonoBehaviour, IAsyncInstallable
     {
         public bool IsInstalled { get; private set; }
 
