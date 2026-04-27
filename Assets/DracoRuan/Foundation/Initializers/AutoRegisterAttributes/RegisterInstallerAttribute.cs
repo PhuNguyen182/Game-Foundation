@@ -2,12 +2,12 @@ using System;
 
 namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
 {
-    [AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class RegisterInstallerAttribute : Attribute
     {
-        public readonly string InstallerKey;
-        public readonly string LifetimeScopeName;
-        public readonly string InstallerInstanceType;
+        public string InstallerKey { get; set; }
+        public string LifetimeScopeName  { get; set; }
+        public string InstallerInstanceType { get; set; }
 
         public RegisterInstallerAttribute(string installerKey, string lifetimeScopeName = null,
             InstallerType installerType = InstallerType.PlainCSharp)

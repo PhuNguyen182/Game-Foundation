@@ -1,3 +1,4 @@
+using DracoRuan.VContainerSupport.Generated;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
@@ -11,7 +12,6 @@ namespace DracoRuan.Foundation.Initializers
         protected override void Configure(IContainerBuilder builder)
         {
             LifetimeScopeInstallerRoot = this.transform;
-            builder.RegisterEntryPoint<int>(Lifetime.Scoped);
         }
     }
 }

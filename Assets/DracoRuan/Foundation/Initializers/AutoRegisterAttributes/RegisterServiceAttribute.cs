@@ -3,30 +3,15 @@ using VContainer;
 
 namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
 {
-    [AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class RegisterServiceAttribute : Attribute
     {
-        public readonly string ServiceName;
-        public readonly string LifetimeScope;
-        public readonly string LifetimeScopeName;
-        public readonly string InstallerName;
-        public readonly bool AsImplementInterfaces;
-        public readonly bool IsEntryPoint;
-        public readonly bool AsSelf;
-        public readonly string WithKey;
-
-        public RegisterServiceAttribute(string serviceName, Lifetime lifetime, string lifetimeScopeName = null, 
-            string installerName = null, bool asImplementInterfaces = false, bool isEntryPoint = false, 
-            bool asSelf = false, string withKey = null)
-        {
-            this.ServiceName = serviceName;
-            this.LifetimeScope = $"{lifetime}";
-            this.LifetimeScopeName = lifetimeScopeName;
-            this.InstallerName = installerName;
-            this.AsImplementInterfaces = asImplementInterfaces;
-            this.IsEntryPoint = isEntryPoint;
-            this.AsSelf = asSelf;
-            this.WithKey = withKey;
-        }
+        public string LifetimeScope { get; set; } = nameof(Lifetime.Scoped);
+        public string LifetimeScopeName { get; set; } = nameof(ProjectLifetimeScope);
+        public string InstallerName { get; set; }
+        public bool AsImplementedInterfaces { get; set; }
+        public bool IsEntryPoint { get; set; }
+        public bool AsSelf { get; set; }
+        public string WithKey { get; set; }
     }
 }

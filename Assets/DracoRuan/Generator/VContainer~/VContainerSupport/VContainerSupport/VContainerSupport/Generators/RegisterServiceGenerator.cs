@@ -37,7 +37,7 @@ public class RegisterServiceGenerator : IIncrementalGenerator
             return null;
 
         string serviceName = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        string lifetimeScope = "Scope";
+        string lifetimeScope = "Scoped";
         string lifetimeScopeName = "ProjectLifetimeScope";
         string installerName = null;
         bool asImplementInterfaces = false;
@@ -109,7 +109,7 @@ public class RegisterServiceGenerator : IIncrementalGenerator
                 bool isEntryPoint = item.IsEntryPoint;
                 string asImplementInterfaces = item.AsImplementInterfaces ? ".AsImplementedInterfaces()" : "";
                 string asSelf = item.AsSelf ? ".AsSelf()" : "";
-                string keyed = string.IsNullOrEmpty(item.WithKey) ? $".Keyed({item.WithKey})" : "";
+                string keyed = !string.IsNullOrEmpty(item.WithKey) ? $".Keyed({item.WithKey})" : "";
                 string codeCommand = !isEntryPoint
                     ? $"builder.Register<{item.ServiceName}>(Lifetime.{item.LifetimeScope}){asImplementInterfaces}{asSelf}{keyed};"
                     : $"builder.RegisterEntryPoint<{item.ServiceName}>(Lifetime.{item.LifetimeScope}{asImplementInterfaces}{asSelf}{keyed});";
