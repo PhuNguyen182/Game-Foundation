@@ -11,7 +11,7 @@ namespace VContainerSupport.Generators;
 [Generator]
 public class RegisterServiceGenerator : IIncrementalGenerator
 {
-    private const string AutoRegisterServiceAttributeName = "RegisterService";
+    private const string AutoRegisterServiceAttributeName = "RegisterServiceAttribute";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
