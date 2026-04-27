@@ -9,7 +9,7 @@ namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
         public string LifetimeScopeName  { get; set; }
         public string InstallerInstanceType { get; set; }
 
-        public RegisterInstallerAttribute(string installerKey, string lifetimeScopeName = null,
+        public RegisterInstallerAttribute(string installerKey = null, string lifetimeScopeName = null,
             InstallerType installerType = InstallerType.PlainCSharp)
         {
             this.InstallerKey = installerKey;
