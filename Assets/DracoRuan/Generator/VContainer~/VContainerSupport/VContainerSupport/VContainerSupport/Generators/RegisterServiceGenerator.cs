@@ -22,7 +22,7 @@ public class RegisterServiceGenerator : IIncrementalGenerator
             .Where(registrationModel => registrationModel is not null);
         
         IncrementalValueProvider<ImmutableArray<ServiceRegistrationModel>> registrationData = classDeclarations.Collect();
-        context.RegisterSourceOutput(registrationData, (spc, source) => Execute(source, spc));
+        context.RegisterSourceOutput(registrationData, Execute);
     }
 
     private static ServiceRegistrationModel GetRegistrationData(GeneratorSyntaxContext context)
@@ -80,7 +80,7 @@ public class RegisterServiceGenerator : IIncrementalGenerator
             asImplementInterfaces, isEntryPoint, asSelf, withKey);
     }
 
-    private static void Execute(ImmutableArray<ServiceRegistrationModel> models, SourceProductionContext context)
+    private static void Execute(SourceProductionContext context, ImmutableArray<ServiceRegistrationModel> models)
     {
         if (models.IsDefaultOrEmpty)
             return;
