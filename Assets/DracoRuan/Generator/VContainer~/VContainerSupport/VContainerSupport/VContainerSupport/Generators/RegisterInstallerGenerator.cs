@@ -86,7 +86,7 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
                 if (generatedCode == null)
                     continue;
                 
-                context.AddSource($"VContainer_{model.InstallerKey}Register.g.cs", generatedCode);
+                context.AddSource($"VContainer_{model.MinimalInstallerName}Register.g.cs", generatedCode);
             }
         }
     }

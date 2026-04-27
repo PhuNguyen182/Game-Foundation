@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VContainerSupport")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+36ea44e391a61ba5bd98b5eee719112825326268")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1f0fa59a8a429e2b0b1a82b27af62b8a51c87132")]
 [assembly: System.Reflection.AssemblyProductAttribute("VContainerSupport")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VContainerSupport")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
