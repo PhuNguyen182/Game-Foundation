@@ -104,6 +104,7 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("using Cysharp.Threading.Tasks;");
         stringBuilder.AppendLine("using UnityEngine.AddressableAssets;");
         stringBuilder.AppendLine("using UnityEngine.ResourceManagement.AsyncOperations;");
+        stringBuilder.AppendLine("using DracoRuan.Foundation.Initializers.Interfaces;");
         
         stringBuilder.AppendLine("");
         stringBuilder.AppendLine($"namespace DracoRuan.VContainer{registrationModel.LifetimeScopeName}Support.Generated");
@@ -117,6 +118,8 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("              {");
         stringBuilder.AppendLine("                   installer.Install(builder);");
         stringBuilder.AppendLine($"                   installer.transform.SetParent(DracoRuan.Foundation.Initializers.{registrationModel.LifetimeScopeName}.LifetimeScopeInstallerRoot);");
+        stringBuilder.AppendLine("                    if (installer is IAsyncInstallable installable)");
+        stringBuilder.AppendLine("                         await UniTask.WaitUntil(() => installable.IsInstalled);");
         stringBuilder.AppendLine("              }");
         stringBuilder.AppendLine("        }");
         stringBuilder.AppendLine("");
@@ -151,6 +154,7 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("using Cysharp.Threading.Tasks;");
         stringBuilder.AppendLine("using UnityEngine.AddressableAssets;");
         stringBuilder.AppendLine("using UnityEngine.ResourceManagement.AsyncOperations;");
+        stringBuilder.AppendLine("using DracoRuan.Foundation.Initializers.Interfaces;");
         
         stringBuilder.AppendLine("");
         stringBuilder.AppendLine($"namespace DracoRuan.VContainer{registrationModel.LifetimeScopeName}Support.Generated");
@@ -161,7 +165,11 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("        {");
         stringBuilder.AppendLine($"              {registrationModel.FullInstallerName} installer = await InitializeInstaller(\"{registrationModel.InstallerKey}\");");
         stringBuilder.AppendLine("               if (installer != null)");
+        stringBuilder.AppendLine("              {");
         stringBuilder.AppendLine("                   installer.Install(builder);");
+        stringBuilder.AppendLine("                  if (installer is IAsyncInstallable installable)");
+        stringBuilder.AppendLine("                      await UniTask.WaitUntil(() => installable.IsInstalled);");
+        stringBuilder.AppendLine("              }");
         stringBuilder.AppendLine("        }");
         stringBuilder.AppendLine("");
         
@@ -190,17 +198,21 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         
         stringBuilder.AppendLine("using VContainer;");
         stringBuilder.AppendLine("using VContainer.Unity;");
+        stringBuilder.AppendLine("using Cysharp.Threading.Tasks;");
         stringBuilder.AppendLine("using UnityEngine;");
+        stringBuilder.AppendLine("using DracoRuan.Foundation.Initializers.Interfaces;");
         
         stringBuilder.AppendLine("");
         stringBuilder.AppendLine($"namespace DracoRuan.VContainer{registrationModel.LifetimeScopeName}Support.Generated");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine($"    public static class VContainer{registrationModel.LifetimeScopeName}InstallerExtensions");
+        stringBuilder.AppendLine($"    public static class VContainer{registrationModel.LifetimeScopeName}{registrationModel.MinimalInstallerName}InstallerExtensions");
         stringBuilder.AppendLine("    {");
-        stringBuilder.AppendLine($"        public static void RegisterInstallerAuto{registrationModel.LifetimeScopeName}(this IContainerBuilder builder)");
+        stringBuilder.AppendLine($"        public static async UniTask RegisterInstallerAuto{registrationModel.LifetimeScopeName}(this IContainerBuilder builder)");
         stringBuilder.AppendLine("        {");
-        stringBuilder.AppendLine($"              {registrationModel.FullInstallerName} installer = new {registrationModel.InstallerKey}();");
+        stringBuilder.AppendLine($"              {registrationModel.FullInstallerName} installer = new {registrationModel.FullInstallerName}();");
         stringBuilder.AppendLine("              installer.Install(builder);");
+        stringBuilder.AppendLine("              if (installer is IAsyncInstallable installable)");
+        stringBuilder.AppendLine("                  await UniTask.WaitUntil(() => installable.IsInstalled);");
         stringBuilder.AppendLine("        }");
         stringBuilder.AppendLine("    }");
         stringBuilder.AppendLine("}");

@@ -1,6 +1,6 @@
 ﻿using VContainer.Unity;
 
-namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
+namespace DracoRuan.Foundation.Initializers.Interfaces
 {
     public interface IAsyncInstallable : IInstaller
     {
