@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Text;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -69,10 +70,11 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
             return;
 
         StringBuilder stringBuilder = new();
-        foreach (IGrouping<string, InstallerRegistrationModel> grouping in models.GroupBy(registrationModel =>
-                     registrationModel.LifetimeScopeName))
+        IEnumerable<IGrouping<string, InstallerRegistrationModel>> registrationModelGroups =
+            models.GroupBy(registrationModel => registrationModel.LifetimeScopeName);
+        foreach (IGrouping<string, InstallerRegistrationModel> grouping in registrationModelGroups)
         {
-            foreach (InstallerRegistrationModel model in models)
+            foreach (InstallerRegistrationModel model in grouping)
             {
                 stringBuilder.Clear();
                 SourceText generatedCode = model.InstallerInstanceType switch
@@ -105,9 +107,9 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("using UnityEngine.ResourceManagement.AsyncOperations;");
         
         stringBuilder.AppendLine("");
-        stringBuilder.AppendLine("namespace DracoRuan.VContainerSupport.Generated");
+        stringBuilder.AppendLine($"namespace DracoRuan.VContainer{registrationModel.LifetimeScopeName}Support.Generated");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine($"    public static class VContainer{registrationModel.LifetimeScopeName}Extensions");
+        stringBuilder.AppendLine($"    public static class VContainer{registrationModel.LifetimeScopeName}InstallerExtensions");
         stringBuilder.AppendLine("    {");
         stringBuilder.AppendLine($"        public static UniTask RegisterInstallerAuto{registrationModel.LifetimeScopeName}(this IContainerBuilder builder)");
         stringBuilder.AppendLine("        {");
@@ -152,9 +154,9 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("using UnityEngine.ResourceManagement.AsyncOperations;");
         
         stringBuilder.AppendLine("");
-        stringBuilder.AppendLine("namespace DracoRuan.VContainerSupport.Generated");
+        stringBuilder.AppendLine($"namespace DracoRuan.VContainer{registrationModel.LifetimeScopeName}Support.Generated");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine($"    public static class VContainer{registrationModel.LifetimeScopeName}Extensions");
+        stringBuilder.AppendLine($"    public static class VContainer{registrationModel.LifetimeScopeName}InstallerExtensions");
         stringBuilder.AppendLine("    {");
         stringBuilder.AppendLine($"        public static UniTask RegisterInstallerAuto{registrationModel.LifetimeScopeName}(this IContainerBuilder builder)");
         stringBuilder.AppendLine("        {");
@@ -192,9 +194,9 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("using UnityEngine;");
         
         stringBuilder.AppendLine("");
-        stringBuilder.AppendLine("namespace DracoRuan.VContainerSupport.Generated");
+        stringBuilder.AppendLine($"namespace DracoRuan.VContainer{registrationModel.LifetimeScopeName}Support.Generated");
         stringBuilder.AppendLine("{");
-        stringBuilder.AppendLine($"    public static class VContainer{registrationModel.LifetimeScopeName}Extensions");
+        stringBuilder.AppendLine($"    public static class VContainer{registrationModel.LifetimeScopeName}InstallerExtensions");
         stringBuilder.AppendLine("    {");
         stringBuilder.AppendLine($"        public static void RegisterInstallerAuto{registrationModel.LifetimeScopeName}(this IContainerBuilder builder)");
         stringBuilder.AppendLine("        {");
