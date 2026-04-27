@@ -11,8 +11,7 @@ namespace VContainerSupport.Generators;
 [Generator]
 public class RegisterServiceGenerator : IIncrementalGenerator
 {
-    private const string AttributeShortName = "RegisterService";
-    private const string AttributeFullName = "RegisterServiceAttribute";
+    private const string AutoRegisterServiceAttributeName = "RegisterService";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -31,7 +30,7 @@ public class RegisterServiceGenerator : IIncrementalGenerator
         ClassDeclarationSyntax classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
         INamedTypeSymbol symbol = context.SemanticModel.GetDeclaredSymbol(classDeclarationSyntax) as INamedTypeSymbol;
         AttributeData attributeData = symbol?.GetAttributes().FirstOrDefault(attribute =>
-            attribute.AttributeClass?.Name is AttributeFullName or AttributeShortName);
+            attribute.AttributeClass?.Name is AutoRegisterServiceAttributeName);
 
         if (attributeData == null)
             return null;
