@@ -111,8 +111,8 @@ public class RegisterServiceGenerator : IIncrementalGenerator
                 string asSelf = item.AsSelf ? ".AsSelf()" : "";
                 string keyed = !string.IsNullOrEmpty(item.WithKey) ? $".Keyed({item.WithKey})" : "";
                 string codeCommand = !isEntryPoint
-                    ? $"builder.Register<{item.ServiceName}>(Lifetime.{item.LifetimeScope}){asImplementInterfaces}{asSelf}{keyed};"
-                    : $"builder.RegisterEntryPoint<{item.ServiceName}>(Lifetime.{item.LifetimeScope}{asImplementInterfaces}{asSelf}{keyed});";
+                    ? $"            builder.Register<{item.ServiceName}>(Lifetime.{item.LifetimeScope}){asImplementInterfaces}{asSelf}{keyed};"
+                    : $"            builder.RegisterEntryPoint<{item.ServiceName}>(Lifetime.{item.LifetimeScope}){asImplementInterfaces}{asSelf}{keyed};";
                 stringBuilder.AppendLine(codeCommand);
             }
 

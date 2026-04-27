@@ -1,4 +1,3 @@
-using DracoRuan.VContainerSupport.Generated;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
