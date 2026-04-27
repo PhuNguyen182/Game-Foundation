@@ -2,12 +2,12 @@
 
 public record InstallerRegistrationModel(
     string InstallerKey,
-    string InstallerDataType,
+    string FullInstallerName,
     string LifetimeScopeName,
     string InstallerInstanceType)
 {
     public string InstallerKey { get; } = InstallerKey;
+    public string FullInstallerName { get; } = FullInstallerName;
     public string LifetimeScopeName { get; } = LifetimeScopeName;
-    public string InstallerDataType { get; } = InstallerDataType;
     public string InstallerInstanceType { get; } = InstallerInstanceType;
 }
