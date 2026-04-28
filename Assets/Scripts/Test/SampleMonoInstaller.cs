@@ -19,7 +19,6 @@ namespace Test
         public void Install(IContainerBuilder builder)
         {
             this.IsInstalled = true;
-            builder.AutoRegisterAllAvailableInstallers();
         }
     }
 

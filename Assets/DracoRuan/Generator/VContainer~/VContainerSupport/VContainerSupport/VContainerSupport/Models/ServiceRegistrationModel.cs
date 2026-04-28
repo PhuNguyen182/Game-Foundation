@@ -4,7 +4,7 @@ public record ServiceRegistrationModel(
     string ServiceName,
     string LifetimeScope,
     string LifetimeScopeName,
-    string InstallerName,
+    string MinimalServiceName,
     bool AsImplementInterfaces,
     bool IsEntryPoint,
     bool AsSelf,
@@ -13,7 +13,7 @@ public record ServiceRegistrationModel(
     public string ServiceName { get; } = ServiceName;
     public string LifetimeScope { get; } = LifetimeScope;
     public string LifetimeScopeName { get; } = LifetimeScopeName;
-    public string InstallerName { get; } = InstallerName;
+    public string MinimalServiceName { get; } = MinimalServiceName;
     public bool AsImplementInterfaces { get; } = AsImplementInterfaces;
     public bool IsEntryPoint { get; } = IsEntryPoint;
     public bool AsSelf { get; } = AsSelf;

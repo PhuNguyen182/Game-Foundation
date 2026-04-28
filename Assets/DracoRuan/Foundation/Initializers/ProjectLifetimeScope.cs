@@ -4,6 +4,7 @@ using VContainer.Unity;
 
 namespace DracoRuan.Foundation.Initializers
 {
+    [DefaultExecutionOrder(-50)]
     public class ProjectLifetimeScope : LifetimeScope
     {
         public static Transform LifetimeScopeInstallerRoot;

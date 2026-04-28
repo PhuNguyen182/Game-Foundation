@@ -106,7 +106,7 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
                     continue;
 
                 BuildInstallerManager(model);
-                context.AddSource($"VContainer_{model.MinimalInstallerName}Register.g.cs", generatedCode);
+                context.AddSource($"VContainer{grouping.Key}{model.MinimalInstallerName}Register.g.cs", generatedCode);
             }
 
             InstallerManagerStringBuilder.Append("\n");
