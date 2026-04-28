@@ -21,9 +21,9 @@ namespace DracoRuan.Foundation.Initializers
 
         private async UniTask RegisterServices(IContainerBuilder builder)
         {
-            await builder.AutoRegisterAllAvailableInstallers();
-            builder.AutoRegisterAllProjectLifetimeScopeEntryPoints();
-            builder.AutoRegisterAllProjectLifetimeScopeServices();
+            await builder.RegisterAllProjectLifetimeScopeInstallers();
+            builder.RegisterAllProjectLifetimeScopeEntryPoints();
+            builder.RegisterAllProjectLifetimeScopeServices();
         }
     }
 }

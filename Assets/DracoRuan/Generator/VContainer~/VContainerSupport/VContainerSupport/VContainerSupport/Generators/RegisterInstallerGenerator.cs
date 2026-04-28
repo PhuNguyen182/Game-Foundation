@@ -113,7 +113,7 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
             InstallerManagerStringBuilder.Append(InstallerNamespaceStringBuilder);
             InstallerManagerStringBuilder.AppendLine($"     public static class {grouping.Key}InstallerRegisterManagerExtension");
             InstallerManagerStringBuilder.AppendLine("     {");
-            InstallerManagerStringBuilder.AppendLine($"          public static async UniTask AutoRegisterAllAvailableInstallers(this IContainerBuilder builder)");
+            InstallerManagerStringBuilder.AppendLine($"          public static async UniTask RegisterAll{grouping.Key}Installers(this IContainerBuilder builder)");
             InstallerManagerStringBuilder.AppendLine("          {");
             InstallerManagerStringBuilder.AppendLine("               using (ListPool<UniTask>.Get(out List<UniTask> loadTasks))");
             InstallerManagerStringBuilder.AppendLine("               {");
