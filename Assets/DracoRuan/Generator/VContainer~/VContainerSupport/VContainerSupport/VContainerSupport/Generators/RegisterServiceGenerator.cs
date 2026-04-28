@@ -117,7 +117,6 @@ public class RegisterServiceGenerator : IIncrementalGenerator
             EntryPointRegisterBaseBuilder.AppendLine($"namespace DracoRuan.VContainer{serviceRegistrationModels.Key}EntryPointRegisterSupport.Generated");
             EntryPointRegisterBaseBuilder.AppendLine("{");
             
-            
             foreach (ServiceRegistrationModel registrationModel in serviceRegistrationModels)
             {
                 string serviceType = registrationModel.IsEntryPoint ? "EntryPoint" : "Service";
