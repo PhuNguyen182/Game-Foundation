@@ -1,3 +1,5 @@
+using Cysharp.Threading.Tasks;
+using DracoRuan.VContainerInstallerSupport.Generated;
 using DracoRuan.VContainerProjectLifetimeScopeEntryPointRegisterSupport.Generated;
 using DracoRuan.VContainerProjectLifetimeScopeServiceRegisterSupport.Generated;
 using UnityEngine;
@@ -14,8 +16,14 @@ namespace DracoRuan.Foundation.Initializers
         protected override void Configure(IContainerBuilder builder)
         {
             LifetimeScopeInstallerRoot = this.transform;
-            builder.AutoRegisterAllProjectLifetimeScopeServices();
+            this.RegisterServices(builder).Forget();
+        }
+
+        private async UniTask RegisterServices(IContainerBuilder builder)
+        {
+            await builder.AutoRegisterAllAvailableInstallers();
             builder.AutoRegisterAllProjectLifetimeScopeEntryPoints();
+            builder.AutoRegisterAllProjectLifetimeScopeServices();
         }
     }
 }

@@ -129,9 +129,9 @@ public class RegisterServiceGenerator : IIncrementalGenerator
             
             ServiceRegisterBaseBuilder.Append(ServiceRegisterNamespaceBuilder);
             ServiceRegisterBaseBuilder.AppendLine("");
-            ServiceRegisterBaseBuilder.AppendLine($"        public static class AutoRegister{serviceRegistrationModels.Key}Services");
+            ServiceRegisterBaseBuilder.AppendLine($"        public static class {serviceRegistrationModels.Key}ServicesRegistration");
             ServiceRegisterBaseBuilder.AppendLine("        {");
-            ServiceRegisterBaseBuilder.AppendLine($"            public static void AutoRegisterAll{serviceRegistrationModels.Key}Services(this IContainerBuilder builder)");
+            ServiceRegisterBaseBuilder.AppendLine($"            public static void RegisterAll{serviceRegistrationModels.Key}Services(this IContainerBuilder builder)");
             ServiceRegisterBaseBuilder.AppendLine("            {");
             
             ServiceRegisterBaseBuilder.Append(ServiceRegisterComponentBuilder);
@@ -141,9 +141,9 @@ public class RegisterServiceGenerator : IIncrementalGenerator
             
             EntryPointRegisterBaseBuilder.Append(EntryPointRegisterNamespaceBuilder);
             EntryPointRegisterBaseBuilder.AppendLine("");
-            EntryPointRegisterBaseBuilder.AppendLine($"        public static class AutoRegister{serviceRegistrationModels.Key}EntryPoints");
+            EntryPointRegisterBaseBuilder.AppendLine($"        public static class {serviceRegistrationModels.Key}EntryPointsRegistration");
             EntryPointRegisterBaseBuilder.AppendLine("        {");
-            EntryPointRegisterBaseBuilder.AppendLine($"            public static void AutoRegisterAll{serviceRegistrationModels.Key}EntryPoints(this IContainerBuilder builder)");
+            EntryPointRegisterBaseBuilder.AppendLine($"            public static void RegisterAll{serviceRegistrationModels.Key}EntryPoints(this IContainerBuilder builder)");
             EntryPointRegisterBaseBuilder.AppendLine("            {");
             
             EntryPointRegisterBaseBuilder.Append(EntryPointRegisterComponentBuilder);
