@@ -1,13 +1,17 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using Object = UnityEngine.Object;
 
 namespace DracoRuan.Utilities.ObjectPooling
 {
-    public class GameObjectPool : IGameObjectPool
+    public class GameObjectPool : IGameObjectPool, IDisposable
     {
         private readonly ObjectPool<GameObject> _objectPool;
         private readonly HashSet<int> _spawnedInstanceIds;
+        
+        private bool _isDisposed;
         
         public int PoolHashKey { get; }
 
@@ -36,20 +40,11 @@ namespace DracoRuan.Utilities.ObjectPooling
                 return instance;
             }
 
-            void OnGetInstance(GameObject instance)
-            {
-                instance.SetActive(true);
-            }
-
-            void OnReleaseInstance(GameObject instance)
-            {
-                instance.SetActive(false);
-            }
-
-            void OnDestroyInstance(GameObject instance)
-            {
-                Object.Destroy(instance);
-            }
+            void OnGetInstance(GameObject instance) => instance.SetActive(true);
+            
+            void OnReleaseInstance(GameObject instance) => instance.SetActive(false);
+            
+            void OnDestroyInstance(GameObject instance) => Object.Destroy(instance);
         }
         
         public GameObject Spawn()
@@ -73,10 +68,35 @@ namespace DracoRuan.Utilities.ObjectPooling
             return this._spawnedInstanceIds.Contains(instanceId);
         }
 
-        public void ClearPool()
+        private void ReleaseUnmanagedResources()
         {
-            this._objectPool.Clear();
-            this._spawnedInstanceIds.Clear();
+            
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (this._isDisposed)
+                return;
+            
+            this.ReleaseUnmanagedResources();
+            if (disposing)
+            {
+                this._objectPool?.Dispose();
+                this._spawnedInstanceIds.Clear();
+            }
+            
+            this._isDisposed = true;
+        }
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        ~GameObjectPool()
+        {
+            this.Dispose(false);
         }
     }
 }

@@ -3,98 +3,102 @@ using UnityEngine;
 
 namespace DracoRuan.Utilities.ObjectPooling
 {
-    public static class ObjectPoolManager<T> where T : Component
+    public static class ObjectPoolManager<TPoolableObject> where TPoolableObject : Component
     {
-        private static readonly Dictionary<int, GameObjectPool<T>> ObjectPools = new();
+        private static readonly Dictionary<int, GameObjectPool<TPoolableObject>> ObjectPools = new();
 
-        public static void PreloadPool(T prefab, int defaultCapacity = ObjectPoolConstant.PoolCapacity, 
+        public static void PreloadPool(TPoolableObject prefab, int defaultCapacity = ObjectPoolConstant.PoolCapacity,
             int preloadCount = ObjectPoolConstant.PoolMaxSize)
         {
             int hashId = prefab.gameObject.GetInstanceID();
-            if (ObjectPools.ContainsKey(hashId)) 
+            if (ObjectPools.ContainsKey(hashId))
                 return;
-            
-            GameObjectPool<T> objectPool = ObjectPoolFactory.CreateObjectPool(prefab, defaultCapacity, preloadCount);
+
+            GameObjectPool<TPoolableObject> objectPool =
+                ObjectPoolFactory.CreateObjectPool(prefab, defaultCapacity, preloadCount);
             ObjectPools.Add(objectPool.PoolHashKey, objectPool);
         }
 
-        public static T Spawn(T prefab)
+        public static TPoolableObject Spawn(TPoolableObject prefab)
         {
-            T instance;
+            TPoolableObject instance;
             int hashId = prefab.gameObject.GetInstanceID();
-            if (ObjectPools.TryGetValue(hashId, out GameObjectPool<T> objectPool))
+            if (ObjectPools.TryGetValue(hashId, out GameObjectPool<TPoolableObject> objectPool))
             {
                 instance = objectPool.Spawn();
             }
             else
             {
                 PreloadPool(prefab);
-                GameObjectPool<T> createdObjectPool = ObjectPools[hashId];
+                GameObjectPool<TPoolableObject> createdObjectPool = ObjectPools[hashId];
                 instance = createdObjectPool.Spawn();
             }
-            
+
             return instance;
         }
 
-        public static T Spawn(T prefab, Transform parent)
+        public static TPoolableObject Spawn(TPoolableObject prefab, Transform parent)
         {
-            T instance = Spawn(prefab);
-            instance.transform.SetParent(parent);
-            return instance;
-        }
-        
-        public static T Spawn(T prefab, Vector3 position)
-        {
-            T instance = Spawn(prefab);
-            instance.transform.position = position;
-            return instance;
-        }
-        
-        public static T Spawn(T prefab, Vector3 position, Transform parent)
-        {
-            T instance = Spawn(prefab);
-            instance.transform.position = position;
-            instance.transform.SetParent(parent);
-            return instance;
-        }
-        
-        public static T Spawn(T prefab, Vector3 position, Quaternion rotation)
-        {
-            T instance = Spawn(prefab);
-            instance.transform.SetPositionAndRotation(position, rotation);
-            return instance;
-        }
-        
-        public static T Spawn(T prefab, Vector3 position, Quaternion rotation, Transform parent)
-        {
-            T instance = Spawn(prefab);
-            instance.transform.SetPositionAndRotation(position, rotation);
+            TPoolableObject instance = Spawn(prefab);
             instance.transform.SetParent(parent);
             return instance;
         }
 
-        public static void Despawn(T instance)
+        public static TPoolableObject Spawn(TPoolableObject prefab, Vector3 position)
+        {
+            TPoolableObject instance = Spawn(prefab);
+            instance.transform.position = position;
+            return instance;
+        }
+
+        public static TPoolableObject Spawn(TPoolableObject prefab, Vector3 position, Transform parent)
+        {
+            TPoolableObject instance = Spawn(prefab);
+            instance.transform.position = position;
+            instance.transform.SetParent(parent);
+            return instance;
+        }
+
+        public static TPoolableObject Spawn(TPoolableObject prefab, Vector3 position, Quaternion rotation)
+        {
+            TPoolableObject instance = Spawn(prefab);
+            instance.transform.SetPositionAndRotation(position, rotation);
+            return instance;
+        }
+
+        public static TPoolableObject Spawn(TPoolableObject prefab, Vector3 position, Quaternion rotation,
+            Transform parent)
+        {
+            TPoolableObject instance = Spawn(prefab);
+            instance.transform.SetPositionAndRotation(position, rotation);
+            instance.transform.SetParent(parent);
+            return instance;
+        }
+
+        public static void Despawn(TPoolableObject instance)
         {
             foreach (var kvp in ObjectPools)
             {
-                if (!kvp.Value.ContainInstance(instance)) 
+                if (!kvp.Value.ContainInstance(instance))
                     continue;
-                
-                GameObjectPool<T> objectPool = kvp.Value;
+
+                GameObjectPool<TPoolableObject> objectPool = kvp.Value;
                 objectPool.Despawn(instance);
                 return;
             }
 
-            Debug.Log($"This Object {instance.name} with instance id {instance.gameObject.GetInstanceID()} has not been spawned in any object pool.");
+            Debug.Log($"This Object {instance.name} with instance id {instance.gameObject.GetInstanceID()} has not been spawned in any object pool. Destroy it instead!");
             Object.Destroy(instance);
         }
 
-        public static void ClearPool()
+        public static void ClearObjectPool(TPoolableObject originalPrefab)
         {
-            foreach (var kvp in ObjectPools)
-                kvp.Value.ClearPool();
-            
-            ObjectPools.Clear();
+            int instanceId = originalPrefab.gameObject.GetInstanceID();
+            if (!ObjectPools.TryGetValue(instanceId, out GameObjectPool<TPoolableObject> objectPool))
+                return;
+
+            objectPool.Dispose();
+            ObjectPools.Remove(instanceId);
         }
     }
 }

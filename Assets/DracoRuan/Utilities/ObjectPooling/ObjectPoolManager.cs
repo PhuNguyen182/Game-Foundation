@@ -7,7 +7,7 @@ namespace DracoRuan.Utilities.ObjectPooling
     {
         private static readonly Dictionary<int, GameObjectPool> ObjectPools = new();
 
-        public static void PreloadPool(GameObject prefab, int defaultCapacity = ObjectPoolConstant.PoolCapacity, 
+        public static void PreloadPool(GameObject prefab, int defaultCapacity = ObjectPoolConstant.PoolCapacity,
             int preloadCount = ObjectPoolConstant.PoolMaxSize)
         {
             int hashId = prefab.GetInstanceID();
@@ -77,24 +77,26 @@ namespace DracoRuan.Utilities.ObjectPooling
         {
             foreach (var kvp in ObjectPools)
             {
-                if (!kvp.Value.ContainInstance(instance)) 
+                if (!kvp.Value.ContainInstance(instance))
                     continue;
-                
+
                 GameObjectPool objectPool = kvp.Value;
                 objectPool.Despawn(instance);
                 return;
             }
 
-            Debug.Log($"This Object {instance.name} with instance id {instance.gameObject.GetInstanceID()} has not been spawned in any object pool.");
+            Debug.Log($"This Object {instance.name} with instance id {instance.GetInstanceID()} has not been spawned in any object pool. Destroy it instead!");
             Object.Destroy(instance);
         }
 
-        public static void ClearPool()
+        public static void ClearObjectPool(GameObject originalPrefab)
         {
-            foreach (var kvp in ObjectPools)
-                kvp.Value.ClearPool();
+            int instanceId = originalPrefab.GetInstanceID();
+            if (!ObjectPools.TryGetValue(instanceId, out GameObjectPool objectPool))
+                return;
 
-            ObjectPools.Clear();
+            objectPool.Dispose();
+            ObjectPools.Remove(instanceId);
         }
     }
 }
