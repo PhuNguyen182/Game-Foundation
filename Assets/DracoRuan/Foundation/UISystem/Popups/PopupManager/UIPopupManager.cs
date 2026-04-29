@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DracoRuan.Foundation.UISystem.Popups.PopupInstance;
 using DracoRuan.Foundation.UISystem.Views;
+using DracoRuan.Utilities.ObjectPooling;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -31,7 +32,7 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
                     if (popupEntry.shouldPreload)
                     {
                         BaseUIPopup popupPrefab = popupEntry.popupPrefab;
-                        GameObjectPoolManager.PoolPreLoad(popupPrefab, 1);
+                        ObjectPooling.PreloadPool(popupPrefab, 1);
                     }
                 }
             }
@@ -43,7 +44,7 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
             if (!popupPrefab || popupPrefab is not TPopup targetPopup)
                 return null;
 
-            TPopup result = GameObjectPoolManager.SpawnInstance(targetPopup, Vector3.zero, Quaternion.identity, parent);
+            TPopup result = ObjectPooling.Spawn(targetPopup, Vector3.zero, Quaternion.identity, parent);
             result.transform.SetAsLastSibling();
             result.SetPopupManager(this);
             
@@ -61,7 +62,7 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
             if (!popupPrefab || popupPrefab is not TPopup targetPopup) 
                 return null;
             
-            TPopup result = GameObjectPoolManager.SpawnInstance(targetPopup, Vector3.zero, Quaternion.identity, parent);
+            TPopup result = ObjectPooling.Spawn(targetPopup, Vector3.zero, Quaternion.identity, parent);
             result.transform.SetAsLastSibling();
             result.SetPopupManager(this);
             result.BindModelData(model);
