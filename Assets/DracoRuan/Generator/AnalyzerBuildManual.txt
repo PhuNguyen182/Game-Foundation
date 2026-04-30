@@ -1,0 +1,3 @@
+# Có thể thay thế bằng file .csproj khác tùy thuộc vào dự án khác nhau
+
+dotnet build "E:\Projects\Draco Ruan Game Foundation\Game-Foundation\Assets\DracoRuan\Generator\VContainer~\VContainerSupport\VContainerAnalyzer\VContainerAnalyzer\VContainerAnalyzer.csproj"
