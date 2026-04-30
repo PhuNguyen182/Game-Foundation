@@ -20,7 +20,7 @@ namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
     /// <code>.AsSelf()</code>
     /// <param name="WithKey"> Register service with specified key</param>
     /// <code>.Keyed("123")</code>
-    [AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class RegisterServiceAttribute : Attribute
     {
         public string LifetimeScope { get; set; } = nameof(Lifetime.Scoped);
