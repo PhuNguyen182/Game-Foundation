@@ -111,7 +111,7 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("              {");
         stringBuilder.AppendLine("                   installer.Install(builder);");
         stringBuilder.AppendLine("                   if (installer is IAsyncInstallable installable)");
-        stringBuilder.AppendLine("                         await UniTask.WaitUntil(() => installable.IsInstalled);");
+        stringBuilder.AppendLine("                         await UniTask.WaitUntil(() => installable.IsInstalled());");
         stringBuilder.AppendLine("              }");
         stringBuilder.AppendLine("        }");
         stringBuilder.AppendLine("");
@@ -162,7 +162,7 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("              {");
         stringBuilder.AppendLine("                   installer.Install(builder);");
         stringBuilder.AppendLine("                  if (installer is IAsyncInstallable installable)");
-        stringBuilder.AppendLine("                      await UniTask.WaitUntil(() => installable.IsInstalled);");
+        stringBuilder.AppendLine("                      await UniTask.WaitUntil(() => installable.IsInstalled());");
         stringBuilder.AppendLine("              }");
         stringBuilder.AppendLine("        }");
         stringBuilder.AppendLine("");
@@ -208,7 +208,7 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine($"              {registrationModel.FullInstallerName} installer = new {registrationModel.FullInstallerName}();");
         stringBuilder.AppendLine("              installer.Install(builder);");
         stringBuilder.AppendLine("              if (installer is IAsyncInstallable installable)");
-        stringBuilder.AppendLine("                  await UniTask.WaitUntil(() => installable.IsInstalled);");
+        stringBuilder.AppendLine("                  await UniTask.WaitUntil(() => installable.IsInstalled());");
         stringBuilder.AppendLine("        }");
         stringBuilder.AppendLine("    }");
         stringBuilder.AppendLine("}");
