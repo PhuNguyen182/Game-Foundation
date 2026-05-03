@@ -151,7 +151,7 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("using DracoRuan.Foundation.Initializers.Interfaces;");
         
         stringBuilder.AppendLine("");
-        stringBuilder.AppendLine($"namespace DracoRuan.VContainer{registrationModel.MinimalInstallerName}Support.Generated");
+        stringBuilder.AppendLine($"namespace DracoRuan.VContainerInstallerSupport.Generated");
         stringBuilder.AppendLine("{");
         stringBuilder.AppendLine($"    public static class VContainer{registrationModel.MinimalInstallerName}ScriptableObjectInstallerExtensions");
         stringBuilder.AppendLine("    {");
@@ -199,7 +199,7 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("using DracoRuan.Foundation.Initializers.Interfaces;");
         
         stringBuilder.AppendLine("");
-        stringBuilder.AppendLine($"namespace DracoRuan.VContainer{registrationModel.MinimalInstallerName}Support.Generated");
+        stringBuilder.AppendLine($"namespace DracoRuan.VContainerInstallerSupport.Generated");
         stringBuilder.AppendLine("{");
         stringBuilder.AppendLine($"    public static class VContainer{registrationModel.MinimalInstallerName}PlainCSharpInstallerExtensions");
         stringBuilder.AppendLine("    {");
