@@ -13,10 +13,11 @@ namespace DracoRuan.Foundation.Initializers
         protected override void Configure(IContainerBuilder builder)
         {
             LifetimeScopeInstallerRoot = this.transform;
-            this.RegisterServices(builder).Forget();
+            builder.RegisterEntryPoint<AppInitializationPipelineEntryPoint>(Lifetime.Scoped);
+            this.RegisterServicesAndInstaller(builder).Forget();
         }
 
-        private async UniTask RegisterServices(IContainerBuilder builder)
+        private async UniTask RegisterServicesAndInstaller(IContainerBuilder builder)
         {
             await UniTask.CompletedTask;
         }
