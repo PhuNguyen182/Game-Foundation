@@ -9,7 +9,7 @@ namespace Test
     [AutoInstall(InstallerKey = nameof(SampleMonoInstaller2), InstallerInstanceType = nameof(InstallerType.MonoBehaviour))]
     public class SampleMonoInstaller2 : MonoBehaviour, IAsyncInstallable
     {
-        public bool IsInstalled { get; private set; }
+        private bool _isInstalled;
 
         private void Awake()
         {
@@ -18,7 +18,9 @@ namespace Test
 
         public void Install(IContainerBuilder builder)
         {
-            this.IsInstalled = true;
+            this._isInstalled = true;
         }
+
+        public bool IsInstalled() => this._isInstalled;
     }
 }

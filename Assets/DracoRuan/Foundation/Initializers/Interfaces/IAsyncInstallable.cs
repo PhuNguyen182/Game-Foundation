@@ -4,6 +4,6 @@ namespace DracoRuan.Foundation.Initializers.Interfaces
 {
     public interface IAsyncInstallable : IInstaller
     {
-        public bool IsInstalled { get; }
+        public bool IsInstalled();
     }
 }
