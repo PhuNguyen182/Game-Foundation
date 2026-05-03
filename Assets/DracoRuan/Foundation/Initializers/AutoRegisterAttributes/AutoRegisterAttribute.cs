@@ -21,7 +21,7 @@ namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
     /// <param name="WithKey"> Register service with specified key</param>
     /// <code>.Keyed("123")</code>
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
-    public class RegisterServiceAttribute : Attribute
+    public class AutoRegisterAttribute : Attribute
     {
         public string LifetimeScope { get; set; } = nameof(Lifetime.Scoped);
         public string LifetimeScopeName { get; set; } = nameof(ProjectLifetimeScope);

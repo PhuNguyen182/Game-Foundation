@@ -1,16 +1,14 @@
 ﻿using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using DracoRuan.Foundation.Initializers;
 using DracoRuan.Foundation.Initializers.AutoRegisterAttributes;
 using DracoRuan.Foundation.Initializers.Interfaces;
-using DracoRuan.VContainerInstallerSupport.Generated;
 using UnityEngine.Pool;
 using UnityEngine;
 using VContainer;
 
 namespace Test
 {
-    [RegisterInstaller(InstallerKey = nameof(SampleMonoInstaller), LifetimeScopeName = nameof(ProjectLifetimeScope), 
+    [AutoInstall(InstallerKey = nameof(SampleMonoInstaller), 
         InstallerInstanceType = nameof(InstallerType.MonoBehaviour))]
     public class SampleMonoInstaller : MonoBehaviour, IAsyncInstallable
     {

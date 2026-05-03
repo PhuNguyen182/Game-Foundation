@@ -1,10 +1,7 @@
-using Cysharp.Threading.Tasks;
-using DracoRuan.VContainerInstallerSupport.Generated;
-using DracoRuan.VContainerProjectLifetimeScopeEntryPointRegisterSupport.Generated;
-using DracoRuan.VContainerProjectLifetimeScopeServiceRegisterSupport.Generated;
-using UnityEngine;
 using VContainer;
 using VContainer.Unity;
+using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 namespace DracoRuan.Foundation.Initializers
 {
@@ -21,9 +18,7 @@ namespace DracoRuan.Foundation.Initializers
 
         private async UniTask RegisterServices(IContainerBuilder builder)
         {
-            await builder.RegisterAllProjectLifetimeScopeInstallers();
-            builder.RegisterAllProjectLifetimeScopeEntryPoints();
-            builder.RegisterAllProjectLifetimeScopeServices();
+            await UniTask.CompletedTask;
         }
     }
 }

@@ -6,7 +6,7 @@ using MessagePipe;
 
 namespace DracoRuan.CoreSystems.MessageBrokers.Core
 {
-    [RegisterInstaller(InstallerKey = nameof(MessageBrokerInstaller), LifetimeScopeName = nameof(ProjectLifetimeScope))]
+    [AutoInstall(InstallerKey = nameof(MessageBrokerInstaller))]
     public class MessageBrokerInstaller : IAsyncInstallable
     {
         public bool IsInstalled { get; private set; }
