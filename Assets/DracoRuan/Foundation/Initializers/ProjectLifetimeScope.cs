@@ -2,6 +2,7 @@ using VContainer;
 using VContainer.Unity;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
+using DracoRuan.VContainerMessageBrokerInstallerSupport.Generated;
 
 namespace DracoRuan.Foundation.Initializers
 {
@@ -18,6 +19,7 @@ namespace DracoRuan.Foundation.Initializers
 
         private async UniTask RegisterServices(IContainerBuilder builder)
         {
+            await builder.InstallMessageBrokerInstaller();
             await UniTask.CompletedTask;
         }
     }

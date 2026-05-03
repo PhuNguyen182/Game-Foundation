@@ -4,12 +4,13 @@ using DracoRuan.Foundation.Initializers.AutoRegisterAttributes;
 using DracoRuan.Foundation.Initializers.Interfaces;
 using UnityEngine.Pool;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using VContainer;
 
 namespace Test
 {
-    [AutoInstall(InstallerKey = nameof(SampleMonoInstaller), 
-        InstallerInstanceType = nameof(InstallerType.MonoBehaviour))]
+    [AutoInstall(InstallerKey = nameof(SampleMonoInstaller), InstallerInstanceType = nameof(InstallerType.MonoBehaviour))]
     public class SampleMonoInstaller : MonoBehaviour, IAsyncInstallable
     {
         public bool IsInstalled { get; private set; }
