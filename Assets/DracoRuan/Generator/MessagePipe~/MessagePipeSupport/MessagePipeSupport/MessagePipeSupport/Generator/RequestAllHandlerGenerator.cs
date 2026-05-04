@@ -1,5 +1,5 @@
-﻿using System.Linq;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
+using System.Linq;
 using System.Text;
 using MessagePipeSupport.Models;
 using Microsoft.CodeAnalysis;
@@ -8,50 +8,43 @@ using Microsoft.CodeAnalysis.Text;
 
 namespace MessagePipeSupport.Generator;
 
-[Generator]
-public class RequestHandlerGenerator : IIncrementalGenerator
+public class RequestAllHandlerGenerator : IIncrementalGenerator
 {
-    private const string RequestHandlerAttributeName = "RequestHandlerAttribute";
+    private const string RequestAllHandlerAttributeName = "RequestAllHandlerAttribute";
     
     private static readonly StringBuilder RequestHandlerOverallBuilder = new();
     
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        IncrementalValuesProvider<RequestHandlerModel> classDeclarations = context.SyntaxProvider
+        IncrementalValuesProvider<RequestAllHandlerModel> classDeclarations = context.SyntaxProvider
             .CreateSyntaxProvider(
                 predicate: (syntaxNode, _) => syntaxNode is ClassDeclarationSyntax { AttributeLists.Count: > 0 },
                 transform: (syntaxContext, _) => GetRegistrationData(syntaxContext))
             .Where(registrationModel => registrationModel is not null);
         
-        IncrementalValueProvider<ImmutableArray<RequestHandlerModel>> registrationData = classDeclarations.Collect();
+        IncrementalValueProvider<ImmutableArray<RequestAllHandlerModel>> registrationData = classDeclarations.Collect();
         context.RegisterSourceOutput(registrationData, Execute);
     }
 
-    private static RequestHandlerModel GetRegistrationData(GeneratorSyntaxContext context)
+    private static RequestAllHandlerModel GetRegistrationData(GeneratorSyntaxContext context)
     {
         ClassDeclarationSyntax classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
         INamedTypeSymbol symbol = context.SemanticModel.GetDeclaredSymbol(classDeclarationSyntax) as INamedTypeSymbol;
         AttributeData attributeData = symbol?.GetAttributes().FirstOrDefault(attribute =>
-            attribute.AttributeClass?.Name is RequestHandlerAttributeName);
+            attribute.AttributeClass?.Name is RequestAllHandlerAttributeName);
 
         if (attributeData == null)
             return null;
         
         string fullRequestHandlerName = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        string minimalRequestHandlerName = symbol.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
         string requestType = "int";
         string responseType = "int";
-        bool isAsync = false;
         
         foreach (var kvp in attributeData.NamedArguments)
         {
             ITypeSymbol typeSymbol;
             switch (kvp.Key)
             {
-                case "IsAsync":
-                    if (kvp.Value.Value != null) 
-                        isAsync = (bool)kvp.Value.Value;
-                    break;
                 case "RequestType":
                     typeSymbol = kvp.Value.Value as ITypeSymbol;
                     requestType = typeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -63,10 +56,10 @@ public class RequestHandlerGenerator : IIncrementalGenerator
             }
         }
         
-        return new RequestHandlerModel(fullRequestHandlerName, minimalRequestHandlerName, isAsync, requestType, responseType);
+        return new RequestAllHandlerModel(fullRequestHandlerName, requestType, responseType);
     }
 
-    private static void Execute(SourceProductionContext context, ImmutableArray<RequestHandlerModel> models)
+    private static void Execute(SourceProductionContext context, ImmutableArray<RequestAllHandlerModel> models)
     {
         if (models.IsDefaultOrEmpty)
             return;
@@ -82,10 +75,10 @@ public class RequestHandlerGenerator : IIncrementalGenerator
         RequestHandlerOverallBuilder.AppendLine("{");
         RequestHandlerOverallBuilder.AppendLine($"   public static class MessagePipeRequestHandlerExtension");
         RequestHandlerOverallBuilder.AppendLine("   {");
-        RequestHandlerOverallBuilder.AppendLine("       public static void RegisterAllRequestHandlers(this IContainerBuilder builder, MessagePipeOptions options)");
+        RequestHandlerOverallBuilder.AppendLine("       public static void RegisterAllRequestAllHandlers(this IContainerBuilder builder, MessagePipeOptions options)");
         RequestHandlerOverallBuilder.AppendLine("       {");
         
-        foreach (RequestHandlerModel model in models)
+        foreach (RequestAllHandlerModel model in models)
         {
             GetGeneratedCodeForRequestHandler(model, requestHandlerBuilder);
         }
@@ -98,14 +91,11 @@ public class RequestHandlerGenerator : IIncrementalGenerator
         context.AddSource("GeneratedMessagePipeRequestHandlersRegister.g.cs", generatedCode);
     }
 
-    private static void GetGeneratedCodeForRequestHandler(RequestHandlerModel requestHandlerModel,
+    private static void GetGeneratedCodeForRequestHandler(RequestAllHandlerModel requestHandlerModel,
         StringBuilder stringBuilder)
     {
         string requestType = requestHandlerModel.RequestType;
         string responseType = requestHandlerModel.ResponseType;
-        if (!requestHandlerModel.IsAsync)
-            stringBuilder.AppendLine($"            builder.RegisterRequestHandler<{requestType}, {responseType}, {requestHandlerModel.FullRequestHandlerName}>(options);");
-        else
-            stringBuilder.AppendLine($"            builder.RegisterAsyncRequestHandler<{requestType}, {responseType}, {requestHandlerModel.FullRequestHandlerName}>(options);");
+        stringBuilder.AppendLine($"            builder.RegisterRequestHandler<{requestType}, {responseType}, {requestHandlerModel.FullRequestHandlerName}>(options);");
     }
 }

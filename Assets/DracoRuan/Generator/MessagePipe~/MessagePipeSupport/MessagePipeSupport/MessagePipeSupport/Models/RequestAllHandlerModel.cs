@@ -1,15 +1,11 @@
 ﻿namespace MessagePipeSupport.Models;
 
-public record RequestHandlerModel(
+public record RequestAllHandlerModel(
     string FullRequestHandlerName,
-    string MinimalRequestHandlerName,
-    bool IsAsync,
     string RequestType,
     string ResponseType)
 {
     public string FullRequestHandlerName { get; } = FullRequestHandlerName;
-    public string MinimalRequestHandlerName { get; } = MinimalRequestHandlerName;
-    public bool IsAsync { get; } = IsAsync;
     public string RequestType { get; } = RequestType;
     public string ResponseType { get; } = ResponseType;
 }
