@@ -9,9 +9,11 @@ namespace DracoRuan.CoreSystems.MessageBrokers.Core
     public class MessageBrokerInstaller : IAsyncInstallable
     {
         private bool _isInstalled;
+        private IContainerBuilder _builder;
 
         public void Install(IContainerBuilder builder)
         {
+            this._builder = builder;
             builder.RegisterMessagePipe(this.OnMessagePipeRegisterOption);
             builder.RegisterBuildCallback(resolver => GlobalMessagePipe.SetProvider(resolver.AsServiceProvider()));
             this._isInstalled = true;
@@ -19,7 +21,7 @@ namespace DracoRuan.CoreSystems.MessageBrokers.Core
 
         private void OnMessagePipeRegisterOption(MessagePipeOptions options)
         {
-            
+            //this._builder.RegisterAllRequestHandlers(options);
         }
 
         public bool IsInstalled() => this._isInstalled;
