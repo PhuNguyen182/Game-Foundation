@@ -1,7 +1,6 @@
 using VContainer;
-using DracoRuan.Foundation.Initializers;
-using DracoRuan.Foundation.Initializers.AutoRegisterAttributes;
 using DracoRuan.Foundation.Initializers.Interfaces;
+using DracoRuan.Foundation.Initializers.AutoRegisterAttributes;
 using MessagePipe;
 
 namespace DracoRuan.CoreSystems.MessageBrokers.Core
