@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MessagePipeSupport.Sample")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6e257ae3d0f1be8b402e57ce200bfdd4bbc1e68a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+01e7e881623bf97d7d21cc03124a68817a158a0c")]
 [assembly: System.Reflection.AssemblyProductAttribute("MessagePipeSupport.Sample")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MessagePipeSupport.Sample")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
