@@ -1,6 +1,8 @@
 using System;
 using Cysharp.Threading.Tasks;
+using DracoRuan.CoreSystems.MessageBrokers.CustomEvents.SaveDynamicData;
 using DracoRuan.Foundation.DataFlow.DataProviders;
+using MessagePipe;
 using UnityEngine;
 
 namespace Temps.Scripts
@@ -9,11 +11,13 @@ namespace Temps.Scripts
     {
         [SerializeField] private string sourceDataKey;
         
+        private SaveDataEvent _saveDataEvent;
         private IDataProvider _resourceDataProvider;
 
         private void Awake()
         {
             this._resourceDataProvider = new ResourcesDataProvider();
+            this._saveDataEvent = new SaveDataEvent(null);
         }
 
         private void Start()

@@ -1,22 +1,22 @@
-using System;
+﻿using System;
 using MessagePipe;
 
-namespace DracoRuan.CoreSystems.MessageBrokers.CustomEvents.SaveDynamicData
+namespace DracoRuan.CoreSystems.MessageBrokers.CustomEvents.DeleteDynamicData
 {
-    public class SaveDataEvent : IDisposable
+    public class DeleteDataEvent : IDisposable
     {
         private bool _isDisposed;
-        private readonly IDisposablePublisher<SaveDataMessage> _saveDataPublisher;
-        public ISubscriber<SaveDataMessage> SaveDataSubscriber { get; }
+        private readonly IDisposablePublisher<DeleteDataMessage> _deleteDataPublisher;
+        public ISubscriber<DeleteDataMessage> DeleteDataSubscriber { get; }
 
-        public SaveDataEvent(EventFactory eventFactory)
+        public DeleteDataEvent(EventFactory eventFactory)
         {
-            (this._saveDataPublisher, this.SaveDataSubscriber) = eventFactory.CreateEvent<SaveDataMessage>();
+            (this._deleteDataPublisher, this.DeleteDataSubscriber) = eventFactory.CreateEvent<DeleteDataMessage>();
         }
 
-        public void SendSaveDataMessage(SaveDataMessage message)
+        public void SendSaveDataMessage(DeleteDataMessage message)
         {
-            this._saveDataPublisher?.Publish(message);
+            this._deleteDataPublisher?.Publish(message);
         }
         
         private void ReleaseUnmanagedResources()
@@ -26,7 +26,7 @@ namespace DracoRuan.CoreSystems.MessageBrokers.CustomEvents.SaveDynamicData
 
         private void ReleaseManagedResources()
         {
-            this._saveDataPublisher?.Dispose();
+            this._deleteDataPublisher?.Dispose();
         }
 
         private void Dispose(bool disposing)
@@ -49,6 +49,6 @@ namespace DracoRuan.CoreSystems.MessageBrokers.CustomEvents.SaveDynamicData
             GC.SuppressFinalize(this);
         }
 
-        ~SaveDataEvent() => this.Dispose(false);
+        ~DeleteDataEvent() => this.Dispose(false);
     }
 }
