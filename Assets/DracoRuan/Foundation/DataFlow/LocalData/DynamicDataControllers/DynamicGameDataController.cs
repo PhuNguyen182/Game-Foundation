@@ -21,7 +21,9 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         private readonly CancellationTokenSource _cancellationTokenSource;
         
         private bool _isDisposed;
-        private Type DataType => typeof(TData);
+        private bool _isDataInitialized;
+        
+        public Type SourceDataType => typeof(TData);
         private IDataProvider _dataProvider;
         
         protected event Action<TData> OnDataChangedInternal;
@@ -44,11 +46,14 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         
         public TData ExposedSourceData => this.SourceData;
 
+        public bool IsDataControllerIInitialized() => this._isDataInitialized;
+
         #region Initialization
 
         protected DynamicGameDataController(IDataProviderService dataProviderService, SaveDataEvent saveDataEvent,
             DeleteDataEvent deleteDataEvent)
         {
+            this._isDataInitialized = false;
             this._cancellationTokenSource = new CancellationTokenSource();
             this._cancellationToken = this._cancellationTokenSource.Token;
             
@@ -59,15 +64,6 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             this._saveDataEvent = saveDataEvent;
             this.SubscribeDataEvents();
         }
-
-        public virtual void InjectDataManager(IMainDataManager mainDataManager)
-        {
-            this.DataSerializer = this.GetDataSerializer();
-            this.DataSaveService = mainDataManager.DataProviderService.GetDataSaveServiceByType(this.DataSourceType);
-            this._dataProvider = mainDataManager.DataProviderService.GetDataProviderByType(this.DataSourceType);
-        }
-
-        public abstract void Initialize();
 
         private void SubscribeDataEvents()
         {
@@ -81,19 +77,19 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 
         private void OnSaveDataMessageReceived(SaveDataMessage message)
         {
-            if (!message.SaveAllData && message.DynamicDataType != this.DataType) 
+            if (!message.SaveAllData && message.DynamicDataType != this.SourceDataType) 
                 return;
             
-            Debug.Log($"Save data {nameof(this.DataType)}");
+            Debug.Log($"Save data {nameof(this.SourceDataType)}");
             this.SaveData();
         }
 
         private void OnDeleteDataMessageReceived(DeleteDataMessage message)
         {
-            if (!message.DeleteAllData && message.DynamicDataType != this.DataType) 
+            if (!message.DeleteAllData && message.DynamicDataType != this.SourceDataType) 
                 return;
             
-            Debug.Log($"Delete data {nameof(this.DataType)}");
+            Debug.Log($"Delete data {nameof(this.SourceDataType)}");
             this.DeleteData();
         }
         
@@ -103,27 +99,29 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 
         public async UniTask LoadData()
         {
-            this.SourceData = await this._dataProvider.LoadDataAsync(DataType.Name, this.DataSerializer, this.DataSaveService);
+            this.SourceData =
+                await this._dataProvider.LoadDataAsync(SourceDataType.Name, this.DataSerializer, this.DataSaveService);
             this.SourceData ??= new TData();
             this.OnDataChangedInternal?.Invoke(this.SourceData);
+            this._isDataInitialized = true;
         }
 
         public UniTask SaveDataAsync()
         {
             if (this._dataProvider is IDataSaver dataSaver) 
-                dataSaver.SaveData(this.SourceData, this.DataType.Name, this.DataSerializer, this.DataSaveService);
+                dataSaver.SaveData(this.SourceData, this.SourceDataType.Name, this.DataSerializer, this.DataSaveService);
             return UniTask.CompletedTask;
         }
 
         public void SaveData()
         {
             if (this._dataProvider is IDataSaver dataSaver) 
-                dataSaver.SaveData(this.SourceData, this.DataType.Name, this.DataSerializer, this.DataSaveService);
+                dataSaver.SaveData(this.SourceData, this.SourceDataType.Name, this.DataSerializer, this.DataSaveService);
         }
 
         public void DeleteData()
         {
-            this.DataSaveService.DeleteData(this.DataType.Name);
+            this.DataSaveService.DeleteData(this.SourceDataType.Name);
         }
 
         #endregion

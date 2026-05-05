@@ -15,6 +15,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         where TRecordMap : ClassMap<TRecord>
     {
         private bool _isDisposed;
+        private bool _isDataInitialized;
         
         private IDataProviderService _dataProviderService;
         
@@ -23,7 +24,10 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         
         public TData ExposedSourceData => this.SourceData;
         public int DataVersion => this.SourceData?.DataVersion ?? 0;
-        
+        public Type SourceDataType => typeof(TData);
+
+        public bool IsDataControllerIInitialized() => this._isDataInitialized;
+
         public async UniTask InitializeData(IDataSequenceProcessor dataSequenceProcessor)
         {
             dataSequenceProcessor.Clear();
@@ -38,7 +42,10 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 
             await dataSequenceProcessor.Execute();
             if (dataSequenceProcessor.LatestProcessSequence is IProcessSequenceData processSequenceData)
+            {
                 this.SourceData = processSequenceData.GameData as TData;
+                this._isDataInitialized = true;
+            }
             
             this.OnDataInitialized();
         }

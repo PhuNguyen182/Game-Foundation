@@ -3,21 +3,31 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.DataProcessors;
 using DracoRuan.Foundation.DataFlow.DataProviders;
-using DracoRuan.Foundation.DataFlow.MasterDataController;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 {
-    public abstract class StaticGameDataController<TData> : IStaticGameDataController where TData : class, IGameData
+    public abstract class StaticGameDataController<TData> : IStaticGameDataController 
+        where TData : class, IGameData
     {
-        private bool _isDisposed;
-        private IDataProviderService _dataProviderService;
+        private readonly IDataProviderService _dataProviderService;
         private IDataProvider _dataProvider;
+        
+        private bool _isDisposed;
+        private bool _isDataInitialized;
         
         protected abstract TData SourceData { get; set; }
         protected abstract List<DataProcessSequence> DataProcessSequences { get; }
-        
+
+        public Type SourceDataType => typeof(TData);
         public TData ExposedSourceData => this.SourceData;
         public int DataVersion => this.SourceData?.DataVersion ?? 0;
+
+        protected StaticGameDataController(IDataProviderService dataProviderService)
+        {
+            this._dataProviderService = dataProviderService;
+        }
+
+        public bool IsDataControllerIInitialized() => this._isDataInitialized;
         
         public async UniTask InitializeData(IDataSequenceProcessor dataSequenceProcessor)
         {
@@ -33,14 +43,12 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 
             await dataSequenceProcessor.Execute();
             if (dataSequenceProcessor.LatestProcessSequence is IProcessSequenceData processSequenceData)
+            {
                 this.SourceData = processSequenceData.GameData as TData;
+                this._isDataInitialized = true;
+            }
             
             this.OnDataInitialized();
-        }
-
-        public virtual void InjectDataManager(IMainDataManager mainDataManager)
-        {
-            this._dataProviderService = mainDataManager.DataProviderService;
         }
         
         protected abstract void OnDataInitialized();

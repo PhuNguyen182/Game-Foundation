@@ -15,18 +15,6 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
         public bool IsInitialized { get; private set; }
         public IDataProviderService DataProviderService { get; } = new DataProviderService();
 
-        public async UniTask InitializeDataHandlers()
-        {
-            // Initialize static data first
-            this._staticCustomDataManager = new StaticCustomDataManager();
-            await this._staticCustomDataManager.InitializeDataControllers(this);
-            
-            // Then initialize dynamic data later
-            this._dynamicCustomDataManager = new DynamicCustomDataManager();
-            await this._dynamicCustomDataManager.InitializeDataControllers(this);
-            this.IsInitialized = true;
-        }
-
         public TStaticGameDataHandler GetStaticDataController<TStaticGameDataHandler>()
             where TStaticGameDataHandler : class, IStaticGameDataController
             => this._staticCustomDataManager?.GetDataHandler<TStaticGameDataHandler>();

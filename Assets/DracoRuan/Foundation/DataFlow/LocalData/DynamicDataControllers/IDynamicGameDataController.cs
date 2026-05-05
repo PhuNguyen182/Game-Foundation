@@ -4,12 +4,11 @@ using DracoRuan.Foundation.DataFlow.MasterDataController;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 {
-    public interface IDynamicGameDataController : IDisposable
+    public interface IDynamicGameDataController : IDisposable, IInitializableDataController
     {
         public int DataVersion { get; }
+        public Type SourceDataType { get; }
         
-        public void Initialize();
-        public void InjectDataManager(IMainDataManager mainDataManager);
         public UniTask LoadData();
         public UniTask SaveDataAsync();
         public void SaveData();
