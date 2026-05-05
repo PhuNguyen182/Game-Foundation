@@ -4,6 +4,7 @@ using CsvHelper.Configuration;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.LocalData;
+using DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers;
 using DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers.CSVs;
 using UnityEngine;
 

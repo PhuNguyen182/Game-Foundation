@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DracoRuan.Foundation.DataFlow.LocalData
+namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 {
     public interface ISetCustomCsvRecordGameData<in TData>
     {
