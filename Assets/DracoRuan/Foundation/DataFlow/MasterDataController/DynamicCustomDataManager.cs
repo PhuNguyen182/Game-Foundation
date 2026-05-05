@@ -3,43 +3,68 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.LocalData;
 using DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers;
+using DracoRuan.Foundation.Initializers.Interfaces;
 using UnityEngine;
 using UnityEngine.Pool;
+using ZLinq;
 
 namespace DracoRuan.Foundation.DataFlow.MasterDataController
 {
-    public class DynamicCustomDataManager : IDynamicCustomDataManager
+    public class DynamicCustomDataManager : IDynamicCustomDataManager, IAsyncInitializable
     {
         private bool _isDisposed;
         private bool _isInitialized;
         
-        private readonly object _lock = new();
+        private readonly object _lock;
         private readonly Dictionary<Type, IDynamicGameDataController> _dynamicDataHandlers = new();
 
         public DynamicCustomDataManager(IEnumerable<IInitializableDataController> dynamicDataControllers)
         {
+            this._lock = new object();
             this._dynamicDataHandlers.Clear();
-            foreach (IInitializableDataController dataController in dynamicDataControllers)
+            List<IInitializableDataController> dataControllers = dynamicDataControllers.AsValueEnumerable().ToList();
+            foreach (IInitializableDataController dataController in dataControllers)
             {
-                if (dataController is IDynamicGameDataController dynamicGameDataController)
-                    this._dynamicDataHandlers.Add(dynamicGameDataController.SourceDataType, dynamicGameDataController);
+                if (dataController is IDynamicGameDataController staticGameDataController)
+                    this._dynamicDataHandlers.Add(staticGameDataController.SourceDataType, staticGameDataController);
+            }
+
+            WaitAllDataControllerInitialized().Forget();
+            return;
+
+            async UniTask WaitAllDataControllerInitialized()
+            {
+                using (ListPool<UniTask>.Get(out List<UniTask> waitTasks))
+                {
+                    foreach (IInitializableDataController dataController in dataControllers)
+                    {
+                        if (dataController is not IDynamicGameDataController) 
+                            continue;
+                        
+                        UniTask waitTask = UniTask.WaitUntil(dataController.IsDataControllerIInitialized);
+                        waitTasks.Add(waitTask);
+                    }
+
+                    await UniTask.WhenAll(waitTasks);
+                    this._isInitialized = true;
+                    dataControllers.Clear();
+                }
             }
         }
+        
+        public bool IsInitialized() => this._isInitialized;
 
         public TDataHandler GetDataHandler<TDataHandler>()
             where TDataHandler : class, IDynamicGameDataController
         {
-            lock (this._lock)
+            if (!this._isInitialized)
             {
-                if (!this._isInitialized)
-                {
-                    Debug.LogWarning("GetDataHandler called before initialization");
-                    return null;
-                }
-
-                Type sourceDataType = typeof(TDataHandler);
-                return this._dynamicDataHandlers.GetValueOrDefault(sourceDataType) as TDataHandler;
+                Debug.LogWarning("GetDataHandler called before initialization");
+                return null;
             }
+
+            Type sourceDataType = typeof(TDataHandler);
+            return this._dynamicDataHandlers.GetValueOrDefault(sourceDataType) as TDataHandler;
         }
 
         public void DeleteSingleData(Type dataType) =>

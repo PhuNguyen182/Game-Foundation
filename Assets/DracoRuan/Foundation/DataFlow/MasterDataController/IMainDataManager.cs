@@ -1,16 +1,12 @@
 ﻿using System;
 using Cysharp.Threading.Tasks;
-using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers;
 using DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers;
 
 namespace DracoRuan.Foundation.DataFlow.MasterDataController
 {
-    public interface IMainDataManager : IDisposable
+    public interface IMainDataManager
     {
-        public bool IsInitialized { get; }
-        public IDataProviderService DataProviderService { get; }
-        
         public TStaticGameDataController GetStaticDataController<TStaticGameDataController>()
             where TStaticGameDataController : class, IStaticGameDataController;
 

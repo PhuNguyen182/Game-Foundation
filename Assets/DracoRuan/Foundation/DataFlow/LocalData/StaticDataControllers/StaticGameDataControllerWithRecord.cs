@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.DataProcessors;
 using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers.CSVs;
-using DracoRuan.Foundation.DataFlow.MasterDataController;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 {
@@ -17,7 +16,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         private bool _isDisposed;
         private bool _isDataInitialized;
         
-        private IDataProviderService _dataProviderService;
+        private readonly IDataProviderService _dataProviderService;
         
         protected abstract TData SourceData { get; set; }
         protected abstract List<DataProcessSequence> DataProcessSequences { get; }
@@ -25,6 +24,11 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         public TData ExposedSourceData => this.SourceData;
         public int DataVersion => this.SourceData?.DataVersion ?? 0;
         public Type SourceDataType => typeof(TData);
+        
+        protected StaticGameDataControllerWithRecord(IDataProviderService dataProviderService)
+        {
+            this._dataProviderService = dataProviderService;
+        }
 
         public bool IsDataControllerIInitialized() => this._isDataInitialized;
 
@@ -48,11 +52,6 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
             }
             
             this.OnDataInitialized();
-        }
-
-        public void InjectDataManager(IMainDataManager mainDataManager)
-        {
-            this._dataProviderService = mainDataManager.DataProviderService;
         }
         
         protected abstract void OnDataInitialized();

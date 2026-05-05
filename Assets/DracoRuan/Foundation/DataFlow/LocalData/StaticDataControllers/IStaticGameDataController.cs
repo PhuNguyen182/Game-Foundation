@@ -1,7 +1,6 @@
 using System;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.DataProcessors;
-using DracoRuan.Foundation.DataFlow.MasterDataController;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 {
