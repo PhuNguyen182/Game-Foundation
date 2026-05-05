@@ -133,7 +133,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             {
                 SerializationType.Json => new JsonDataSerializer<TData>(),
                 SerializationType.EncryptedJson => new EncryptedJsonDataSerializer<TData>(),
-                SerializationType.Binary => new BinaryDataSerializer<TData>(),
+                SerializationType.MemoryPack => new BinaryDataSerializer<TData>(),
                 _ => null
             };
         }

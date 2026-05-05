@@ -5,6 +5,7 @@
         None = 0,
         Json = 1,
         EncryptedJson = 2,
-        Binary = 3,
+        MemoryPack = 3,
+        MessagePack = 4,
     }
 }
