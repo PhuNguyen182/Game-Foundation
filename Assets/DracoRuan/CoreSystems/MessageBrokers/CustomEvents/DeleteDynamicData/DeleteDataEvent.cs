@@ -14,7 +14,7 @@ namespace DracoRuan.CoreSystems.MessageBrokers.CustomEvents.DeleteDynamicData
             (this._deleteDataPublisher, this.DeleteDataSubscriber) = eventFactory.CreateEvent<DeleteDataMessage>();
         }
 
-        public void SendSaveDataMessage(DeleteDataMessage message)
+        public void SendDeleteDataMessage(DeleteDataMessage message)
         {
             this._deleteDataPublisher?.Publish(message);
         }
