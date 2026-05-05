@@ -34,7 +34,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         protected abstract SerializationType SerializationType { get; }
         protected abstract DataSourceType DataSourceType { get; }
         
-        public int DataVersion => this.SourceData?.Version ?? 0;
+        public int DataVersion => this.SourceData?.DataVersion ?? 0;
 
         public event Action<TData> OnDataChanged
         {

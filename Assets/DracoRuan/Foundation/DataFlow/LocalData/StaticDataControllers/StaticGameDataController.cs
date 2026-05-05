@@ -17,7 +17,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         protected abstract List<DataProcessSequence> DataProcessSequences { get; }
         
         public TData ExposedSourceData => this.SourceData;
-        public int DataVersion => this.SourceData?.Version ?? 0;
+        public int DataVersion => this.SourceData?.DataVersion ?? 0;
         
         public async UniTask InitializeData(IDataSequenceProcessor dataSequenceProcessor)
         {
