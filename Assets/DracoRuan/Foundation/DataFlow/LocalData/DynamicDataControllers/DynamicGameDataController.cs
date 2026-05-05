@@ -5,12 +5,11 @@ using DracoRuan.Foundation.DataFlow.MasterDataController;
 using DracoRuan.Foundation.DataFlow.Serialization.CustomDataSerializerServices;
 using DracoRuan.Foundation.DataFlow.Serialization;
 using DracoRuan.Foundation.DataFlow.SaveSystem;
-using DracoRuan.Foundation.DataFlow.TypeCreator;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 {
     public abstract class DynamicGameDataController<TData> : IDynamicGameDataController,
-        IDynamicGameDataControllerEvent<TData> where TData : IGameData, IDisposable
+        IDynamicGameDataControllerEvent<TData> where TData : class, IGameData, IDisposable, new()
     {
         private bool _isDisposed;
         private Type DataType => typeof(TData);
@@ -54,7 +53,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         public async UniTask LoadData()
         {
             this.SourceData = await this._dataProvider.LoadDataAsync(DataType.Name, this.DataSerializer, this.DataSaveService);
-            this.SourceData ??= TypeFactory.Create<TData>();
+            this.SourceData ??= new TData();
             this.OnDataChangedInternal?.Invoke(this.SourceData);
         }
 
