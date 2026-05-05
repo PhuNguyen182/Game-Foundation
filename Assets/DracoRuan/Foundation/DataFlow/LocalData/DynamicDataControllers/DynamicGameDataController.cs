@@ -1,16 +1,25 @@
 using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
+using DracoRuan.CoreSystems.MessageBrokers.CustomEvents.DeleteDynamicData;
+using DracoRuan.CoreSystems.MessageBrokers.CustomEvents.SaveDynamicData;
 using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.MasterDataController;
 using DracoRuan.Foundation.DataFlow.Serialization.CustomDataSerializerServices;
 using DracoRuan.Foundation.DataFlow.Serialization;
 using DracoRuan.Foundation.DataFlow.SaveSystem;
+using MessagePipe;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 {
     public abstract class DynamicGameDataController<TData> : IDynamicGameDataController,
         IDynamicGameDataControllerEvent<TData> where TData : class, IGameData, IDisposable, new()
     {
+        private readonly SaveDataEvent _saveDataEvent;
+        private readonly DeleteDataEvent _deleteDataEvent;
+        private readonly CancellationToken _cancellationToken;
+        private readonly CancellationTokenSource _cancellationTokenSource;
+        
         private bool _isDisposed;
         private Type DataType => typeof(TData);
         private IDataProvider _dataProvider;
@@ -37,6 +46,20 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 
         #region Initialization
 
+        protected DynamicGameDataController(IDataProviderService dataProviderService, SaveDataEvent saveDataEvent,
+            DeleteDataEvent deleteDataEvent)
+        {
+            this._cancellationTokenSource = new CancellationTokenSource();
+            this._cancellationToken = this._cancellationTokenSource.Token;
+            
+            this.DataSerializer = this.GetDataSerializer();
+            this.DataSaveService = dataProviderService.GetDataSaveServiceByType(this.DataSourceType);
+            this._dataProvider = dataProviderService.GetDataProviderByType(this.DataSourceType);
+            this._deleteDataEvent = deleteDataEvent;
+            this._saveDataEvent = saveDataEvent;
+            this.SubscribeDataEvents();
+        }
+
         public virtual void InjectDataManager(IMainDataManager mainDataManager)
         {
             this.DataSerializer = this.GetDataSerializer();
@@ -45,6 +68,34 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         }
 
         public abstract void Initialize();
+
+        private void SubscribeDataEvents()
+        {
+            this._saveDataEvent.SaveDataSubscriber
+                .Subscribe(this.OnSaveDataMessageReceived)
+                .AddTo(this._cancellationToken);
+            this._deleteDataEvent.DeleteDataSubscriber
+                .Subscribe(this.OnDeleteDataMessageReceived)
+                .AddTo(this._cancellationToken);
+        }
+
+        private void OnSaveDataMessageReceived(SaveDataMessage message)
+        {
+            if (!message.SaveAllData && message.DynamicDataType != this.DataType) 
+                return;
+            
+            Debug.Log($"Save data {nameof(this.DataType)}");
+            this.SaveData();
+        }
+
+        private void OnDeleteDataMessageReceived(DeleteDataMessage message)
+        {
+            if (!message.DeleteAllData && message.DynamicDataType != this.DataType) 
+                return;
+            
+            Debug.Log($"Delete data {nameof(this.DataType)}");
+            this.DeleteData();
+        }
         
         #endregion
 
@@ -96,9 +147,11 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         
         protected virtual void ReleaseManagedResources()
         {
+            this._cancellationTokenSource?.Cancel();
+            this._cancellationTokenSource?.Dispose();
             this.OnDataChangedInternal = null;
             this.SourceData?.Dispose();
-            this.SourceData = default;
+            this.SourceData = null;
         }
 
         protected virtual void ReleaseUnmanagedResources()
