@@ -46,15 +46,15 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
 
             try
             {
-                List<MigrationUnit> units = BuildMigrationUnits(context);
+                List<MigrationUnit> units = this.BuildMigrationUnits(context);
                 if (units.Count == 0)
                 {
                     Debug.Log("[Orchestrator] No domain need migration.");
                     return MigrationResult.Succeeded();
                 }
 
-                this._resolver.ValidateDependenciesExist(units, _registry);
-                List<MigrationUnit> ordered = _resolver.BuildTopologicalSortedMigrations(units);
+                this._resolver.ValidateDependenciesExist(units, this._registry);
+                List<MigrationUnit> ordered = this._resolver.BuildTopologicalSortedMigrations(units);
                 Debug.Log($"[Orchestrator] Migration order: {string.Join(" → ", GetDomainNames(ordered))}");
 
                 foreach (MigrationUnit unit in ordered)
@@ -104,7 +104,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
                 if (manifest.IsStepCompleted(migrator.Domain, migrator.FromVersion, migrator.ToVersion))
                 {
                     Debug.Log($"[Orchestrator] Skip (completed): {migrator.Domain} " +
-                              $"v{migrator.FromVersion}→v{migrator.ToVersion}");
+                              $"v{migrator.FromVersion} → v{migrator.ToVersion}");
                     continue;
                 }
 
@@ -113,7 +113,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
                 this._manifestStorage.Save(manifest);
 
                 this.OnMigrationStepStarted?.Invoke(migrator.Domain, migrator.FromVersion, migrator.ToVersion);
-                Debug.Log($"[Orchestrator] Run: {migrator.Domain} v{migrator.FromVersion}→v{migrator.ToVersion}");
+                Debug.Log($"[Orchestrator] Run: {migrator.Domain} v{migrator.FromVersion} → v{migrator.ToVersion}");
 
                 MigrationResult result;
                 try
@@ -129,7 +129,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
                 {
                     OnMigrationStepFailed?.Invoke(
                         migrator.Domain, migrator.FromVersion, migrator.ToVersion, result.ErrorMessage);
-                    Debug.LogError($"[Orchestrator] Failed: {migrator.Domain} v{migrator.FromVersion}→v{migrator.ToVersion} – {result.ErrorMessage}");
+                    Debug.LogError($"[Orchestrator] Failed: {migrator.Domain} v{migrator.FromVersion} → v{migrator.ToVersion} – {result.ErrorMessage}");
                     return result;
                 }
 
@@ -147,13 +147,13 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
                 if (!valid)
                 {
                     this.OnMigrationStepFailed?.Invoke(migrator.Domain, migrator.FromVersion, migrator.ToVersion, "Validation failed");
-                    return MigrationResult.Failed($"Validation failed after: {migrator.Domain} v{migrator.FromVersion}→v{migrator.ToVersion}");
+                    return MigrationResult.Failed($"Validation failed after: {migrator.Domain} v{migrator.FromVersion} → v{migrator.ToVersion}");
                 }
 
                 manifest.MarkStepCompleted(migrator.Domain, migrator.FromVersion, migrator.ToVersion);
                 this._manifestStorage.Save(manifest);
                 this.OnMigrationStepCompleted?.Invoke(migrator.Domain, migrator.FromVersion, migrator.ToVersion);
-                Debug.Log($"[Orchestrator] Completed: {migrator.Domain} v{migrator.FromVersion}→v{migrator.ToVersion}");
+                Debug.Log($"[Orchestrator] Completed: {migrator.Domain} v{migrator.FromVersion} → v{migrator.ToVersion}");
             }
 
             return MigrationResult.Succeeded();
@@ -162,9 +162,9 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
         private List<MigrationUnit> BuildMigrationUnits(MigrationContext context)
         {
             List<MigrationUnit> units = new();
-            foreach (var domain in _registry.GetAllDomains())
+            foreach (string domain in this._registry.GetAllDomains())
             {
-                int domainVersion = GetDomainVersion(context, domain);
+                int domainVersion = this.GetDomainVersion(context, domain);
                 int latestVersion = this._registry.GetLatestVersionOfDomain(domain);
 
                 if (domainVersion >= latestVersion)
@@ -182,7 +182,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
 
         private int GetDomainVersion(MigrationContext context, string domain)
         {
-            var key = $"version_{domain}";
+            string key = $"version_{domain}";
             object version = context.GetSharedData<object>(key);
             if (version is int versionNumber)
             {
