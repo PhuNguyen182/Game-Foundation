@@ -63,7 +63,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
                     if (unitResult.IsSuccess) 
                         continue;
                     
-                    if (Strategy == RollbackStrategy.Fully)
+                    if (this.Strategy == RollbackStrategy.Fully)
                     {
                         Debug.LogError($"[Orchestrator] Domain '{unit.Domain}' failed! Rollback-ing ...");
                         return MigrationResult.Failed(
@@ -94,10 +94,8 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
             }
         }
 
-        private async UniTask<MigrationResult> RunUnitAsync(MigrationUnit unit,
-            MigrationContext context,
-            MigrationManifest manifest,
-            string fullSnapshotKey)
+        private async UniTask<MigrationResult> RunUnitAsync(MigrationUnit unit, MigrationContext context,
+            MigrationManifest manifest, string fullSnapshotKey)
         {
             foreach (IDataMigrator migrator in unit.MigratorChain)
             {
@@ -108,7 +106,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
                     continue;
                 }
 
-                string snapshotKey = _snapshots.TakeSnapshot(context, migrator.Domain, migrator.FromVersion);
+                string snapshotKey = this._snapshots.TakeSnapshot(context, migrator.Domain, migrator.FromVersion);
                 manifest.GetOrCreateStep(migrator.Domain, migrator.FromVersion, migrator.ToVersion, snapshotKey);
                 this._manifestStorage.Save(manifest);
 
