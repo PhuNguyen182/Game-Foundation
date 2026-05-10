@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
+using DracoRuan.Foundation.DataFlow.DataMigration.Core.Manifest;
+using DracoRuan.Foundation.DataFlow.DataMigration.Core.Exceptions;
 using DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies;
 using DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies.Resolver;
-using DracoRuan.Foundation.DataFlow.DataMigration.Core.Exceptions;
-using DracoRuan.Foundation.DataFlow.DataMigration.Core.Manifest;
 using DracoRuan.Foundation.DataFlow.DataMigration.Core.Snapshot;
 using DracoRuan.Foundation.DataFlow.DataMigration.Migrator;
+using Cysharp.Threading.Tasks;
 
 namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
 {
@@ -23,11 +23,8 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
         public event Action<string, int, int> OnMigrationStepCompleted;
         public event Action<string, int, int, string> OnMigrationStepFailed;
 
-        public DataMigrationOrchestrator(
-            MigrationRegistry registry,
-            MigrationResolver resolver,
-            SnapshotManager snapshots,
-            MigrationManifestStorage manifestStorage)
+        public DataMigrationOrchestrator(MigrationRegistry registry, MigrationResolver resolver, 
+            SnapshotManager snapshots, MigrationManifestStorage manifestStorage)
         {
             this._registry = registry;
             this._resolver = resolver;
@@ -132,8 +129,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
                 {
                     OnMigrationStepFailed?.Invoke(
                         migrator.Domain, migrator.FromVersion, migrator.ToVersion, result.ErrorMessage);
-                    Debug.LogError($"[Orchestrator] Failed: {migrator.Domain} " +
-                                   $"v{migrator.FromVersion}→v{migrator.ToVersion} – {result.ErrorMessage}");
+                    Debug.LogError($"[Orchestrator] Failed: {migrator.Domain} v{migrator.FromVersion}→v{migrator.ToVersion} – {result.ErrorMessage}");
                     return result;
                 }
 
@@ -150,17 +146,14 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
 
                 if (!valid)
                 {
-                    this.OnMigrationStepFailed?.Invoke(migrator.Domain, migrator.FromVersion, migrator.ToVersion,
-                        "Validation failed");
-                    return MigrationResult.Failed(
-                        $"Validation failed after: {migrator.Domain} v{migrator.FromVersion}→v{migrator.ToVersion}");
+                    this.OnMigrationStepFailed?.Invoke(migrator.Domain, migrator.FromVersion, migrator.ToVersion, "Validation failed");
+                    return MigrationResult.Failed($"Validation failed after: {migrator.Domain} v{migrator.FromVersion}→v{migrator.ToVersion}");
                 }
 
                 manifest.MarkStepCompleted(migrator.Domain, migrator.FromVersion, migrator.ToVersion);
                 this._manifestStorage.Save(manifest);
                 this.OnMigrationStepCompleted?.Invoke(migrator.Domain, migrator.FromVersion, migrator.ToVersion);
-                Debug.Log(
-                    $"[Orchestrator] Completed: {migrator.Domain} v{migrator.FromVersion}→v{migrator.ToVersion}");
+                Debug.Log($"[Orchestrator] Completed: {migrator.Domain} v{migrator.FromVersion}→v{migrator.ToVersion}");
             }
 
             return MigrationResult.Succeeded();
@@ -201,7 +194,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
 
         private MigrationManifest CreateManifest(MigrationContext context)
         {
-            var manifest = new MigrationManifest
+            MigrationManifest manifest = new()
             {
                 playerId = context.PlayerId,
                 startVersion = context.CurrentVersion,
