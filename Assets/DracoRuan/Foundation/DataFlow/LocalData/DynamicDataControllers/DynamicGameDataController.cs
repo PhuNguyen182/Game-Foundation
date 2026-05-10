@@ -18,12 +18,12 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         private readonly DeleteDataEvent _deleteDataEvent;
         private readonly CancellationToken _cancellationToken;
         private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly IDataProvider _dataProvider;
         
         private bool _isDisposed;
         private bool _isDataInitialized;
         
         public Type SourceDataType => typeof(TData);
-        private IDataProvider _dataProvider;
         
         protected event Action<TData> OnDataChangedInternal;
         protected abstract TData SourceData { get; set; }
