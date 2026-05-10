@@ -8,7 +8,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Manifest
     {
         public int playerId;
         public int startVersion;
-        public int endVersion;
+        public int targetVersion;
         public bool isMigrationCompleted;
         public string startedAt;
         public string completedAt;

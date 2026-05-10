@@ -10,11 +10,11 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies.Resolver
             Dictionary<string, MigrationUnit> unitMap = new();
             foreach (var unit in units)
                 unitMap[unit.Domain] = unit;
-            
+
             List<MigrationUnit> result = new();
             Dictionary<string, ResolveVisitState> visitStateMap = new();
             Stack<string> stackPath = new();
-            
+
             foreach (var kvp in unitMap)
                 visitStateMap[kvp.Key] = ResolveVisitState.NotVisited;
 
@@ -23,11 +23,11 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies.Resolver
                 if (visitStateMap[domain] == ResolveVisitState.NotVisited)
                     this.Visit(domain, unitMap, visitStateMap, result, stackPath);
             }
-            
+
             return result;
         }
 
-        private void Visit(string domain, 
+        private void Visit(string domain,
             Dictionary<string, MigrationUnit> unitMap,
             Dictionary<string, ResolveVisitState> visitStates,
             List<MigrationUnit> sortedUnits,
@@ -37,10 +37,10 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies.Resolver
             {
                 throw new MigrationException($"Unknown migration unit: {domain}");
             }
-            
+
             visitStates[domain] = ResolveVisitState.Visiting;
             stackPath.Push(domain);
-            
+
             foreach (var dependency in unit.Dependencies)
             {
                 if (!visitStates.TryGetValue(dependency, out ResolveVisitState visitState))
@@ -65,21 +65,21 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies.Resolver
             visitStates[domain] = ResolveVisitState.Visited;
             sortedUnits.Add(unit);
         }
-        
+
         private string BuildCyclePath(Stack<string> path, string cycleDomain)
         {
-            var pathList = new List<string>(path);
+            List<string> pathList = new(path);
             pathList.Reverse();
-            var idx = pathList.IndexOf(cycleDomain);
-            if (idx >= 0)
-            {
-                var cycle = pathList.GetRange(idx, pathList.Count - idx);
-                cycle.Add(cycleDomain);
-                return string.Join(" → ", cycle);
-            }
-            return cycleDomain + " → ...";
+
+            int cycleDomainIndex = pathList.IndexOf(cycleDomain);
+            if (cycleDomainIndex < 0)
+                return $"{cycleDomain} → ...";
+
+            List<string> cycle = pathList.GetRange(cycleDomainIndex, pathList.Count - cycleDomainIndex);
+            cycle.Add(cycleDomain);
+            return string.Join(" → ", cycle);
         }
-        
+
         public void ValidateDependenciesExist(IEnumerable<MigrationUnit> units, MigrationRegistry registry)
         {
             List<string> errors = new();
@@ -90,8 +90,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies.Resolver
                     if (!registry.HasDataMigratorForDomain(dependency))
                     {
                         errors.Add(
-                            $"Domain '{unit.Domain}' depends on '{dependency}' " +
-                            $"but '{dependency}' do not have any registered migrator.");
+                            $"Domain '{unit.Domain}' depends on '{dependency}' but '{dependency}' do not have any registered migrator.");
                     }
                 }
             }

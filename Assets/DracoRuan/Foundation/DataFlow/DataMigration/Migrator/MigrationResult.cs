@@ -15,9 +15,9 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Migrator
             this.Exception = exception;
         }
 
-        public MigrationResult Succeeded() => new(true);
+        public static MigrationResult Succeeded() => new(true);
 
-        public MigrationResult Failed(string errorMessage = null, Exception exception = null) =>
+        public static MigrationResult Failed(string errorMessage = null, Exception exception = null) =>
             new(false, errorMessage, exception);
 
         public override string ToString()
