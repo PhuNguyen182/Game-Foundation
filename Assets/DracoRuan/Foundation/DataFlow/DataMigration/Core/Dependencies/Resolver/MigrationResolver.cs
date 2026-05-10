@@ -41,7 +41,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies.Resolver
             visitStates[domain] = ResolveVisitState.Visiting;
             stackPath.Push(domain);
 
-            foreach (var dependency in unit.Dependencies)
+            foreach (string dependency in unit.Dependencies)
             {
                 if (!visitStates.TryGetValue(dependency, out ResolveVisitState visitState))
                 {
@@ -50,11 +50,11 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies.Resolver
 
                 if (visitState == ResolveVisitState.Visiting)
                 {
-                    var cycle = BuildCyclePath(stackPath, dependency);
+                    string cycle = this.BuildCyclePath(stackPath, dependency);
                     throw new MigrationException(
                         $"Circular dependency detected in migration!\n" +
                         $"Cycle: {cycle}\n" +
-                        $"Please check Dependencies of relevanted migrators.");
+                        $"Please check Dependencies of relevant migrators.");
                 }
 
                 if (visitState == ResolveVisitState.NotVisited)
@@ -83,14 +83,13 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies.Resolver
         public void ValidateDependenciesExist(IEnumerable<MigrationUnit> units, MigrationRegistry registry)
         {
             List<string> errors = new();
-            foreach (var unit in units)
+            foreach (MigrationUnit unit in units)
             {
                 foreach (string dependency in unit.Dependencies)
                 {
                     if (!registry.HasDataMigratorForDomain(dependency))
                     {
-                        errors.Add(
-                            $"Domain '{unit.Domain}' depends on '{dependency}' but '{dependency}' do not have any registered migrator.");
+                        errors.Add($"Domain '{unit.Domain}' depends on '{dependency}' but '{dependency}' do not have any registered migrator.");
                     }
                 }
             }
