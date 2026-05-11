@@ -1,10 +1,12 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DracoRuan.CoreSystems.MessageBrokers.CustomEvents.DeleteDynamicData;
+using DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator;
 using DracoRuan.CoreSystems.MessageBrokers.CustomEvents.SaveDynamicData;
-using DracoRuan.Foundation.DataFlow.DataProviders;
+using DracoRuan.CoreSystems.MessageBrokers.CustomEvents.DeleteDynamicData;
+using DracoRuan.Foundation.DataFlow.DataMigration.Migrator;
 using DracoRuan.Foundation.DataFlow.Serialization.CustomDataSerializerServices;
+using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.Serialization;
 using DracoRuan.Foundation.DataFlow.SaveSystem;
 using MessagePipe;
@@ -16,9 +18,10 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
     {
         private readonly SaveDataEvent _saveDataEvent;
         private readonly DeleteDataEvent _deleteDataEvent;
-        private readonly CancellationToken _cancellationToken;
         private readonly IDataSaveService _dataSaveService;
         private readonly IDataSerializer<TData> _dataSerializer;
+        private readonly CancellationToken _cancellationToken;
+        private readonly DataMigrationOrchestrator _migrationOrchestrator;
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly IDataProvider _dataProvider;
         
@@ -33,7 +36,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         protected abstract SerializationType SerializationType { get; }
         protected abstract DataSourceType DataSourceType { get; }
         
-        public int DataVersion => this.SourceData?.DataVersion ?? 0;
+        public abstract int CurrentDataVersion { get; }
 
         public event Action<TData> OnDataChanged
         {
@@ -43,24 +46,31 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         
         public TData ExposedSourceData => this.SourceData;
 
-        public bool IsDataControllerIInitialized() => this._isDataInitialized;
-
         #region Initialization
 
         protected DynamicGameDataController(IDataProviderService dataProviderService, SaveDataEvent saveDataEvent,
-            DeleteDataEvent deleteDataEvent)
+            DeleteDataEvent deleteDataEvent, DataMigrationOrchestrator dataMigrationOrchestrator)
         {
             this._isDataInitialized = false;
+            DataSourceType dataSourceType = GetDataSourceType();
             this._cancellationTokenSource = new CancellationTokenSource();
             this._cancellationToken = this._cancellationTokenSource.Token;
-            
+            this._migrationOrchestrator = dataMigrationOrchestrator;
+
             this._dataSerializer = this.GetDataSerializer();
-            this._dataSaveService = dataProviderService.GetDataSaveServiceByType(this.DataSourceType);
-            this._dataProvider = dataProviderService.GetDataProviderByType(this.DataSourceType);
+            this._dataSaveService = dataProviderService.GetDataSaveServiceByType(dataSourceType);
+            this._dataProvider = dataProviderService.GetDataProviderByType(dataSourceType);
             this._deleteDataEvent = deleteDataEvent;
             this._saveDataEvent = saveDataEvent;
             this.SubscribeDataEvents();
+            this.MigrateData().Forget();
+            return;
+            
+            DataSourceType GetDataSourceType() => this.DataSourceType;
         }
+        
+        public bool IsDataControllerIInitialized() => this._isDataInitialized;
+
 
         private void SubscribeDataEvents()
         {
@@ -89,6 +99,26 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             Debug.Log($"Delete data {nameof(this.SourceDataType)}");
             this.DeleteData();
         }
+
+        private async UniTask MigrateData()
+        {
+            await this.LoadData();
+            string playerId = nameof(TData);
+            MigrationContext migrationContext = new MigrationContext
+            {
+                PlayerId = playerId,
+                CurrentVersion = this.SourceData.DataVersion,
+                TargetVersion = this.CurrentDataVersion
+            };
+            
+            MigrationResult migrationResult = await this._migrationOrchestrator.MigrateData(migrationContext);
+            if (migrationResult.IsSuccess)
+                this.LoadDataFromLatestVersion();
+            
+            this._isDataInitialized = true;
+        }
+
+        protected abstract void LoadDataFromLatestVersion();
         
         #endregion
 
@@ -96,29 +126,47 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 
         public async UniTask LoadData()
         {
-            this.SourceData =
-                await this._dataProvider.LoadDataAsync(SourceDataType.Name, this._dataSerializer, this._dataSaveService);
+            int mostRecentDataVersion = this.GetMostRecentDataVersion();
+            string dataSavePath = this.GetDataSaveKeyByVersion(mostRecentDataVersion);
+            this.SourceData = await this._dataProvider.LoadDataAsync(dataSavePath, this._dataSerializer, this._dataSaveService);
             this.SourceData ??= new TData();
-            this.OnDataChangedInternal?.Invoke(this.SourceData);
-            this._isDataInitialized = true;
-        }
-
-        public UniTask SaveDataAsync()
-        {
-            if (this._dataProvider is IDataSaver dataSaver) 
-                dataSaver.SaveData(this.SourceData, this.SourceDataType.Name, this._dataSerializer, this._dataSaveService);
-            return UniTask.CompletedTask;
         }
 
         public void SaveData()
         {
-            if (this._dataProvider is IDataSaver dataSaver) 
-                dataSaver.SaveData(this.SourceData, this.SourceDataType.Name, this._dataSerializer, this._dataSaveService);
+            if (this._dataProvider is not IDataSaver dataSaver) 
+                return;
+            
+            int currentDataVersion = this.SourceData.DataVersion;
+            string dataSavePath = this.GetDataSaveKeyByVersion(currentDataVersion);
+            dataSaver.SaveData(this.SourceData, dataSavePath, this._dataSerializer,
+                this._dataSaveService);
         }
 
         public void DeleteData()
         {
             this._dataSaveService.DeleteData(this.SourceDataType.Name);
+        }
+
+        private int GetMostRecentDataVersion()
+        {
+            int currentDataVersion = this.CurrentDataVersion;
+            while (currentDataVersion > 1)
+            {
+                string dataSavePath = this.GetDataSaveKeyByVersion(currentDataVersion);
+                if (this._dataSaveService.IsDataExist(dataSavePath))
+                    break;
+                
+                currentDataVersion -= 1;
+            }
+            
+            return currentDataVersion;
+        }
+
+        private string GetDataSaveKeyByVersion(int version)
+        {
+            string dataSavePath = $"{this.SourceDataType.Name}_v{version}";
+            return dataSavePath;
         }
 
         #endregion

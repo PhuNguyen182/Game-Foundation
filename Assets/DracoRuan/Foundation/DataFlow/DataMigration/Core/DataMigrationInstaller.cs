@@ -8,6 +8,7 @@ using DracoRuan.Foundation.DataFlow.DataMigration.Core.Snapshot;
 using DracoRuan.Foundation.DataFlow.DataMigration.Migrator;
 using DracoRuan.Foundation.Initializers.AutoRegisterAttributes;
 using VContainer;
+using VContainer.Unity;
 
 namespace DracoRuan.Foundation.DataFlow.DataMigration.Core
 {
@@ -15,49 +16,33 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core
     public class DataMigrationInstaller : IAsyncInstallable
     {
         private bool _isInstalled;
-        private MigrationRegistry _migrationRegistry;
-        private MigrationManifestStorage _migrationManifestStorage;
-        private DataMigrationOrchestrator _migrationOrchestrator;
-        private MigrationResolver _migrationResolver;
-        private SnapshotManager _snapshotManager;
         
         public bool IsInstalled() => this._isInstalled;
 
         public void Install(IContainerBuilder builder)
         {
-            this.RegisterDependencies(builder);
+            builder.RegisterEntryPoint<DataMigrationOrchestrator>(Lifetime.Scoped);
+            builder.Register<MigrationRegistry>(Lifetime.Scoped);
+            builder.Register<MigrationManifestStorage>(Lifetime.Scoped);
+            builder.Register<MigrationResolver>(Lifetime.Scoped);
+            builder.Register<SnapshotManager>(Lifetime.Scoped);
+            this.RegisterDataMigrators(builder);
         }
 
-        private void RegisterDependencies(IContainerBuilder builder)
+        private void RegisterDataMigrators(IContainerBuilder builder)
         {
-            this._migrationRegistry = new MigrationRegistry();
-            this._migrationManifestStorage = new MigrationManifestStorage();
-            this._migrationResolver = new MigrationResolver();
-            this._snapshotManager = new SnapshotManager();
-            this.RegisterDataMigrators();
-            this._migrationOrchestrator = new DataMigrationOrchestrator(this._migrationRegistry,
-                this._migrationResolver, this._snapshotManager, this._migrationManifestStorage)
-            {
-                Strategy = RollbackStrategy.Fully
-            };
+            builder.Register<IDataMigrator, SampleDataMigrator>(Lifetime.Scoped).AsSelf();
         }
+    }
 
-        private void RegisterDataMigrators()
+    public class SampleDataMigrator : DataMigratorBase
+    {
+        public override string Domain { get; }
+        public override int FromVersion { get; }
+        public override int ToVersion { get; }
+        public override UniTask<MigrationResult> MigrateData(MigrationContext context)
         {
-            // Register data migrator for each persistant data model here
-        }
-
-        public async UniTask<bool> RunDataMigration(MigrationContext context, int targetVersion)
-        {
-            context.TargetVersion = targetVersion;
-            MigrationResult result = await this._migrationOrchestrator.MigrateData(context);
-
-            if (!result.IsSuccess)
-            {
-                Debug.LogError(result.ToString());
-            }
-            
-            return result.IsSuccess;
+            throw new System.NotImplementedException();
         }
     }
 }

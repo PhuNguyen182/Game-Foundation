@@ -75,20 +75,6 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
             foreach (IDynamicGameDataController dynamicDataHandler in this._dynamicDataHandlers.Values)
                 dynamicDataHandler.DeleteData();
         }
-        
-        public async UniTask SaveAllDataAsync()
-        {
-            using (ListPool<UniTask>.Get(out List<UniTask> saveDataTasks))
-            {
-                foreach (IDynamicGameDataController dynamicDataHandler in this._dynamicDataHandlers.Values)
-                {
-                    UniTask saveDataTask = dynamicDataHandler.SaveDataAsync();
-                    saveDataTasks.Add(saveDataTask);
-                }
-
-                await UniTask.WhenAll(saveDataTasks);
-            }
-        }
 
         public void SaveAllData()
         {

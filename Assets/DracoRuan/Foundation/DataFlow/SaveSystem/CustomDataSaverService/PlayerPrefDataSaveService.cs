@@ -8,6 +8,12 @@ namespace DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService
     /// </summary>
     public class PlayerPrefDataSaveService : IDataSaveService
     {
+        public bool IsDataExist(string dataName)
+        {
+            bool isDataExist = PlayerPrefs.HasKey(dataName);
+            return isDataExist;
+        }
+        
         public async UniTask<string> LoadData(string name)
         {
             if (!PlayerPrefs.HasKey(name))
@@ -16,13 +22,6 @@ namespace DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService
             await UniTask.CompletedTask;
             string serializedData = PlayerPrefs.GetString(name);
             return serializedData;
-        }
-
-        public UniTask SaveDataAsync(string name, object serializedData)
-        {
-            string saveData = serializedData as string;
-            PlayerPrefs.SetString(name, saveData);
-            return UniTask.CompletedTask;
         }
 
         public void SaveData(string name, object serializedData)

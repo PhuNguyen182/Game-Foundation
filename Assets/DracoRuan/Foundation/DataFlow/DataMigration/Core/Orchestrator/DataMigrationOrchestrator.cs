@@ -7,10 +7,11 @@ using DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies.Resolver;
 using DracoRuan.Foundation.DataFlow.DataMigration.Core.Snapshot;
 using DracoRuan.Foundation.DataFlow.DataMigration.Migrator;
 using Cysharp.Threading.Tasks;
+using VContainer.Unity;
 
 namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
 {
-    public class DataMigrationOrchestrator
+    public class DataMigrationOrchestrator : IInitializable
     {
         private readonly MigrationRegistry _registry;
         private readonly MigrationResolver _resolver;
@@ -23,13 +24,17 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
         public event Action<string, int, int> OnMigrationStepCompleted;
         public event Action<string, int, int, string> OnMigrationStepFailed;
 
-        public DataMigrationOrchestrator(MigrationRegistry registry, MigrationResolver resolver, 
-            SnapshotManager snapshots, MigrationManifestStorage manifestStorage)
+        public DataMigrationOrchestrator(MigrationRegistry registry, MigrationResolver resolver,
+            SnapshotManager snapshots, MigrationManifestStorage manifestStorage, 
+            IEnumerable<IDataMigrator> dataMigrators)
         {
             this._registry = registry;
             this._resolver = resolver;
             this._snapshots = snapshots;
             this._manifestStorage = manifestStorage;
+            
+            foreach (IDataMigrator dataMigrator in dataMigrators)
+                this._registry.Register(dataMigrator);
         }
 
         public async UniTask<MigrationResult> MigrateData(MigrationContext context)
@@ -208,6 +213,11 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
         {
             foreach (MigrationUnit unit in units)
                 yield return unit.Domain;
+        }
+
+        public void Initialize()
+        {
+            
         }
     }
 }

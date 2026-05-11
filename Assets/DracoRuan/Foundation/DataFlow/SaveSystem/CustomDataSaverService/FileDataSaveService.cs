@@ -14,6 +14,13 @@ namespace DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService
         
         private readonly string _filePath = Application.persistentDataPath;
 
+        public bool IsDataExist(string dataName)
+        {
+            string dataPath = this.GetDataPath(dataName);
+            bool isDataExist = File.Exists(dataPath);
+            return isDataExist;
+        }
+
         public async UniTask<string> LoadData(string name)
         {
             string dataPath = this.GetDataPath(name);
@@ -23,21 +30,6 @@ namespace DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService
             using StreamReader streamReader = new(dataPath);
             string serializedData = await streamReader.ReadToEndAsync();
             return serializedData;
-        }
-
-        public async UniTask SaveDataAsync(string name, object serializedData)
-        {
-            string dataPath = this.GetDataPath(name);
-            string directoryPath = this.GetDirectoryPath();
-            
-            if (!Directory.Exists(directoryPath))
-                Directory.CreateDirectory(directoryPath);
-
-            string saveData = serializedData as string;
-            await using FileStream fileStream = new(dataPath, FileMode.Create, FileAccess.Write, FileShare.None,
-                bufferSize: 4096, useAsync: true);
-            await using StreamWriter writer = new(fileStream);
-            await writer.WriteLineAsync(saveData);
         }
 
         public void SaveData(string name, object serializedData)

@@ -1,5 +1,4 @@
 ﻿using System;
-using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers;
 using DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers;
 
@@ -14,8 +13,6 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
             where TDynamicGameDataController : class, IDynamicGameDataController;
 
         public void SaveAllData();
-        public UniTask SaveAllDataAsync();
-        
         public void DeleteSingleData(Type dataType);
         public void DeleteAllData();
     }
