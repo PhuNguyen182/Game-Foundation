@@ -118,6 +118,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             if (migrationResult.IsSuccess)
                 this.LoadDataFromLatestVersion();
             
+            this.OnDataChangedInternal?.Invoke(this.SourceData);
             this._isDataInitialized = true;
         }
 
