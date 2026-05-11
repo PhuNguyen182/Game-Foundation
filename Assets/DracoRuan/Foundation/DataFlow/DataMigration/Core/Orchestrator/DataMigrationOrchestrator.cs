@@ -17,6 +17,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
         private readonly MigrationResolver _resolver;
         private readonly SnapshotManager _snapshots;
         private readonly MigrationManifestStorage _manifestStorage;
+        private readonly bool _allDataMigratorsRegistered;
 
         public RollbackStrategy Strategy { get; set; }
 
@@ -32,10 +33,15 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
             this._resolver = resolver;
             this._snapshots = snapshots;
             this._manifestStorage = manifestStorage;
-            
+
+            this._allDataMigratorsRegistered = false;
             foreach (IDataMigrator dataMigrator in dataMigrators)
                 this._registry.Register(dataMigrator);
+            
+            this._allDataMigratorsRegistered = true;
         }
+
+        public bool AllDataMigratorsRegistered() => this._allDataMigratorsRegistered;
 
         public async UniTask<MigrationResult> MigrateData(MigrationContext context)
         {

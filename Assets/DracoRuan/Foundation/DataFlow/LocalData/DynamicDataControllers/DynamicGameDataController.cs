@@ -103,6 +103,9 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         private async UniTask MigrateData()
         {
             await this.LoadData();
+            await UniTask.WaitUntil(this._migrationOrchestrator.AllDataMigratorsRegistered,
+                cancellationToken: _cancellationToken);
+            
             string playerId = nameof(TData);
             MigrationContext migrationContext = new MigrationContext
             {

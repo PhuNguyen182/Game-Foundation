@@ -1,17 +1,36 @@
-using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.Initializers.Interfaces;
 using DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies;
 using DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies.Resolver;
 using DracoRuan.Foundation.DataFlow.DataMigration.Core.Manifest;
 using DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator;
 using DracoRuan.Foundation.DataFlow.DataMigration.Core.Snapshot;
-using DracoRuan.Foundation.DataFlow.DataMigration.Migrator;
 using DracoRuan.Foundation.Initializers.AutoRegisterAttributes;
 using VContainer;
 using VContainer.Unity;
 
 namespace DracoRuan.Foundation.DataFlow.DataMigration.Core
 {
+    /// <summary>
+    /// This installer is responsible for registering all necessary services of Data Migration.
+    /// To sufficiently migrate all available data, please create a new Installer of type IAsyncInstallable for
+    /// registering all available data migrators in the project 
+    /// </summary>
+    /// <code>
+    /// [AutoInstall(InstallerInstanceType = nameof(InstallerType.PlainCSharp))]
+    /// public class DataMigratorInstaller : IAsyncInstallable
+    /// {
+    ///     private bool _isInstalled;
+    /// 
+    ///     public bool IsInstalled() => this._isInstalled;
+    /// 
+    ///     public void Install(IContainerBuilder builder)
+    ///     {
+    ///         builder.Register&lt;IDataMigrator, InventoryDataMigratorV1ToV2&gt;(Lifetime.Scoped).AsSelf();
+    ///         builder.Register&lt;IDataMigrator, QuestDataMigratorV3ToV4&gt;(Lifetime.Scoped).AsSelf();
+    ///         // Continue register all available data migrators here ...
+    ///     }
+    /// }
+    /// </code>
     [AutoInstall(InstallerInstanceType = nameof(InstallerType.PlainCSharp))]
     public class DataMigrationInstaller : IAsyncInstallable
     {
@@ -26,23 +45,6 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core
             builder.Register<MigrationManifestStorage>(Lifetime.Scoped);
             builder.Register<MigrationResolver>(Lifetime.Scoped);
             builder.Register<SnapshotManager>(Lifetime.Scoped);
-            this.RegisterDataMigrators(builder);
-        }
-
-        private void RegisterDataMigrators(IContainerBuilder builder)
-        {
-            builder.Register<IDataMigrator, SampleDataMigrator>(Lifetime.Scoped).AsSelf();
-        }
-    }
-
-    public class SampleDataMigrator : DataMigratorBase
-    {
-        public override string Domain { get; }
-        public override int FromVersion { get; }
-        public override int ToVersion { get; }
-        public override UniTask<MigrationResult> MigrateData(MigrationContext context)
-        {
-            throw new System.NotImplementedException();
         }
     }
 }
