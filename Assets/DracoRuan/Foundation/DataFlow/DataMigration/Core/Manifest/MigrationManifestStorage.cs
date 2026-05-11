@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using UnityEngine;
 
 namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Manifest
@@ -11,7 +12,15 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Manifest
         {
             const string manifestPrefix = "MigrationManifest";
             string manifestKey = $"{manifestPrefix}{playerId}";
-            string rawData = PlayerPrefs.GetString(manifestKey, null);
+            
+            string directoryPath = "DataMigration";
+            string dataPath = Path.Combine(directoryPath, $"{manifestKey}.json");
+            
+            if (!File.Exists(dataPath))
+                return null;
+
+            using StreamReader streamReader = new(dataPath);
+            string rawData = streamReader.ReadToEnd();
             
             if (string.IsNullOrEmpty(rawData))
                 return null;
@@ -33,8 +42,16 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Manifest
             const string manifestPrefix = "MigrationManifest";
             string manifestKey = $"{manifestPrefix}{manifest.playerId}";
             string json = JsonUtility.ToJson(manifest);
-            PlayerPrefs.SetString(manifestKey, json);
-            // TODO: Can be replaced by File saving and MemoryPack serialization
+            string directoryPath = "DataMigration";
+            string dataPath = Path.Combine(directoryPath, $"{manifestKey}.json");
+            
+            if (!Directory.Exists(directoryPath))
+                Directory.CreateDirectory(directoryPath);
+            
+            using FileStream fileStream = new(dataPath, FileMode.Create, FileAccess.Write, FileShare.None,
+                bufferSize: 4096, useAsync: false);
+            using StreamWriter writer = new(fileStream);
+            writer.WriteLineAsync(json);
         }
     }
 }

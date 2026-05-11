@@ -17,7 +17,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator
         private readonly SnapshotManager _snapshots;
         private readonly MigrationManifestStorage _manifestStorage;
 
-        public RollbackStrategy Strategy { get; set; } = RollbackStrategy.Fully;
+        public RollbackStrategy Strategy { get; set; }
 
         public event Action<string, int, int> OnMigrationStepStarted;
         public event Action<string, int, int> OnMigrationStepCompleted;

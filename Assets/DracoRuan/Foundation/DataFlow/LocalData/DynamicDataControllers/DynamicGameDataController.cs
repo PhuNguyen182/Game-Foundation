@@ -17,6 +17,8 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         private readonly SaveDataEvent _saveDataEvent;
         private readonly DeleteDataEvent _deleteDataEvent;
         private readonly CancellationToken _cancellationToken;
+        private readonly IDataSaveService _dataSaveService;
+        private readonly IDataSerializer<TData> _dataSerializer;
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly IDataProvider _dataProvider;
         
@@ -27,10 +29,6 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         
         protected event Action<TData> OnDataChangedInternal;
         protected abstract TData SourceData { get; set; }
-
-        protected abstract IDataSerializer<TData> DataSerializer { get; set; }
-        
-        protected abstract IDataSaveService DataSaveService { get; set; }
 
         protected abstract SerializationType SerializationType { get; }
         protected abstract DataSourceType DataSourceType { get; }
@@ -56,8 +54,8 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             this._cancellationTokenSource = new CancellationTokenSource();
             this._cancellationToken = this._cancellationTokenSource.Token;
             
-            this.DataSerializer = this.GetDataSerializer();
-            this.DataSaveService = dataProviderService.GetDataSaveServiceByType(this.DataSourceType);
+            this._dataSerializer = this.GetDataSerializer();
+            this._dataSaveService = dataProviderService.GetDataSaveServiceByType(this.DataSourceType);
             this._dataProvider = dataProviderService.GetDataProviderByType(this.DataSourceType);
             this._deleteDataEvent = deleteDataEvent;
             this._saveDataEvent = saveDataEvent;
@@ -99,7 +97,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         public async UniTask LoadData()
         {
             this.SourceData =
-                await this._dataProvider.LoadDataAsync(SourceDataType.Name, this.DataSerializer, this.DataSaveService);
+                await this._dataProvider.LoadDataAsync(SourceDataType.Name, this._dataSerializer, this._dataSaveService);
             this.SourceData ??= new TData();
             this.OnDataChangedInternal?.Invoke(this.SourceData);
             this._isDataInitialized = true;
@@ -108,19 +106,19 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         public UniTask SaveDataAsync()
         {
             if (this._dataProvider is IDataSaver dataSaver) 
-                dataSaver.SaveData(this.SourceData, this.SourceDataType.Name, this.DataSerializer, this.DataSaveService);
+                dataSaver.SaveData(this.SourceData, this.SourceDataType.Name, this._dataSerializer, this._dataSaveService);
             return UniTask.CompletedTask;
         }
 
         public void SaveData()
         {
             if (this._dataProvider is IDataSaver dataSaver) 
-                dataSaver.SaveData(this.SourceData, this.SourceDataType.Name, this.DataSerializer, this.DataSaveService);
+                dataSaver.SaveData(this.SourceData, this.SourceDataType.Name, this._dataSerializer, this._dataSaveService);
         }
 
         public void DeleteData()
         {
-            this.DataSaveService.DeleteData(this.SourceDataType.Name);
+            this._dataSaveService.DeleteData(this.SourceDataType.Name);
         }
 
         #endregion
