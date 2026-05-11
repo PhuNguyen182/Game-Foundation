@@ -6,7 +6,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Manifest
     [Serializable]
     public class MigrationManifest
     {
-        public int playerId;
+        public string playerId;
         public int startVersion;
         public int targetVersion;
         public bool isMigrationCompleted;

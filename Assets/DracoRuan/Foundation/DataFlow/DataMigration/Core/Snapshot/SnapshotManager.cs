@@ -86,7 +86,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Snapshot
         private static string BuildSnapshotKey(string domain, int version)
             => $"{domain}_v{version}_{DateTime.UtcNow:O}";
 
-        private static string BuildSnapshotKey(int playerId)
+        private static string BuildSnapshotKey(string playerId)
             => $"Full_{playerId}_{DateTime.UtcNow:O}";
     }
 }

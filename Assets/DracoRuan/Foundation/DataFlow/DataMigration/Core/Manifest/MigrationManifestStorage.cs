@@ -8,7 +8,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core.Manifest
     {
         private const string ManifestKey = "MigrationManifest";
         
-        public MigrationManifest Load(int playerId)
+        public MigrationManifest Load(string playerId)
         {
             const string manifestPrefix = "MigrationManifest";
             string manifestKey = $"{manifestPrefix}{playerId}";

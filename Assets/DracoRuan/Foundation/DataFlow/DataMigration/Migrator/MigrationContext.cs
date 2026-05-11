@@ -7,7 +7,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Migrator
         public Dictionary<string, object> Data { get; } = new();
         private readonly Dictionary<string, object> _sharedData = new();
         
-        public int PlayerId { get; set; }
+        public string PlayerId { get; set; }
         public int CurrentVersion { get; set; }
         public int TargetVersion { get; set; }
 
