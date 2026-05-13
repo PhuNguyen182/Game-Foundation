@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+using System.Text;
 using UnityEngine;
 
 namespace DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService
@@ -14,19 +14,19 @@ namespace DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService
             return isDataExist;
         }
         
-        public async UniTask<string> LoadData(string name)
+        public byte[] LoadData(string name)
         {
             if (!PlayerPrefs.HasKey(name))
                 return null;
-
-            await UniTask.CompletedTask;
+            
             string serializedData = PlayerPrefs.GetString(name);
-            return serializedData;
+            byte[] data = Encoding.UTF8.GetBytes(serializedData);
+            return data;
         }
 
-        public void SaveData(string name, object serializedData)
+        public void SaveData(string name, byte[] serializedData)
         {
-            string saveData = serializedData as string;
+            string saveData = Encoding.UTF8.GetString(serializedData);
             PlayerPrefs.SetString(name, saveData);
         }
 

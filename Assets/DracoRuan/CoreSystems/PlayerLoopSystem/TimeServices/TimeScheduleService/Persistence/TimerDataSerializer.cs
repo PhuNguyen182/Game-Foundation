@@ -11,8 +11,6 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.TimeScheduleServic
     /// </summary>
     public class TimerDataSerializer : IDataSerializer<List<CountdownTimerData>>
     {
-        public string FileExtension => ".json";
-
         public object Serialize(List<CountdownTimerData> data)
         {
             if (data.Count == 0)

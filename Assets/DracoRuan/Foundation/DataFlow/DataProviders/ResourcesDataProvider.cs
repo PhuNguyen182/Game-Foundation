@@ -12,10 +12,9 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
         public async UniTask<TData> LoadDataAsync<TData>(string pathToData, 
             IDataSerializer<TData> serializer = null, IDataSaveService dataSaveService = null)
         {
-            Object asset = null;
             try
             {
-                asset = await Resources.LoadAsync(pathToData);
+                Object asset = await Resources.LoadAsync(pathToData);
                 if (asset is TData result)
                 {
                     Debug.Log(

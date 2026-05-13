@@ -1,5 +1,4 @@
 using System.IO;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService
@@ -21,30 +20,31 @@ namespace DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService
             return isDataExist;
         }
 
-        public async UniTask<string> LoadData(string name)
+        public byte[] LoadData(string name)
         {
             string dataPath = this.GetDataPath(name);
             if (!File.Exists(dataPath))
                 return null;
 
-            using StreamReader streamReader = new(dataPath);
-            string serializedData = await streamReader.ReadToEndAsync();
+            using FileStream fileStream = new(dataPath, FileMode.Open, FileAccess.Read, FileShare.None,
+                bufferSize: 4096, useAsync: false);
+            byte[] serializedData = new byte[fileStream.Length];
+            int readBytes = fileStream.Read(serializedData, 0, serializedData.Length);
+            Debug.Log($"Read bytes: {readBytes}");
             return serializedData;
         }
 
-        public void SaveData(string name, object serializedData)
+        public void SaveData(string name, byte[] serializedData)
         {
             string dataPath = this.GetDataPath(name);
             string directoryPath = this.GetDirectoryPath();
             
             if (!Directory.Exists(directoryPath))
                 Directory.CreateDirectory(directoryPath);
-
-            string saveData = serializedData as string;
+            
             using FileStream fileStream = new(dataPath, FileMode.Create, FileAccess.Write, FileShare.None,
                 bufferSize: 4096, useAsync: false);
-            using StreamWriter writer = new(fileStream);
-            writer.WriteLineAsync(saveData);
+            fileStream.Write(serializedData);
         }
 
         public void DeleteData(string name)

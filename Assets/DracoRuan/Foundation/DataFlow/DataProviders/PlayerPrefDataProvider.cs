@@ -25,8 +25,8 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
                     return default;
                 }
                 
-                string savedSerializedData = await dataSaveService.LoadData(pathToData);
-                if (!string.IsNullOrEmpty(savedSerializedData))
+                byte[] savedSerializedData = dataSaveService.LoadData(pathToData);
+                if (savedSerializedData != null)
                 {
                     TData result = serializer.Deserialize(savedSerializedData);
                     Debug.Log($"[PlayerPrefProvider] [{typeof(TData)}] Loaded data from path: {pathToData} successfully !!!");
@@ -43,8 +43,15 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
                 Debug.LogError(
                     $"[PlayerPrefProvider] [{typeof(TData)}] Failed to load data from path: {pathToData}. More info: {e.Message}");
             }
-            
+
+            await UniTask.CompletedTask;
             return default;
+        }
+        
+        public byte[] LoadRawDataAsync(string pathToData, IDataSaveService dataSaveService = null)
+        {
+            byte[] savedSerializedData = dataSaveService?.LoadData(pathToData);
+            return savedSerializedData;
         }
 
         public void UnloadData<TData>(TData data)
@@ -70,7 +77,7 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
                 }
 
                 object serializedData = dataSerializer.Serialize(data);
-                dataSaveService.SaveData(pathToData, serializedData);
+                dataSaveService.SaveData(pathToData, serializedData as byte[]);
                 Debug.Log($"[PlayerPrefProvider] [{typeof(TData)}] Saved data to path: {pathToData} successfully !!!");
             }
             catch (Exception e)

@@ -12,10 +12,9 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
         public async UniTask<TData> LoadDataAsync<TData>(string pathToData,
             IDataSerializer<TData> serializer = null, IDataSaveService dataSaveService = null)
         {
-            AsyncOperationHandle<TData> operationHandle = default;
             try
             {
-                operationHandle = Addressables.LoadAssetAsync<TData>(pathToData);
+                AsyncOperationHandle<TData> operationHandle = Addressables.LoadAssetAsync<TData>(pathToData);
                 while (!operationHandle.IsDone)
                     await UniTask.NextFrame();
 

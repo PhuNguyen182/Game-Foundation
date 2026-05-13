@@ -27,7 +27,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.TimeScheduleServic
             
             try
             {
-                this._dataSaveService.SaveData(SaveFileName, timerDataList);
+                //this._dataSaveService.SaveData(SaveFileName, timerDataList);
                 Debug.Log($"[FileTimerPersistence] Saved {timerDataList.Count} timers to file");
                 return true;
             }
@@ -42,16 +42,17 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.TimeScheduleServic
         {
             try
             {
-                var loadTask = this._dataSaveService.LoadData(SaveFileName);
+                return new List<CountdownTimerData>();
+                /*var loadTask = this._dataSaveService.LoadData(SaveFileName);
                 var serializedTimerData = await loadTask;
                 
                 if (!string.IsNullOrEmpty(serializedTimerData))
                 {
                     Debug.Log($"[FileTimerPersistence] Loaded {serializedTimerData} timers from file");
-                }
+                }*
                 
                 List<CountdownTimerData> timerDataList = this._serializer.Deserialize(serializedTimerData);
-                return timerDataList ?? new List<CountdownTimerData>();
+                return timerDataList ?? new List<CountdownTimerData>();*/
             }
             catch (Exception ex)
             {

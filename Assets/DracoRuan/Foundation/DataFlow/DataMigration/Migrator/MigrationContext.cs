@@ -5,6 +5,8 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Migrator
     public class MigrationContext
     {
         public Dictionary<string, object> Data { get; } = new();
+        
+        private readonly Dictionary<int, byte[]> _rawData = new();
         private readonly Dictionary<string, object> _sharedData = new();
         
         public string PlayerId { get; set; }
@@ -20,6 +22,10 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Migrator
 
         public void SetData<TData>(string dataKey, TData data) where TData : class
             => this.Data[dataKey] = data;
+        
+        public byte[] GetRawData(int dataVersion) => this._rawData[dataVersion];
+        
+        public void SetRawData(int dataVersion, byte[] data) => this._rawData[dataVersion] = data;
         
         public TSharedData GetSharedData<TSharedData>(string dataKey)
         {

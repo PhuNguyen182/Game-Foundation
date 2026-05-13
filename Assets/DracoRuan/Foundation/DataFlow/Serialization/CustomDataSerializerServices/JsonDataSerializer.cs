@@ -11,7 +11,6 @@ namespace DracoRuan.Foundation.DataFlow.Serialization.CustomDataSerializerServic
     {
         private const int SafeJsonLength = 1000;
         
-        public string FileExtension => ".json";
         private static readonly JsonSerializer JsonSerializer;
         private static readonly JsonSerializerSettings JsonSerializerSettings;
         

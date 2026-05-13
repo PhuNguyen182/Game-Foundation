@@ -2,10 +2,8 @@ using MemoryPack;
 
 namespace DracoRuan.Foundation.DataFlow.Serialization.CustomDataSerializerServices
 {
-    public class BinaryDataSerializer<T> : IDataSerializer<T>
+    public class MemoryPackBinaryDataSerializer<T> : IDataSerializer<T>
     {
-        public string FileExtension => ".binpackmem";
-        
         public object Serialize(T data)
         {
             byte[] serializedData = MemoryPackSerializer.Serialize(data);
@@ -14,7 +12,10 @@ namespace DracoRuan.Foundation.DataFlow.Serialization.CustomDataSerializerServic
 
         public T Deserialize(object serializedData)
         {
-            T deserializedData = MemoryPackSerializer.Deserialize<T>(serializedData as byte[]);
+            if (serializedData is not byte[] convertedData)
+                return default;
+            
+            T deserializedData = MemoryPackSerializer.Deserialize<T>(convertedData);
             return deserializedData;
         }
     }
