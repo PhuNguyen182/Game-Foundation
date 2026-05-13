@@ -95,7 +95,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 
         private async UniTask MigrateData()
         {
-            byte[] mostRecentSaveData = this.LoadRawData();
+            byte[] mostRecentSavedRawData = this.LoadRawData();
             await UniTask.WaitUntil(this._migrationOrchestrator.AllDataMigratorsRegistered,
                 cancellationToken: _cancellationToken);
             
@@ -103,7 +103,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             int mostRecentDataVersion = this.GetMostRecentDataVersion();
             if (mostRecentDataVersion >= this.CurrentDataVersion)
             {
-                this.SourceData = this._dataSerializer.Deserialize(mostRecentSaveData);
+                this.SourceData = this._dataSerializer.Deserialize(mostRecentSavedRawData);
             }
             else
             {
@@ -114,7 +114,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
                     TargetVersion = this.CurrentDataVersion
                 };
 
-                this.MigrationContext.SetRawData(mostRecentDataVersion, mostRecentSaveData);
+                this.MigrationContext.SetRawData(mostRecentDataVersion, mostRecentSavedRawData);
                 MigrationResult migrationResult = await this._migrationOrchestrator.MigrateData(this.MigrationContext);
                 if (migrationResult.IsSuccess)
                     this.LoadDataFromLatestVersion(this.MigrationContext);
@@ -135,8 +135,8 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             this.SourceData = new TData();
             int mostRecentDataVersion = this.GetMostRecentDataVersion();
             string dataSavePath = this.GetDataSaveKeyByVersion(mostRecentDataVersion);
-            byte[] mostRecentSaveData = this._dataSaveService.LoadData(dataSavePath);
-            return mostRecentSaveData;
+            byte[] mostRecentSavedRawData = this._dataSaveService.LoadData(dataSavePath);
+            return mostRecentSavedRawData;
         }
         
         #endregion
