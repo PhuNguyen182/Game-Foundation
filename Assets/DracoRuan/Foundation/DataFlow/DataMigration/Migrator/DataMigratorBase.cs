@@ -24,5 +24,12 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Migrator
 
         protected TData GetDependencyData<TData>(MigrationContext context, string domain) where TData : class
             => context.GetData<TData>(domain);
+
+        protected bool ContainRawDataOfFromVersion(MigrationContext context)
+        {
+            byte[] rawData = context.GetRawData(this.FromVersion);
+            bool containRawData = rawData is { Length: > 0 };
+            return containRawData;
+        }
     }
 }
