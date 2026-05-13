@@ -29,7 +29,8 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         private bool _isDataInitialized;
         
         public Type SourceDataType => typeof(TData);
-        
+
+        protected MigrationContext MigrationContext;
         protected event Action<TData> OnDataChangedInternal;
         protected abstract TData SourceData { get; set; }
         
@@ -101,24 +102,23 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             
             string domain = nameof(TData);
             int mostRecentDataVersion = this.GetMostRecentDataVersion();
-
-            MigrationContext migrationContext = new MigrationContext
+            if (mostRecentDataVersion >= this.CurrentDataVersion)
             {
-                PlayerId = domain,
-                CurrentVersion = mostRecentDataVersion,
-                TargetVersion = this.CurrentDataVersion
-            };
-
-            migrationContext.SetRawData(mostRecentDataVersion, mostRecentSaveData);
-            if (mostRecentDataVersion == this.CurrentDataVersion)
-            {
-                this.LoadDataFromLatestVersion(migrationContext);
+                this.SourceData = this._dataSerializer.Deserialize(mostRecentSaveData);
             }
             else
             {
-                MigrationResult migrationResult = await this._migrationOrchestrator.MigrateData(migrationContext);
+                this.MigrationContext = new MigrationContext
+                {
+                    PlayerId = domain,
+                    CurrentVersion = mostRecentDataVersion,
+                    TargetVersion = this.CurrentDataVersion
+                };
+
+                this.MigrationContext.SetRawData(mostRecentDataVersion, mostRecentSaveData);
+                MigrationResult migrationResult = await this._migrationOrchestrator.MigrateData(this.MigrationContext);
                 if (migrationResult.IsSuccess)
-                    this.LoadDataFromLatestVersion(migrationContext);
+                    this.LoadDataFromLatestVersion(this.MigrationContext);
             }
 
             this.OnDataChangedInternal?.Invoke(this.SourceData);
