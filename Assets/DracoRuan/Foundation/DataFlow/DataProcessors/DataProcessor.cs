@@ -16,11 +16,11 @@ namespace DracoRuan.Foundation.DataFlow.DataProcessors
         
         public IGameData GameData { get; private set; }
 
-        public DataProcessor(string dataConfigKey, IDataProvider dataProvider, IDataSerializer<TData> dataSerializer = null)
+        public DataProcessor(string dataConfigKey, IDataProvider dataProvider)
         {
             this._dataConfigKey = dataConfigKey;
             this._dataProvider = dataProvider;
-            this._dataSerializer = dataSerializer ?? new JsonDataSerializer<TData>();
+            this._dataSerializer = new JsonDataSerializer<TData>();
         }
         
         public async UniTask<bool> Process()
