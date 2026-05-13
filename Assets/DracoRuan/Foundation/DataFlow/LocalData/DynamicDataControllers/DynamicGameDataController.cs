@@ -65,7 +65,6 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         
         public bool IsDataControllerIInitialized() => this._isDataInitialized;
 
-
         private void SubscribeDataEvents()
         {
             this._saveDataEvent.SaveDataSubscriber
