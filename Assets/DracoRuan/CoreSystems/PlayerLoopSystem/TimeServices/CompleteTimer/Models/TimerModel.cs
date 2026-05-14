@@ -5,18 +5,18 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Mode
 {
     public class TimerModel : IDisposable
     {
-        public string TimerId;
-        public long StartUnixTime;
-        public int TierCount;
+        public readonly long StartUnixTime;
+        public readonly int TierCount;
         
-        private List<long> _ticksByTier;
+        public string TimerId { get; private set; }
+        public List<long> TicksByTier {get; private set;}
 
         public TimerModel(string timerId, long startUnixTime, long duration)
         {
             this.TimerId = timerId;
             this.StartUnixTime = startUnixTime;
             this.TierCount = 1;
-            this._ticksByTier = new List<long> { duration, };
+            this.TicksByTier = new List<long> { duration, };
         }
 
         public TimerModel(string timerId, long startUnixTime, params long[] durations)
@@ -24,8 +24,8 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Mode
             this.TimerId = timerId;
             this.StartUnixTime = startUnixTime;
             this.TierCount = durations.Length;
-            this._ticksByTier = new List<long>();
-            this._ticksByTier.AddRange(durations);
+            this.TicksByTier = new List<long>();
+            this.TicksByTier.AddRange(durations);
         }
         
         public TimerModel(string timerId, long startUnixTime, List<long> durations)
@@ -33,15 +33,15 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Mode
             this.TimerId = timerId;
             this.StartUnixTime = startUnixTime;
             this.TierCount = durations.Count;
-            this._ticksByTier = new List<long>();
-            this._ticksByTier.AddRange(durations);
+            this.TicksByTier = new List<long>();
+            this.TicksByTier.AddRange(durations);
         }
 
         public void Dispose()
         {
             this.TimerId = null;
-            this._ticksByTier?.Clear();
-            this._ticksByTier = null;
+            this.TicksByTier?.Clear();
+            this.TicksByTier = null;
         }
     }
 }
