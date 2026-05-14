@@ -2,7 +2,7 @@ using System;
 
 namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.SimpleTimer
 {
-    public interface ITimer
+    public interface ITimer : IDisposable
     {
         public bool IsFinished { get; }
         public bool IsRunning { get; }

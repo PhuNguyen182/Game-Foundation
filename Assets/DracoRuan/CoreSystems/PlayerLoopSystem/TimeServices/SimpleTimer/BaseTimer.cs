@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.SimpleTimer
 {
-    public abstract class BaseTimer : ITimer, IUpdateHandler, IDisposable
+    public abstract class BaseTimer : ITimer, IUpdateHandler
     {
         private bool _disposed;
         private float _initialTime;
@@ -65,7 +65,6 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.SimpleTimer
         public void Dispose()
         {
             this.Dispose(true);
-            this.ReleaseAllCallbacks();
             GC.SuppressFinalize(this);
         }
 
@@ -75,7 +74,10 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.SimpleTimer
                 return;
 
             if (disposing)
+            {
+                this.ReleaseAllCallbacks();
                 UpdateServiceManager.DeregisterUpdateHandler(this);
+            }
 
             this._disposed = true;
         }
