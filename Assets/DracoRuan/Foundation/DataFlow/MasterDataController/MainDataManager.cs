@@ -1,11 +1,12 @@
 using System;
 using DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers;
 using DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers;
+using DracoRuan.Foundation.Initializers.Interfaces;
 using VContainer.Unity;
 
 namespace DracoRuan.Foundation.DataFlow.MasterDataController
 {
-    public class MainDataManager : IMainDataManager, IInitializable
+    public class MainDataManager : IMainDataManager, IInitializable, IAsyncInitializable
     {
         private bool _isDisposed;
         private readonly IStaticCustomDataManager _staticCustomDataManager;
@@ -21,6 +22,18 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
         public void Initialize()
         {
             
+        }
+        
+        public bool IsInitialized()
+        {
+            if (this._staticCustomDataManager is not IAsyncInitializable staticCustomDataManager
+                || this._dynamicCustomDataManager is not IAsyncInitializable dynamicCustomDataManager) 
+                return true;
+            
+            bool isStaticDataControllerInitialized = staticCustomDataManager.IsInitialized() &&
+                                                     dynamicCustomDataManager.IsInitialized();
+            return isStaticDataControllerInitialized;
+
         }
 
         public TStaticGameDataHandler GetStaticDataController<TStaticGameDataHandler>()
