@@ -3,7 +3,7 @@ using DracoRuan.CoreSystems.PlayerLoopSystem.Core.Handlers;
 using DracoRuan.CoreSystems.PlayerLoopSystem.UpdateServices;
 using UnityEngine;
 
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.Timers
+namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.SimpleTimer
 {
     public abstract class BaseTimer : ITimer, IUpdateHandler, IDisposable
     {
@@ -42,8 +42,8 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.Timers
                 return;
             
             this.IsRunning = false;
-            UpdateServiceManager.DeregisterUpdateHandler(this);
             this.OnTimerStop?.Invoke();
+            this.Dispose();
         }
 
         public abstract void Tick(float deltaTime);
@@ -69,7 +69,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.Timers
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (this._disposed) 
                 return;

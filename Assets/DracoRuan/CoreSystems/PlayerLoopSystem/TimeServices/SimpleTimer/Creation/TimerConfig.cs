@@ -1,4 +1,4 @@
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.Timers.Creation
+namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.SimpleTimer.Creation
 {
     public struct TimerConfig
     {

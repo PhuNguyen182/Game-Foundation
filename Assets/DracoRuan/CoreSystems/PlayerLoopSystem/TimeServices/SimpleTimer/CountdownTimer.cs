@@ -1,4 +1,4 @@
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.Timers
+namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.SimpleTimer
 {
     /// <summary>
     /// Timer that counts down from a specific value to zero.

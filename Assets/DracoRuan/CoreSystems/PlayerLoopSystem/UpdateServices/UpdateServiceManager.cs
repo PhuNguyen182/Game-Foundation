@@ -6,8 +6,8 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.UpdateServices
 {
     public static class UpdateServiceManager
     {
-        private static readonly List<IUpdateHandler> UpdateTimeServices = new();
-        private static readonly List<IUpdateHandler> PendingUpdateTimeServices = new();
+        private static readonly List<IUpdateHandler> UpdateTimeServices = new(capacity: 1000);
+        private static readonly List<IUpdateHandler> PendingUpdateTimeServices = new(capacity: 1000);
         private static int _currentIndex;
         
         public static void UpdateTime()

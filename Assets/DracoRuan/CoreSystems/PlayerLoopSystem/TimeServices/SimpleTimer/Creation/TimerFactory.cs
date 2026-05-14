@@ -1,10 +1,10 @@
 using DracoRuan.CoreSystems.DesignPatterns.Factory;
 
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.Timers.Creation
+namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.SimpleTimer.Creation
 {
     public class TimerFactory : BaseFactory<TimerConfig, BaseTimer>
     {
-        public override BaseTimer Produce(TimerConfig arg)
+        public override BaseTimer Create(TimerConfig arg)
         {
             return arg.Type switch
             {
