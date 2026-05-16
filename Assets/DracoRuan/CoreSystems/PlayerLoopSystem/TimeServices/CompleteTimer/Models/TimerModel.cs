@@ -19,15 +19,6 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Mode
             this.TicksByTier = new List<long> { duration, };
         }
 
-        public TimerModel(string timerId, long startUnixTime, params long[] durations)
-        {
-            this.TimerId = timerId;
-            this.StartUnixTime = startUnixTime;
-            this.TierCount = durations.Length;
-            this.TicksByTier = new List<long>();
-            this.TicksByTier.AddRange(durations);
-        }
-
         public TimerModel(string timerId, long startUnixTime, List<long> durations)
         {
             this.TimerId = timerId;

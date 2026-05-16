@@ -16,8 +16,10 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 
         #region Timer Access
 
-        public TimerCounterUnit GetTimer(string timerId) => this._timerCounters.GetValueOrDefault(timerId);
         public Dictionary<string, TimerCounterUnit> CurrentTimerCounters => this._timerCounters;
+        
+        public TimerCounterUnit GetTimerCounterUnit(string timerId) => this._timerCounters.GetValueOrDefault(timerId);
+        public bool IsTimerCounterExist(string timerId) => this._timerCounters.ContainsKey(timerId);
 
         #endregion
 
@@ -26,13 +28,6 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
         public void RegisterTimer(string timerId, long startUnixTime, long duration)
         {
             TimerModel timerModel = new TimerModel(timerId, startUnixTime, duration);
-            TimerCounterUnit timerCounterUnit = new TimerCounterUnit(timerModel, this._timeValidator);
-            this.AddTimerCounter(timerCounterUnit);
-        }
-
-        public void RegisterTimer(string timerId, long startUnixTime, params long[] durations)
-        {
-            TimerModel timerModel = new TimerModel(timerId, startUnixTime, durations);
             TimerCounterUnit timerCounterUnit = new TimerCounterUnit(timerModel, this._timeValidator);
             this.AddTimerCounter(timerCounterUnit);
         }
@@ -52,12 +47,8 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 
         private void AddTimerCounter(TimerCounterUnit timerCounterUnit)
         {
-            timerCounterUnit.OnTimerRemoved += RemoveTimerOnCompleted;
             timerCounterUnit.AddTo(ref _disposableBag);
             this._timerCounters.Add(timerCounterUnit.TimerId, timerCounterUnit);
-            return;
-
-            void RemoveTimerOnCompleted() => this.RemoveTimer(timerCounterUnit.TimerId);
         }
 
         public void RemoveTimer(string timerId)

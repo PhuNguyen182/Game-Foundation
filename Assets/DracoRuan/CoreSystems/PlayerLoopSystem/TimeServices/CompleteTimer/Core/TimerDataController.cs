@@ -27,17 +27,19 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 
         #region Data Access
 
-        public void AddOrUpdateTimerCounterUnitData(TimerCounterUnit timer)
+        public TimerUpdateState AddOrUpdateTimerCounterUnitData(TimerCounterUnit timer, bool saveDataManually)
         {
-            if (!this._timerSaveData.TimerSaveDataUnits.ContainsKey(timer.TimerId))
-                this.AddTimerCounterUnitData(timer);
-            else
-                this.UpdateTimerCounterUnitData(timer);
+            TimerUpdateState state = !this._timerSaveData.TimerSaveDataUnits.ContainsKey(timer.TimerId)
+                ? this.AddTimerCounterUnitData(timer)
+                : this.UpdateTimerCounterUnitData(timer);
 
-            this.SaveTimerData();
+            if (saveDataManually)
+                this.SaveTimerData();
+            
+            return state;
         }
 
-        private void AddTimerCounterUnitData(TimerCounterUnit timer)
+        private TimerUpdateState AddTimerCounterUnitData(TimerCounterUnit timer)
         {
             TimerSaveUnitModel timerUnitModel = new TimerSaveUnitModel
             {
@@ -48,21 +50,24 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
             };
             
             this._timerSaveData.TimerSaveDataUnits.Add(timer.TimerId, timerUnitModel);
+            return TimerUpdateState.Add;
         }
 
-        private void UpdateTimerCounterUnitData(TimerCounterUnit timer)
+        private TimerUpdateState UpdateTimerCounterUnitData(TimerCounterUnit timer)
         {
             TimerSaveUnitModel timerUnitModel = this._timerSaveData.TimerSaveDataUnits[timer.TimerId];
             timerUnitModel.StartUnixTime = timer.TimerModel.StartUnixTime;
             timerUnitModel.TierCount = timer.TimerModel.TierCount;
             timerUnitModel.TicksByTier = timer.TimerModel.TicksByTier;
             this._timerSaveData.TimerSaveDataUnits[timer.TimerId] = timerUnitModel;
+            return TimerUpdateState.Update;
         }
 
-        public void RemoveTimerCounterUnitData(TimerCounterUnit timer)
+        public TimerUpdateState RemoveTimerCounterUnitData(string timerId)
         {
-            this._timerSaveData.TimerSaveDataUnits.Remove(timer.TimerId);
+            this._timerSaveData.TimerSaveDataUnits.Remove(timerId);
             this.SaveTimerData();
+            return TimerUpdateState.Remove;
         }
 
         public TimerCounterUnit GetTimerCounterUnitFromData(string timerId)

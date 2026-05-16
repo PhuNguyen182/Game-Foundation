@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DracoRuan.CoreSystems.PlayerLoopSystem.Core.Handlers;
 using DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Models;
 
@@ -9,6 +10,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
         private readonly TimerModel _timerModel;
         private readonly TimeValidator _timeValidator;
 
+        private bool _isFirstTickCounterPlay;
         private bool _isActive;
 
         public Action OnTimerTierChanged;
@@ -22,10 +24,11 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 
         public TimerCounterUnit(TimerModel timerModel, TimeValidator timeValidator)
         {
-            this._isActive = true;
+            this._isActive = false;
             this.IsTimerCompleted = false;
             this._timerModel = timerModel;
             this._timeValidator = timeValidator;
+            this._isFirstTickCounterPlay = true;
         }
 
         private void TimerUpdate()
@@ -72,23 +75,54 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 
         public void Tick(float deltaTime)
         {
-            if (!this._isActive || !this.IsTimerCompleted)
+            if (!this._isActive || this.IsTimerCompleted)
                 return;
 
             this.TimerUpdate();
         }
-        
-        public void Activate() => this._isActive = true;
-        
-        public void Deactivate() => this._isActive = false;
 
-        public void UpdateTimerOnStart() => this.TimerUpdate();
+        public void ForceStopImmediately()
+        {
+            this._isActive = false;
+            this.IsTimerCompleted = true;
+            this.OnTimerCompleted?.Invoke();
+            this.ReleaseSelf();
+        }
+
+        public void AddTimestamp(List<float> timesInSeconds)
+        {
+            if (this.TimerModel.TicksByTier.Count != timesInSeconds.Count)
+            {
+                Debug.LogError($"Please check the tier of timer counter. This timer counter has {this.TimerModel.TicksByTier.Count} tiers of counting!");
+                return;
+            }
+
+            int count = timesInSeconds.Count;
+            for (int i = 0; i < count; i++)
+            {
+                long timestamp = TimeSpan.FromSeconds(timesInSeconds[i]).Milliseconds;
+                this.TimerModel.TicksByTier[i] += timestamp;
+            }
+        }
+        
+        public void Activate()
+        {
+            this._isActive = true;
+            if (!this._isFirstTickCounterPlay) 
+                return;
+            
+            this.TimerUpdate();
+            this._isFirstTickCounterPlay = false;
+        }
+
+        public void Deactivate() => this._isActive = false;
 
         public void ReleaseSelf() => this.OnTimerRemoved?.Invoke();
 
         public void Dispose()
         {
             this._isActive = false;
+            this._isFirstTickCounterPlay = false;
             this.OnTimerTierChanged = null;
             this.OnTimerUpdate = null;
             this.OnTimerCompleted = null;
