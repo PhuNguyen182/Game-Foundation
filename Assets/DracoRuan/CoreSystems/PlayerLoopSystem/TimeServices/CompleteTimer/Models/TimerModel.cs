@@ -24,8 +24,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Mode
             this.TimerId = timerId;
             this.StartUnixTime = startUnixTime;
             this.TierCount = durations.Count;
-            this.TicksByTier = new List<long>();
-            this.TicksByTier.AddRange(durations);
+            this.TicksByTier = new List<long>(durations);
         }
 
         public void Dispose()
