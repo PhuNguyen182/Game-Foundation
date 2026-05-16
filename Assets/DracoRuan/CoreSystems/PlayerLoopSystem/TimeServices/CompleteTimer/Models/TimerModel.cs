@@ -6,16 +6,15 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Mode
     public class TimerModel : IDisposable
     {
         public readonly long StartUnixTime;
-        public readonly int TierCount;
 
         public string TimerId { get; private set; }
+        public int TierCount => this.TicksByTier?.Count ?? 0; 
         public List<long> TicksByTier { get; private set; }
 
         public TimerModel(string timerId, long startUnixTime, long duration)
         {
             this.TimerId = timerId;
             this.StartUnixTime = startUnixTime;
-            this.TierCount = 1;
             this.TicksByTier = new List<long> { duration, };
         }
 
@@ -23,7 +22,6 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Mode
         {
             this.TimerId = timerId;
             this.StartUnixTime = startUnixTime;
-            this.TierCount = durations.Count;
             this.TicksByTier = new List<long>(durations);
         }
 
