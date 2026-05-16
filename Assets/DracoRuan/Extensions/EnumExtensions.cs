@@ -4,7 +4,7 @@ namespace DracoRuan.Extensions
 {
     public static class EnumExtensions
     {
-        public static int TotalElementCount<TEnum>(TEnum enumValue) where TEnum : Enum
+        public static int TotalElementCount<TEnum>() where TEnum : Enum
         {
             return Enum.GetValues(typeof(TEnum)).Length;
         }
