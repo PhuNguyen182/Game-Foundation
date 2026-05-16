@@ -4,7 +4,7 @@ using DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Models;
 
 namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 {
-    public class TimerCounter : IUpdateHandler, IDisposable
+    public class TimerCounterUnit : IUpdateHandler, IDisposable
     {
         private readonly TimerModel _timerModel;
         private readonly TimeValidator _timeValidator;
@@ -16,10 +16,11 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
         public Action OnTimerCompleted;
         public Action OnTimerRemoved;
 
+        public TimerModel TimerModel => this._timerModel;
         public bool IsTimerCompleted { get; private set; }
         public string TimerId => this._timerModel?.TimerId;
 
-        public TimerCounter(TimerModel timerModel, TimeValidator timeValidator)
+        public TimerCounterUnit(TimerModel timerModel, TimeValidator timeValidator)
         {
             this._isActive = true;
             this.IsTimerCompleted = false;
@@ -76,10 +77,14 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 
             this.TimerUpdate();
         }
+        
+        public void Activate() => this._isActive = true;
+        
+        public void Deactivate() => this._isActive = false;
 
         public void UpdateTimerOnStart() => this.TimerUpdate();
 
-        public void RemoveSelf() => this.OnTimerRemoved?.Invoke();
+        public void ReleaseSelf() => this.OnTimerRemoved?.Invoke();
 
         public void Dispose()
         {

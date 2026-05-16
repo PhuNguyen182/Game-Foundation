@@ -9,14 +9,15 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
     public class TimerRegistry : IUpdateHandler, IDisposable
     {
         private readonly TimeValidator _timeValidator = new();
-        private readonly Dictionary<string, TimerCounter> _timerCounters = new();
+        private readonly Dictionary<string, TimerCounterUnit> _timerCounters = new();
 
         private DisposableBag _disposableBag;
         private bool _isDisposed;
 
         #region Timer Access
 
-        public TimerCounter GetTimer(string timerId) => this._timerCounters.GetValueOrDefault(timerId);
+        public TimerCounterUnit GetTimer(string timerId) => this._timerCounters.GetValueOrDefault(timerId);
+        public Dictionary<string, TimerCounterUnit> CurrentTimerCounters => this._timerCounters;
 
         #endregion
 
@@ -25,43 +26,43 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
         public void RegisterTimer(string timerId, long startUnixTime, long duration)
         {
             TimerModel timerModel = new TimerModel(timerId, startUnixTime, duration);
-            TimerCounter timerCounter = new TimerCounter(timerModel, this._timeValidator);
-            this.AddTimerCounter(timerCounter);
+            TimerCounterUnit timerCounterUnit = new TimerCounterUnit(timerModel, this._timeValidator);
+            this.AddTimerCounter(timerCounterUnit);
         }
 
         public void RegisterTimer(string timerId, long startUnixTime, params long[] durations)
         {
             TimerModel timerModel = new TimerModel(timerId, startUnixTime, durations);
-            TimerCounter timerCounter = new TimerCounter(timerModel, this._timeValidator);
-            this.AddTimerCounter(timerCounter);
+            TimerCounterUnit timerCounterUnit = new TimerCounterUnit(timerModel, this._timeValidator);
+            this.AddTimerCounter(timerCounterUnit);
         }
 
         public void RegisterTimer(string timerId, long startUnixTime, List<long> durations)
         {
             TimerModel timerModel = new TimerModel(timerId, startUnixTime, durations);
-            TimerCounter timerCounter = new TimerCounter(timerModel, this._timeValidator);
-            this.AddTimerCounter(timerCounter);
+            TimerCounterUnit timerCounterUnit = new TimerCounterUnit(timerModel, this._timeValidator);
+            this.AddTimerCounter(timerCounterUnit);
         }
 
-        public void RegisterTimer(TimerCounter timerCounter) => this.AddTimerCounter(timerCounter);
+        public void RegisterTimer(TimerCounterUnit timerCounterUnit) => this.AddTimerCounter(timerCounterUnit);
 
         #endregion
 
         #region Timer Collection Modifier
 
-        private void AddTimerCounter(TimerCounter timerCounter)
+        private void AddTimerCounter(TimerCounterUnit timerCounterUnit)
         {
-            timerCounter.OnTimerRemoved = RemoveTimerOnCompleted;
-            timerCounter.AddTo(ref _disposableBag);
-            this._timerCounters.Add(timerCounter.TimerId, timerCounter);
+            timerCounterUnit.OnTimerRemoved += RemoveTimerOnCompleted;
+            timerCounterUnit.AddTo(ref _disposableBag);
+            this._timerCounters.Add(timerCounterUnit.TimerId, timerCounterUnit);
             return;
 
-            void RemoveTimerOnCompleted() => this.RemoveTimer(timerCounter.TimerId);
+            void RemoveTimerOnCompleted() => this.RemoveTimer(timerCounterUnit.TimerId);
         }
 
         public void RemoveTimer(string timerId)
         {
-            if (!this._timerCounters.TryGetValue(timerId, out TimerCounter timerCounter))
+            if (!this._timerCounters.TryGetValue(timerId, out TimerCounterUnit timerCounter))
                 return;
 
             timerCounter?.Dispose();

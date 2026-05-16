@@ -6,6 +6,6 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Mode
     [MemoryPackable]
     public partial class TimerSaveData
     {
-        public List<TimerSaveUnitModel> TimerSaveDataUnits = new();
+        public Dictionary<string, TimerSaveUnitModel> TimerSaveDataUnits = new();
     }
 }
