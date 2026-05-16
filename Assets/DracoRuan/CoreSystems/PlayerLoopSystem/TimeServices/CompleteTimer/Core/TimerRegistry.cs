@@ -10,7 +10,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
     {
         private readonly TimeValidator _timeValidator = new();
         private readonly Dictionary<string, TimerCounter> _timerCounters = new();
-        
+
         private DisposableBag _disposableBag;
         private bool _isDisposed;
 
@@ -42,13 +42,13 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
             TimerCounter timerCounter = new TimerCounter(timerModel, this._timeValidator);
             this.AddTimerCounter(timerCounter);
         }
-        
+
         public void RegisterTimer(TimerCounter timerCounter) => this.AddTimerCounter(timerCounter);
 
         #endregion
 
         #region Timer Collection Modifier
-        
+
         private void AddTimerCounter(TimerCounter timerCounter)
         {
             timerCounter.OnTimerRemoved = RemoveTimerOnCompleted;
@@ -61,15 +61,15 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 
         public void RemoveTimer(string timerId)
         {
-            if (!this._timerCounters.TryGetValue(timerId, out TimerCounter timerCounter)) 
+            if (!this._timerCounters.TryGetValue(timerId, out TimerCounter timerCounter))
                 return;
-            
+
             timerCounter?.Dispose();
             this._timerCounters.Remove(timerId);
         }
-        
+
         #endregion
-        
+
         public void Tick(float deltaTime)
         {
             foreach (var kvp in this._timerCounters)
@@ -80,9 +80,9 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 
         private void ReleaseUnmanagedResources()
         {
-            
+
         }
-        
+
         private void ReleaseManagedResources()
         {
             this._timerCounters.Clear();
@@ -93,7 +93,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
         {
             if (this._isDisposed)
                 return;
-            
+
             this.ReleaseUnmanagedResources();
             if (disposing)
             {

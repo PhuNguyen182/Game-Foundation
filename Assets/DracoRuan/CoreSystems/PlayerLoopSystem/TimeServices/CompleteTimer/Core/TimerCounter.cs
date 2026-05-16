@@ -15,10 +15,10 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
         public Action<long> OnTimerUpdate;
         public Action OnTimerCompleted;
         public Action OnTimerRemoved;
-        
+
         public bool IsTimerCompleted { get; private set; }
         public string TimerId => this._timerModel?.TimerId;
-        
+
         public TimerCounter(TimerModel timerModel, TimeValidator timeValidator)
         {
             this._isActive = true;
@@ -62,25 +62,25 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
                 }
             }
 
-            if (zeroTier != tierCount) 
+            if (zeroTier != tierCount)
                 return;
-            
+
             this.OnTimerCompleted?.Invoke();
             this.IsTimerCompleted = true;
         }
-        
+
         public void Tick(float deltaTime)
         {
             if (!this._isActive || !this.IsTimerCompleted)
                 return;
-            
+
             this.TimerUpdate();
         }
-        
+
         public void UpdateTimerOnStart() => this.TimerUpdate();
 
         public void RemoveSelf() => this.OnTimerRemoved?.Invoke();
-        
+
         public void Dispose()
         {
             this._isActive = false;
