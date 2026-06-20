@@ -77,7 +77,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
         
         public void DeregisterTimer(string timerId)
         {
-            this._timerRegistry.RemoveTimer(timerId);
+            this._timerRegistry.DeregisterTimer(timerId);
             this._timerDataController.RemoveTimerCounterUnitData(timerId);
         }
 

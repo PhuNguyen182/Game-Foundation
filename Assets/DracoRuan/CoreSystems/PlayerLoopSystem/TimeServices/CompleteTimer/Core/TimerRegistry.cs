@@ -29,14 +29,14 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
         {
             TimerModel timerModel = new TimerModel(timerId, startUnixTime, duration);
             TimerCounterUnit timerCounterUnit = new TimerCounterUnit(timerModel, this._timeValidator);
-            this.AddTimerCounter(timerCounterUnit);
+            this.RegisterTimer(timerCounterUnit);
         }
 
         public void RegisterTimer(string timerId, long startUnixTime, List<long> durations)
         {
             TimerModel timerModel = new TimerModel(timerId, startUnixTime, durations);
             TimerCounterUnit timerCounterUnit = new TimerCounterUnit(timerModel, this._timeValidator);
-            this.AddTimerCounter(timerCounterUnit);
+            this.RegisterTimer(timerCounterUnit);
         }
 
         public void RegisterTimer(TimerCounterUnit timerCounterUnit) => this.AddTimerCounter(timerCounterUnit);
@@ -51,7 +51,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
             this._timerCounters.Add(timerCounterUnit.TimerId, timerCounterUnit);
         }
 
-        public void RemoveTimer(string timerId)
+        public void DeregisterTimer(string timerId)
         {
             if (!this._timerCounters.TryGetValue(timerId, out TimerCounterUnit timerCounter))
                 return;
@@ -97,7 +97,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 
         public void Dispose()
         {
-            Dispose(true);
+            this.Dispose(true);
             GC.SuppressFinalize(this);
         }
 
