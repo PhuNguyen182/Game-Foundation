@@ -21,7 +21,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // ---------------------------------------------------------------------------
         // Constants
         // ---------------------------------------------------------------------------
-        private const int MaxVersionScan = 20;
+        private const int MaxVersionScan = 100;
         private const string LocalDataFolder = "GameData";
         private const string FileExtension = ".data";
 
