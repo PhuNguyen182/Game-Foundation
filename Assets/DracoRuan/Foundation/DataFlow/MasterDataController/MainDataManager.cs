@@ -33,7 +33,6 @@ namespace DracoRuan.Foundation.DataFlow.MasterDataController
             bool isStaticDataControllerInitialized = staticCustomDataManager.IsInitialized() &&
                                                      dynamicCustomDataManager.IsInitialized();
             return isStaticDataControllerInitialized;
-
         }
 
         public TStaticGameDataHandler GetStaticDataController<TStaticGameDataHandler>()

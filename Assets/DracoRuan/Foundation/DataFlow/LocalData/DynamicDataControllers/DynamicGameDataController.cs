@@ -35,6 +35,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         protected abstract TData SourceData { get; set; }
         
         public abstract int CurrentDataVersion { get; }
+        public event Action OnDataLoaded;
 
         public event Action<TData> OnDataChanged
         {
@@ -97,7 +98,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         {
             byte[] mostRecentSavedRawData = this.LoadRawData();
             await UniTask.WaitUntil(this._migrationOrchestrator.AllDataMigratorsRegistered,
-                cancellationToken: _cancellationToken);
+                cancellationToken: this._cancellationToken);
             
             string domain = nameof(TData);
             int mostRecentDataVersion = this.GetMostRecentDataVersion();
@@ -121,6 +122,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             }
 
             this.OnDataChangedInternal?.Invoke(this.SourceData);
+            this.OnDataLoaded?.Invoke();
             this._isDataInitialized = true;
         }
 

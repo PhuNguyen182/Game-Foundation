@@ -21,6 +21,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         public Type SourceDataType => typeof(TData);
         public TData ExposedSourceData => this.SourceData;
         public int DataVersion => this.SourceData?.DataVersion ?? 0;
+        public event Action OnDataLoaded;
 
         protected StaticGameDataController(IDataProviderService dataProviderService)
         {
@@ -50,8 +51,11 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
             
             this.OnDataInitialized();
         }
-        
-        protected abstract void OnDataInitialized();
+
+        protected virtual void OnDataInitialized()
+        {
+            this.OnDataLoaded?.Invoke();
+        }
 
         protected void CleanupUnusedData()
         {

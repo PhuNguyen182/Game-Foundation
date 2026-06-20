@@ -8,6 +8,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
     {
         public int DataVersion { get; }
         public Type SourceDataType { get; }
+        public event Action OnDataLoaded;
         
         public UniTask InitializeData(IDataSequenceProcessor dataSequenceProcessor);
     }
