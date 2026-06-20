@@ -1,0 +1,399 @@
+/* ============================================================
+   Local Data Manager — Stylesheet
+   (Applied programmatically; not embedded in UXML)
+   ============================================================ */
+
+/* ---- Root ---- */
+.unity-editor-window {
+    padding: 10px;
+    background-color: rgb(56, 56, 56);
+}
+
+/* ---- Header ---- */
+.header-container {
+    background-color: rgb(64, 64, 64);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-left: 4px solid rgb(88, 166, 255);
+}
+
+.title-label {
+    font-size: 18px;
+    color: rgb(210, 210, 210);
+    -unity-font-style: bold;
+    margin-bottom: 5px;
+}
+
+.subtitle-label {
+    font-size: 11px;
+    color: rgb(160, 160, 160);
+    -unity-font-style: italic;
+}
+
+/* ---- Controls ---- */
+.controls-container {
+    background-color: rgb(64, 64, 64);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+/* ---- Search ---- */
+.search-container {
+    background-color: rgb(56, 56, 56);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-left: 3px solid rgb(255, 193, 7);
+}
+
+.search-label {
+    color: rgb(220, 220, 220);
+    font-size: 12px;
+    -unity-font-style: bold;
+    margin-bottom: 8px;
+}
+
+.search-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.search-field {
+    flex-grow: 1;
+    background-color: rgb(48, 48, 48);
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgb(100, 100, 100);
+    padding: 2px 4px;
+    color: rgb(220, 220, 220);
+    font-size: 12px;
+    margin-right: 8px;
+    min-height: 24px;
+}
+
+.search-field:focus {
+    border-color: rgb(255, 193, 7);
+    background-color: rgb(52, 52, 52);
+}
+
+.search-field > .unity-text-field__input,
+.search-field .unity-base-text-field__input {
+    background-color: transparent;
+    border-width: 0;
+    color: rgb(255, 255, 255);
+    font-size: 12px;
+    padding: 0;
+    margin: 0;
+    -unity-text-align: middle-left;
+}
+
+.clear-search-button {
+    background-color: rgb(180, 180, 180);
+    color: rgb(64, 64, 64);
+    border-radius: 4px;
+    border-width: 0;
+    padding: 8px 10px;
+    font-size: 12px;
+    -unity-font-style: bold;
+    min-width: 32px;
+    max-width: 32px;
+}
+
+.clear-search-button:hover {
+    background-color: rgb(210, 210, 210);
+}
+
+/* ---- Action buttons ---- */
+.button-row {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.primary-button {
+    background-color: rgb(88, 166, 255);
+    color: white;
+    border-radius: 6px;
+    padding: 8px 14px;
+    border-width: 0;
+    font-size: 12px;
+    flex-grow: 1;
+    margin: 0 4px;
+    -unity-font-style: bold;
+}
+.primary-button:hover { background-color: rgb(110, 185, 255); }
+
+.success-button {
+    background-color: rgb(76, 175, 80);
+    color: white;
+    border-radius: 6px;
+    padding: 8px 14px;
+    border-width: 0;
+    font-size: 12px;
+    flex-grow: 1;
+    margin: 0 4px;
+    -unity-font-style: bold;
+}
+.success-button:hover { background-color: rgb(100, 195, 104); }
+
+.danger-button {
+    background-color: rgb(244, 67, 54);
+    color: white;
+    border-radius: 6px;
+    padding: 8px 14px;
+    border-width: 0;
+    font-size: 12px;
+    flex-grow: 1;
+    margin: 0 4px;
+    -unity-font-style: bold;
+}
+.danger-button:hover { background-color: rgb(255, 95, 82); }
+
+.open-folder-button {
+    background-color: rgb(255, 193, 7);
+    color: rgb(50, 50, 50);
+    border-radius: 6px;
+    padding: 8px 14px;
+    border-width: 0;
+    font-size: 12px;
+    flex-grow: 1;
+    margin: 0 4px;
+    -unity-font-style: bold;
+}
+.open-folder-button:hover { background-color: rgb(255, 215, 64); }
+
+/* ---- Info row ---- */
+.info-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.info-label {
+    color: rgb(210, 210, 210);
+    font-size: 11px;
+    -unity-font-style: bold;
+}
+
+.status-label {
+    color: rgb(180, 180, 180);
+    font-size: 11px;
+    -unity-font-style: italic;
+}
+
+.folder-path-label {
+    color: rgb(140, 140, 140);
+    font-size: 10px;
+    -unity-font-style: italic;
+    margin-top: 2px;
+}
+
+/* ---- Data display section ---- */
+.data-display-container {
+    flex-grow: 1;
+    flex-direction: column;
+    margin: 8px 0;
+}
+
+.section-header {
+    background-color: rgb(64, 64, 64);
+    border-radius: 8px 8px 0 0;
+    padding: 10px 15px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-width: 1px;
+    border-color: rgb(70, 70, 70);
+    border-bottom-width: 1px;
+}
+
+.section-title {
+    color: rgb(220, 220, 220);
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.section-count {
+    color: rgb(150, 150, 150);
+    font-size: 11px;
+    -unity-font-style: italic;
+}
+
+.data-scroll-view {
+    flex-grow: 1;
+    min-height: 300px;
+    background-color: rgb(46, 46, 46);
+    border-radius: 0 0 8px 8px;
+    padding: 8px;
+    border-width: 1px;
+    border-color: rgb(70, 70, 70);
+    border-left: 3px solid rgb(255, 193, 7);
+}
+
+.data-container {
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+/* ---- Data entry card ---- */
+.data-entry {
+    background-color: rgb(64, 64, 64);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    border-width: 1px;
+    border-color: rgb(80, 80, 80);
+}
+
+.data-entry:hover {
+    border-color: rgb(255, 193, 7);
+    background-color: rgb(70, 70, 70);
+}
+
+.file-data-entry {
+    border-left: 3px solid rgb(255, 193, 7);
+}
+
+.file-data-entry:hover {
+    border-left-color: rgb(255, 220, 80);
+}
+
+.data-entry-header {
+    background-color: rgb(72, 72, 72);
+    border-radius: 6px 6px 0 0;
+    padding: 10px 14px;
+}
+
+.file-data-header {
+    background-color: rgb(70, 70, 70);
+}
+
+.data-entry-title {
+    color: rgb(210, 210, 210);
+    font-size: 14px;
+    -unity-font-style: bold;
+    flex-grow: 1;
+}
+
+.file-data-title {
+    color: rgb(255, 215, 64);
+}
+
+.file-path-label {
+    color: rgb(160, 160, 160);
+    font-size: 10px;
+    -unity-font-style: italic;
+}
+
+.data-entry-content {
+    padding: 14px;
+    background-color: rgb(58, 58, 58);
+    border-radius: 0 0 6px 6px;
+}
+
+/* ---- Small action buttons ---- */
+.small-button {
+    background-color: transparent;
+    border-width: 1px;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin-left: 5px;
+    font-size: 10px;
+    color: rgb(210, 210, 210);
+    border-color: rgb(120, 120, 120);
+}
+
+.load-button   { border-color: rgb(88, 166, 255); color: rgb(88, 166, 255); }
+.save-button   { border-color: rgb(76, 175, 80);  color: rgb(76, 175, 80);  }
+.delete-button { border-color: rgb(244, 67, 54);  color: rgb(244, 67, 54);  }
+
+.load-button:hover   { background-color: rgb(88, 166, 255); color: white; }
+.save-button:hover   { background-color: rgb(76, 175, 80);  color: white; }
+.delete-button:hover { background-color: rgb(244, 67, 54);  color: white; }
+
+/* ---- Expand/collapse button ---- */
+.expand-button {
+    background-color: transparent;
+    border-width: 1px;
+    border-radius: 3px;
+    border-color: rgb(120, 120, 120);
+    color: rgb(200, 200, 200);
+    font-size: 12px;
+    padding: 2px 8px;
+    margin: 0;
+    min-width: 28px;
+    max-width: 28px;
+    -unity-font-style: bold;
+}
+
+.expand-button:hover,
+.file-data-entry .expand-button:hover {
+    border-color: rgb(255, 193, 7);
+    color: rgb(255, 193, 7);
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+/* ---- Property fields ---- */
+.property-field {
+    margin-bottom: 8px;
+}
+
+.property-label {
+    color: rgb(200, 200, 200);
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+.file-data-entry .property-label {
+    color: rgb(255, 215, 64);
+}
+
+.property-value {
+    background-color: rgb(48, 48, 48);
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgb(80, 80, 80);
+    padding: 6px 8px;
+    color: rgb(220, 220, 220);
+}
+
+.property-value:focus {
+    border-color: rgb(255, 193, 7);
+    background-color: rgb(52, 52, 52);
+}
+
+.file-data-entry .property-field {
+    border-left: 1px solid rgba(255, 193, 7, 0.25);
+    padding-left: 8px;
+}
+
+/* ---- Status badges ---- */
+.status-success { color: rgb(76, 175, 80);  }
+.status-error   { color: rgb(244, 67, 54);  }
+.status-warning { color: rgb(255, 193, 7);  }
+.status-info    { color: rgb(88, 166, 255); }
+
+/* ---- Empty state ---- */
+.empty-state {
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    min-height: 200px;
+}
+
+.empty-title {
+    font-size: 22px;
+    color: rgb(140, 140, 140);
+    margin-bottom: 10px;
+    -unity-font-style: bold;
+}
+
+.empty-description {
+    font-size: 13px;
+    color: rgb(110, 110, 110);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    max-width: 350px;
+}

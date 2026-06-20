@@ -1,0 +1,72 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         engine="UnityEngine.UIElements" editor="UnityEditor.UIElements"
+         noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd"
+         editor-extension-mode="True">
+    <!--
+        Stylesheet is applied programmatically in LocalDataTool.CreateGUI()
+        via AssetDatabase.FindAssets so no hard-coded path is needed here.
+    -->
+
+    <!-- ===== Header ===== -->
+    <ui:VisualElement class="header-container">
+        <ui:Label text="🎮 Local Data Manager" class="title-label" />
+        <ui:Label text="File-based persistent data — powered by DynamicGameDataController" class="subtitle-label" />
+    </ui:VisualElement>
+
+    <!-- ===== Controls ===== -->
+    <ui:VisualElement class="controls-container">
+
+        <!-- Search -->
+        <ui:VisualElement class="search-container">
+            <ui:Label text="🔍 Search Controllers" class="search-label" />
+            <ui:VisualElement class="search-row">
+                <ui:TextField name="search-field"
+                              placeholder-text="Type name or controller key…"
+                              class="search-field" />
+                <ui:Button name="clear-search-button" text="✖" class="clear-search-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Action buttons -->
+        <ui:VisualElement class="button-row">
+            <ui:Button name="load-all-button"    text="📥 Load All"    class="primary-button" />
+            <ui:Button name="save-all-button"    text="💾 Save All"    class="success-button" />
+            <ui:Button name="delete-all-button"  text="🗑️ Clear All"  class="danger-button"  />
+            <ui:Button name="open-folder-button" text="📂 Open Folder" class="open-folder-button" />
+        </ui:VisualElement>
+
+        <!-- Status info -->
+        <ui:VisualElement class="info-row">
+            <ui:Label name="data-count-label"  text="📊 0 controllers" class="info-label"   />
+            <ui:Label name="last-action-label" text="Ready"            class="status-label" />
+        </ui:VisualElement>
+
+        <!-- Folder path -->
+        <ui:Label name="folder-path-label"
+                  text="📁 [Application.persistentDataPath]/GameData"
+                  class="folder-path-label" />
+    </ui:VisualElement>
+
+    <!-- ===== Data Section ===== -->
+    <ui:VisualElement class="data-display-container">
+
+        <ui:VisualElement class="section-header">
+            <ui:Label text="📄 File Data Controllers" class="section-title" />
+            <ui:Label name="file-count-label" text="0 / 0" class="section-count" />
+        </ui:VisualElement>
+
+        <ui:ScrollView name="data-scroll-view" class="data-scroll-view">
+            <ui:VisualElement name="data-container" class="data-container" />
+        </ui:ScrollView>
+
+    </ui:VisualElement>
+
+    <!-- ===== Empty State ===== -->
+    <ui:VisualElement name="empty-state" class="empty-state">
+        <ui:Label text="📁 No Controllers Found" class="empty-title" />
+        <ui:Label text="Click 'Load All' to discover DynamicGameDataController implementations in your project."
+                  class="empty-description" />
+    </ui:VisualElement>
+
+</ui:UXML>
