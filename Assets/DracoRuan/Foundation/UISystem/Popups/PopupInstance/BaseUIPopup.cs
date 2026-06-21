@@ -2,6 +2,7 @@ using DracoRuan.Foundation.UISystem.Popups.PopupManager;
 using DracoRuan.Foundation.UISystem.UIElements;
 using DracoRuan.Foundation.UISystem.Views;
 using UnityEngine;
+using VContainer;
 
 namespace DracoRuan.Foundation.UISystem.Popups.PopupInstance
 {
@@ -10,6 +11,12 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupInstance
         [SerializeField] protected BaseUIButton closeButton;
         
         private IUIPopupManager _popupManager;
+
+        [Inject]
+        public void Initialize(IUIPopupManager popupManager)
+        {
+            this._popupManager = popupManager;
+        }
 
         protected virtual void Awake()
         {

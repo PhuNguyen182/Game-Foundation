@@ -9,7 +9,7 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
         public TPopup ShowPopup<TPopup>(string popupName, Transform parent) where TPopup : BaseUIPopup;
 
         public TPopup ShowPopup<TPopup, TPopupModel>(string popupName, Transform parent, TPopupModel model)
-            where TPopup :  BaseUIPopup, IUIModel<TPopupModel>;
+            where TPopup : BaseUIPopup, IUIModel<TPopupModel>;
 
         public void ClosePopup(string popupName);
         public void ClosePopupByType<TPopup>() where TPopup : BaseUIPopup;

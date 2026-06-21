@@ -5,6 +5,7 @@ using DracoRuan.Foundation.UISystem.Views;
 using DracoRuan.Utilities.ObjectPooling;
 using UnityEngine;
 using UnityEngine.Pool;
+using VContainer;
 
 namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
 {
@@ -12,13 +13,15 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
     {
         private readonly PopupCollection _popupCollection;
         private readonly Dictionary<string, BaseUIPopup> _popupDictionary;
+        private readonly IObjectResolver _objectResolver;
         
         private bool _isDisposed;
         
-        public UIPopupManager(PopupCollection popupCollection)
+        public UIPopupManager(PopupCollection popupCollection, IObjectResolver objectResolver)
         {
             this._popupDictionary = new Dictionary<string, BaseUIPopup>();
             this._popupCollection = popupCollection;
+            this._objectResolver = objectResolver;
             this._popupCollection.Initialize();
             PreloadPopups();
             return;
@@ -51,6 +54,7 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
             if (!this._popupDictionary.TryAdd(popupName, result))
                 this._popupDictionary[popupName] = result;
             
+            this._objectResolver.Inject(result);
             result.Show();
             return result;
         }
@@ -70,6 +74,7 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
             if (!this._popupDictionary.TryAdd(popupName, result))
                 this._popupDictionary[popupName] = result;
             
+            this._objectResolver.Inject(result);
             result.Show();
             return result;
         }
