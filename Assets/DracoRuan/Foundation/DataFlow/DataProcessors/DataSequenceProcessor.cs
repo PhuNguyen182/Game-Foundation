@@ -16,7 +16,7 @@ namespace DracoRuan.Foundation.DataFlow.DataProcessors
         
         public async UniTask Execute()
         {
-            foreach (IProcessSequence processSequence in _processSequences)
+            foreach (IProcessSequence processSequence in this._processSequences)
             {
                 bool isSuccess = await processSequence.Process();
                 this.LatestProcessSequence = processSequence;

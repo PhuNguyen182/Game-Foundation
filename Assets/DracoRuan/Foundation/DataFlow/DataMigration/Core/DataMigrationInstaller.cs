@@ -45,6 +45,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core
             builder.Register<MigrationManifestStorage>(Lifetime.Scoped);
             builder.Register<MigrationResolver>(Lifetime.Scoped);
             builder.Register<SnapshotManager>(Lifetime.Scoped);
+            this._isInstalled = true;
         }
     }
 }
