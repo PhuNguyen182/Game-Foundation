@@ -35,6 +35,9 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
         {
             Sequence sequence = DOTween.Sequence();
             AnchoredPositionData movePositionData = this.GetMovePositionData();
+            AnchoredPositionData oppositeMovePositionData = this.GetOppositeMovePositionData();
+            this._rectTransform.anchorMin = oppositeMovePositionData.minAnchor;
+            this._rectTransform.anchorMax = oppositeMovePositionData.maxAnchor;
             sequence.Insert(0, this._rectTransform.DOAnchorMin(movePositionData.minAnchor, this.duration));
             sequence.Insert(0, this._rectTransform.DOAnchorMax(movePositionData.maxAnchor, this.duration));
 
@@ -59,6 +62,20 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
                 MoveDirection.Down => this.moveDownPositionData,
                 MoveDirection.Left => this.moveLeftPositionData,
                 MoveDirection.Right => this.moveRightPositionData,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            return result;
+        }
+        
+        private AnchoredPositionData GetOppositeMovePositionData()
+        {
+            AnchoredPositionData result = this.moveDirection switch
+            {
+                MoveDirection.Up => this.moveDownPositionData,
+                MoveDirection.Down => this.moveUpPositionData,
+                MoveDirection.Left => this.moveRightPositionData,
+                MoveDirection.Right => this.moveLeftPositionData,
                 _ => throw new ArgumentOutOfRangeException()
             };
 

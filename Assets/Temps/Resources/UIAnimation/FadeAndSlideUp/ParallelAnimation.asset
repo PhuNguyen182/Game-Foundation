@@ -10,6 +10,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 557b097b839f173488c3219898d002d6, type: 3}
-  m_Name: SimultaneouslyAnimation
-  m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.SimultaneouslyAnimation
-  AnimationElements: []
+  m_Name: ParallelAnimation
+  m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.ParallelAnimation
+  singleAnimationConfigs: []

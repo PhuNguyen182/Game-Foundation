@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing
 {
-    [CreateAssetMenu(fileName = "SimultaneouslyAnimation", menuName = "DracoRuan/UISystem/AnimationConfig/SimultaneouslyAnimation")]
+    [CreateAssetMenu(fileName = "ParallelAnimation", menuName = "DracoRuan/UISystem/AnimationConfig/ParallelAnimation")]
     public class ParallelAnimation : ScriptableObject
     {
         public SingleAnimation[] singleAnimationConfigs;

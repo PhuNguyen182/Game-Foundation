@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing
 {
-    [CreateAssetMenu(fileName = "SequentialAnimationConfig", menuName = "DracoRuan/UISystem/DOTweenAnimation/SequentialAnimationConfig")]
+    [CreateAssetMenu(fileName = "SequentialAnimation", menuName = "DracoRuan/UISystem/AnimationConfig/SequentialAnimation")]
     public class SequentialAnimation : ScriptableObject
     {
         [SerializeField] private ParallelAnimation[] simultaneouslyAnimations;

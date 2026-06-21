@@ -28,6 +28,7 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
             if (!this.Target)
                 return null;
             
+            this.Target.transform.localScale = this.startScale;
             Tween result = this.scaleMode switch
             {
                 ScaleMode.Uniform => this.GetUniformScaleTween(),
