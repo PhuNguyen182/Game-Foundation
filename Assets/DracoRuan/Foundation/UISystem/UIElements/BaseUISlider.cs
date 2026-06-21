@@ -38,7 +38,6 @@ namespace DracoRuan.Foundation.UISystem.UIElements
         {
             if (this.uiSlider)
                 this.uiSlider.onValueChanged.RemoveListener(this.OnSliderValueChanged);
-            this.OnSliderValueChangedInternal = null;
         }
 
 #if UNITY_EDITOR
