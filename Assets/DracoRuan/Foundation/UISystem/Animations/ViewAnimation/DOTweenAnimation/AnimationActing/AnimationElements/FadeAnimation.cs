@@ -16,6 +16,10 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
                 return null;
             
             Tween result = this.BuildFadeAnimation();
+            if (this.loop)
+                result.SetLoops(this.loopCount, this.loopType);
+            
+            result.SetDelay(this.delay);
             return result;
         }
 

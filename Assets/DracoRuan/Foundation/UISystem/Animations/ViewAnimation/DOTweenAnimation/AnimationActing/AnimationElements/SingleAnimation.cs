@@ -1,13 +1,20 @@
 using System;
-using DG.Tweening;
 using UnityEngine;
+using DG.Tweening;
 
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
 {
     public abstract class SingleAnimation : BaseAnimation
     {
+        [Header("Animation Timing")]
         public float duration;
-
+        public float delay;
+        
+        [Header("Animation Loop")]
+        public bool loop;
+        public LoopType loopType = LoopType.Restart;
+        public int loopCount = 1;
+        
         public override void SetTargetAnimation(CanvasGroup target)
         {
             this.Target = target;
