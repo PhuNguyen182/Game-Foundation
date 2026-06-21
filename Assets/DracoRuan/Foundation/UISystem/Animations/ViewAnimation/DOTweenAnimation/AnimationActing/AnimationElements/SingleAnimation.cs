@@ -21,6 +21,12 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
             this.OnTargetSet();
         }
 
+        public override void TryKillAnimation()
+        {
+            if (this.Target)
+                this.Target.DOKill();
+        }
+        
         protected virtual void OnTargetSet()
         {
             

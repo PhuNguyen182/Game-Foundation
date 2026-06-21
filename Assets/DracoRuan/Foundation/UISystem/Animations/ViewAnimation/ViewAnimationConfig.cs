@@ -1,6 +1,5 @@
 using System;
 using DG.Tweening;
-using DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation;
 using DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing;
 using UnityEngine;
 
@@ -12,7 +11,7 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
         public AnimationType animationType;
         
         [Header("DOTween Config")]
-        public AnimationConfig dotweenAnimationConfig;
+        public AnimationConfig tweenAnimationConfig;
         
         [Header("Animator Config")]
         [Tooltip("If use Animator as main animation playback, please fill in the animation clip name")] 
@@ -34,10 +33,17 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
         
         public Tween PlayTweenAnimation(CanvasGroup target)
         {
-            this.dotweenAnimationConfig.SetTargetAnimation(target);
-            Tween tweenAnimation = this.dotweenAnimationConfig.BuildAnimation();
+            this.tweenAnimationConfig.TryKillAnimation();
+            this.tweenAnimationConfig.SetTargetAnimation(target);
+            Tween tweenAnimation = this.tweenAnimationConfig.BuildAnimation();
             tweenAnimation.Play();
             return tweenAnimation;
+        }
+
+        public void TryKillAnimation()
+        {
+            if (animationType == AnimationType.DOTween && this.tweenAnimationConfig)
+                this.tweenAnimationConfig.TryKillAnimation();
         }
     }
 }

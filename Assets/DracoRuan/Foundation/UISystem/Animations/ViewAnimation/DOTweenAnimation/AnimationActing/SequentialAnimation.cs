@@ -10,11 +10,6 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
         
         private Sequence _sequence;
 
-        public SequentialAnimation(AnimationConfig[] animations)
-        {
-            this.animations = animations;
-        }
-
         public override void SetTargetAnimation(CanvasGroup target)
         {
             int count = this.animations.Length;
@@ -26,17 +21,21 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
 
         public override Tween BuildAnimation()
         {
-            if (this._sequence != null) 
-                return this._sequence;
-            
             this._sequence = DOTween.Sequence();
-            foreach (ParallelAnimation simultaneouslyAnimation in this.animations)
+            foreach (AnimationConfig animation in this.animations)
             {
-                Tween animation = simultaneouslyAnimation.BuildAnimation();
-                this._sequence.Append(animation);
+                Tween builtAnimation = animation.BuildAnimation();
+                this._sequence.Append(builtAnimation);
             }
             
             return this._sequence;
+        }
+
+        public override void TryKillAnimation()
+        {
+            this._sequence?.Kill();
+            if (this.Target)
+                this.Target.DOKill();
         }
     }
 }

@@ -34,5 +34,12 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
             
             return this._sequence;
         }
+        
+        public override void TryKillAnimation()
+        {
+            this._sequence?.Kill();
+            if (this.Target)
+                this.Target.DOKill();
+        }
     }
 }

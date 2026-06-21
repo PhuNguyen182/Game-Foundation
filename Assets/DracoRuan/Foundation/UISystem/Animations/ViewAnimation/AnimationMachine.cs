@@ -175,5 +175,13 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
         }
 
         #endregion
+
+        public void TryKillAnimation()
+        {
+            this.showBackgroundConfig.TryKillAnimation();
+            this.hideBackgroundConfig.TryKillAnimation();
+            this.showSubjectConfig.TryKillAnimation();
+            this.hideSubjectConfig.TryKillAnimation();
+        }
     }
 }

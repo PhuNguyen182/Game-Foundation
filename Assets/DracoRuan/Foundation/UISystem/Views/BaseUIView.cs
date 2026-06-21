@@ -29,6 +29,11 @@ namespace DracoRuan.Foundation.UISystem.Views
                 }).Forget();
         }
 
+        protected virtual void OnDestroy()
+        {
+            this.animationMachine.TryKillAnimation();
+        }
+
 #if UNITY_EDITOR
         private void OnValidate()
         {

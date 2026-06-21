@@ -9,5 +9,6 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
         
         public abstract void SetTargetAnimation(CanvasGroup target);
         public abstract Tween BuildAnimation();
+        public abstract void TryKillAnimation();
     }
 }
