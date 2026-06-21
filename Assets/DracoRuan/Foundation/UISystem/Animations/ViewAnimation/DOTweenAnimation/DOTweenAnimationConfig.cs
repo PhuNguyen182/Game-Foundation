@@ -7,12 +7,12 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
     [CreateAssetMenu(fileName = "AnimationConfig", menuName = "DracoRuan/UISystem/AnimationConfig/DOTweenAnimationConfig")]
     public class DOTweenAnimationConfig : ScriptableObject
     {
-        [SerializeField] public SequentialAnimation animationConfig;
+        [SerializeField] public BaseAnimation animationConfig;
 
         public Tween PlayAnimation(CanvasGroup target)
         {
             this.animationConfig.SetTargetAnimation(target);
-            Tween tweenAnimation = this.animationConfig.BuildSimultaneouslyAnimation();
+            Tween tweenAnimation = this.animationConfig.BuildAnimation();
             tweenAnimation.Play();
             return tweenAnimation;
         }

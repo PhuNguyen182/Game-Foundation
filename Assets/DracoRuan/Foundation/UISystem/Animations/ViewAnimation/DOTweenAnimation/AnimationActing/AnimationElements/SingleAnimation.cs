@@ -4,15 +4,20 @@ using UnityEngine;
 
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
 {
-    public abstract class SingleAnimation : ScriptableObject
+    public abstract class SingleAnimation : BaseAnimation
     {
         public float duration;
 
-        protected CanvasGroup Target;
+        public override void SetTargetAnimation(CanvasGroup target)
+        {
+            this.Target = target;
+            this.OnTargetSet();
+        }
 
-        public virtual void InitializeTarget(CanvasGroup target) => this.Target = target;
-
-        public abstract Tween BuildAnimation();
+        protected virtual void OnTargetSet()
+        {
+            
+        }
     }
 
     [Serializable]

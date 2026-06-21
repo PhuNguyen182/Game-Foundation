@@ -14,11 +14,15 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
             Separate = 1,
         }
         
+        [Header("Common Config")]
         public Vector3 startScale;
         public Vector3 endScale;
         public ScaleMode scaleMode;
         
+        [Header("Uniform Easing")]
         public AnimationEasing uniformEasing;
+        
+        [Header("Separated Axis Easing")]
         public AnimationEasing xAxisEasing;
         public AnimationEasing yAxisEasing;
         public AnimationEasing zAxisEasing;

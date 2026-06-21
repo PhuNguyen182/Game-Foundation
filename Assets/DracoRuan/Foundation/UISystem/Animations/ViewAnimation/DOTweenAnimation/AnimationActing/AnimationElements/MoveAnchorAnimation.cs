@@ -17,17 +17,21 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
         }
         
         public MoveDirection moveDirection;
+        
+        [Header("Move Configs")]
         public AnchoredPositionData moveUpPositionData;
         public AnchoredPositionData moveDownPositionData;
         public AnchoredPositionData moveLeftPositionData;
         public AnchoredPositionData moveRightPositionData;
+        
+        [Header("Easing")]
         public AnimationEasing easing;
         
         private RectTransform _rectTransform;
-        
-        public override void InitializeTarget(CanvasGroup target)
+
+        protected override void OnTargetSet()
         {
-            base.InitializeTarget(target);
+            base.OnTargetSet();
             this._rectTransform = this.Target.GetComponent<RectTransform>();
         }
 
