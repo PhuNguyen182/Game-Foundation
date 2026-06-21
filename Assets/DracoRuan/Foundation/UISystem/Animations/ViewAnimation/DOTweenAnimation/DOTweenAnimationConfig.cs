@@ -4,9 +4,10 @@ using UnityEngine;
 
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation
 {
+    [CreateAssetMenu(fileName = "AnimationConfig", menuName = "DracoRuan/UISystem/AnimationConfig")]
     public class DOTweenAnimationConfig : ScriptableObject
     {
-        [SerializeField] public SequentiallyAnimation animationConfig;
+        [SerializeField] public SequentialAnimation animationConfig;
 
         public Tween PlayAnimation(CanvasGroup target)
         {

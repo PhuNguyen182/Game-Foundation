@@ -1,23 +1,22 @@
-using System;
 using DG.Tweening;
 using DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements;
 using UnityEngine;
 
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing
 {
-    [Serializable]
-    public class SimultaneouslyAnimation
+    [CreateAssetMenu(fileName = "SimultaneouslyAnimation", menuName = "DracoRuan/UISystem/AnimationConfig/SimultaneouslyAnimation")]
+    public class ParallelAnimation : ScriptableObject
     {
-        public AnimationElement[] AnimationElements;
+        public SingleAnimation[] singleAnimationConfigs;
         
         private Sequence _sequence;
 
         public void SetTargetAnimation(CanvasGroup target)
         {
-            int count = this.AnimationElements.Length;
+            int count = this.singleAnimationConfigs.Length;
             for (int i = 0; i < count; i++)
             {
-                this.AnimationElements[i].InitializeTarget(target);
+                this.singleAnimationConfigs[i].InitializeTarget(target);
             }
         }
 
@@ -27,10 +26,10 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
                 return this._sequence;
             
             this._sequence = DOTween.Sequence();
-            int count = this.AnimationElements.Length;
+            int count = this.singleAnimationConfigs.Length;
             for (int i = 0; i < count; i++)
             {
-                Tween animation = this.AnimationElements[i].BuildAnimation();
+                Tween animation = this.singleAnimationConfigs[i].BuildAnimation();
                 this._sequence.Insert(0, animation);
             }
             

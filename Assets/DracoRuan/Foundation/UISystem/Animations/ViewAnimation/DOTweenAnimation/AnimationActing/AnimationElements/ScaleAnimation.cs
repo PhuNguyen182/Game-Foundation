@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
 {
-    [Serializable]
-    public class ScaleAnimation : AnimationElement
+    [CreateAssetMenu(fileName = "ScaleAnimation", menuName = "DracoRuan/UISystem/AnimationConfig/ScaleAnimation")]
+    public class ScaleAnimation : SingleAnimation
     {
         [Serializable]
         public enum ScaleMode
@@ -27,20 +27,29 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
         {
             if (!this.Target)
                 return null;
-
-            Tween result = this.scaleMode == ScaleMode.Uniform
-                ? this.GetUniformScaleTween()
-                : this.GetSeparateScaleTween();
+            
+            Tween result = this.scaleMode switch
+            {
+                ScaleMode.Uniform => this.GetUniformScaleTween(),
+                ScaleMode.Separate => this.GetSeparateScaleTween(),
+                _ => null
+            };
+            
             return result;
         }
         
         private Tween GetUniformScaleTween()
         {
             Tween result = this.Target.transform.DOScale(this.endScale, this.duration);
-            if (this.uniformEasing.easingType == AnimationEasingType.DOTweenEase)
-                result.SetEase(this.uniformEasing.ease);
-            else
-                result.SetEase(this.uniformEasing.curve);
+            switch (this.uniformEasing.easingType)
+            {
+                case AnimationEasingType.DOTweenEase:
+                    result.SetEase(this.uniformEasing.ease);
+                    break;
+                case AnimationEasingType.AnimationCurve:
+                    result.SetEase(this.uniformEasing.curve);
+                    break;
+            }
             
             return result;
         }
@@ -50,28 +59,32 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
             Sequence sequence = DOTween.Sequence();
 
             Tween xAxisTween = this.Target.transform.DOScaleX(this.endScale.x, this.duration);
-            if (this.xAxisEasing.easingType == AnimationEasingType.DOTweenEase)
-                xAxisTween.SetEase(this.xAxisEasing.ease);
-            else
-                xAxisTween.SetEase(this.xAxisEasing.curve);
+            this.BuildEasingForTween(xAxisTween, this.xAxisEasing);
             
             Tween yAxisTween = this.Target.transform.DOScaleY(this.endScale.y, this.duration);
-            if (this.xAxisEasing.easingType == AnimationEasingType.DOTweenEase)
-                yAxisTween.SetEase(this.yAxisEasing.ease);
-            else
-                yAxisTween.SetEase(this.yAxisEasing.curve);
+            this.BuildEasingForTween(yAxisTween, this.yAxisEasing);
             
             Tween zAxisTween = this.Target.transform.DOScaleZ(this.endScale.z, this.duration);
-            if (this.zAxisEasing.easingType == AnimationEasingType.DOTweenEase)
-                zAxisTween.SetEase(this.zAxisEasing.ease);
-            else
-                zAxisTween.SetEase(this.zAxisEasing.curve);
+            this.BuildEasingForTween(zAxisTween, this.zAxisEasing);
             
             sequence.Insert(0, xAxisTween);
             sequence.Insert(0, yAxisTween);
             sequence.Insert(0, zAxisTween);
             
             return sequence;
+        }
+
+        private void BuildEasingForTween(Tween tween, AnimationEasing easing)
+        {
+            switch (easing.easingType)
+            {
+                case AnimationEasingType.DOTweenEase:
+                    tween.SetEase(easing.ease);
+                    break;
+                case AnimationEasingType.AnimationCurve:
+                    tween.SetEase(easing.curve);
+                    break;
+            }
         }
     }
 }

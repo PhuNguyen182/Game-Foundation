@@ -3,10 +3,10 @@ using UnityEngine;
 
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing
 {
-    [CreateAssetMenu(fileName = "SequentiallyAnimationConfig", menuName = "DracoRuan/UISystem/DOTweenAnimation/SequentiallyAnimationAnimation")]
-    public class SequentiallyAnimation : ScriptableObject
+    [CreateAssetMenu(fileName = "SequentialAnimationConfig", menuName = "DracoRuan/UISystem/DOTweenAnimation/SequentialAnimationConfig")]
+    public class SequentialAnimation : ScriptableObject
     {
-        [SerializeField] private SimultaneouslyAnimation[] simultaneouslyAnimations;
+        [SerializeField] private ParallelAnimation[] simultaneouslyAnimations;
         
         private Sequence _sequence;
 
@@ -25,7 +25,7 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
                 return this._sequence;
             
             this._sequence = DOTween.Sequence();
-            foreach (SimultaneouslyAnimation simultaneouslyAnimation in this.simultaneouslyAnimations)
+            foreach (ParallelAnimation simultaneouslyAnimation in this.simultaneouslyAnimations)
             {
                 Tween animation = simultaneouslyAnimation.BuildSimultaneouslyAnimation();
                 this._sequence.Append(animation);

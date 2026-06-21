@@ -1,10 +1,10 @@
-using System;
 using DG.Tweening;
+using UnityEngine;
 
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
 {
-    [Serializable]
-    public class FadeAnimation : AnimationElement
+    [CreateAssetMenu(fileName = "FadeAnimation", menuName = "DracoRuan/UISystem/AnimationConfig/FadeAnimation")]
+    public class FadeAnimation : SingleAnimation
     {
         public float startValue;
         public float endValue;
@@ -23,11 +23,16 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
         {
             this.Target.alpha = this.startValue;
             Tween result = this.Target.DOFade(this.endValue, this.duration);
-            if (this.easing.easingType == AnimationEasingType.DOTweenEase)
-                result.SetEase(this.easing.ease);
-            else
-                result.SetEase(this.easing.curve);
-            
+            switch (this.easing.easingType)
+            {
+                case AnimationEasingType.DOTweenEase:
+                    result.SetEase(this.easing.ease);
+                    break;
+                case AnimationEasingType.AnimationCurve:
+                    result.SetEase(this.easing.curve);
+                    break;
+            }
+
             return result;
         }
     }

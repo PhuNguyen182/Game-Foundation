@@ -2,6 +2,7 @@ using System;
 using DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
+using DracoRuan.Foundation.UISystem.Animations.ViewAnimation;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using VContainer;
@@ -11,6 +12,7 @@ public class ExampleMono : MonoBehaviour
 {
     [SerializeField] private bool check;
     [SerializeField] private float timeout = 3f;
+    [SerializeField] private AnimationConfig animationConfig;
     [SerializeField] private ScaleAnimation scaleAnimation;
 
     private Transform _lifetimeScopeTransform;

@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
 {
-    [Serializable]
-    public class MoveAnimation : AnimationElement
+    [CreateAssetMenu(fileName = "MoveAnchorAnimation", menuName = "DracoRuan/UISystem/AnimationConfig/MoveAnchorAnimation")]
+    public class MoveAnchorAnimation : SingleAnimation
     {
         [Serializable]
         public enum MoveDirection
@@ -38,10 +38,15 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimatio
             sequence.Insert(0, this._rectTransform.DOAnchorMin(movePositionData.minAnchor, this.duration));
             sequence.Insert(0, this._rectTransform.DOAnchorMax(movePositionData.maxAnchor, this.duration));
 
-            if (this.easing.easingType == AnimationEasingType.DOTweenEase)
-                sequence.SetEase(this.easing.ease);
-            else
-                sequence.SetEase(this.easing.curve);
+            switch (this.easing.easingType)
+            {
+                case AnimationEasingType.DOTweenEase:
+                    sequence.SetEase(this.easing.ease);
+                    break;
+                case AnimationEasingType.AnimationCurve:
+                    sequence.SetEase(this.easing.curve);
+                    break;
+            }
 
             return sequence;
         }
