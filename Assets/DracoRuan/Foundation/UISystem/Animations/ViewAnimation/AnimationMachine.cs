@@ -11,14 +11,14 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
         [Header("Main Subject")] 
         [SerializeField] private Animator subjectAnimator;
         [SerializeField] private CanvasGroup animatableSubject;
-        [SerializeField] private AnimationConfig showSubjectConfig;
-        [SerializeField] private AnimationConfig hideSubjectConfig;
+        [SerializeField] private ViewAnimationConfig showSubjectConfig;
+        [SerializeField] private ViewAnimationConfig hideSubjectConfig;
 
         [Header("Background")] 
         [SerializeField] private Animator backgroundAnimator;
         [SerializeField] private CanvasGroup animatableBackground;
-        [SerializeField] private AnimationConfig showBackgroundConfig;
-        [SerializeField] private AnimationConfig hideBackgroundConfig;
+        [SerializeField] private ViewAnimationConfig showBackgroundConfig;
+        [SerializeField] private ViewAnimationConfig hideBackgroundConfig;
         
         private CancellationToken _cancellationToken;
 
@@ -90,15 +90,13 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
 
         private async UniTask PlayShowSubjectAnimationByDoTween()
         {
-            await showSubjectConfig.dotweenAnimationConfig
-                .PlayAnimation(this.animatableSubject)
+            await showSubjectConfig.PlayTweenAnimation(this.animatableSubject)
                 .WithCancellation(this._cancellationToken);
         }
 
         private async UniTask PlayShowBackgroundAnimationByDoTween()
         {
-            await showBackgroundConfig.dotweenAnimationConfig
-                .PlayAnimation(this.animatableSubject)
+            await showBackgroundConfig.PlayTweenAnimation(this.animatableSubject)
                 .WithCancellation(this._cancellationToken);
         }
 
@@ -166,15 +164,13 @@ namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
 
         private async UniTask PlayHideSubjectAnimationByDoTween()
         {
-            await hideSubjectConfig.dotweenAnimationConfig
-                .PlayAnimation(this.animatableSubject)
+            await hideSubjectConfig.PlayTweenAnimation(this.animatableSubject)
                 .WithCancellation(this._cancellationToken);
         }
 
         private async UniTask PlayHideBackgroundAnimationByDoTween()
         {
-            await hideBackgroundConfig.dotweenAnimationConfig
-                .PlayAnimation(this.animatableSubject)
+            await hideBackgroundConfig.PlayTweenAnimation(this.animatableSubject)
                 .WithCancellation(this._cancellationToken);
         }
 

@@ -4,7 +4,7 @@ using DG.Tweening;
 
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
 {
-    public abstract class SingleAnimation : BaseAnimation
+    public abstract class SingleAnimation : AnimationConfig
     {
         [Header("Animation Timing")]
         public float duration;

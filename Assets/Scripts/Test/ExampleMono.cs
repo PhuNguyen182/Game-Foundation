@@ -12,7 +12,7 @@ public class ExampleMono : MonoBehaviour
 {
     [SerializeField] private bool check;
     [SerializeField] private float timeout = 3f;
-    [SerializeField] private AnimationConfig animationConfig;
+    [SerializeField] private ViewAnimationConfig viewAnimationConfig;
     [SerializeField] private ScaleAnimation scaleAnimation;
 
     private Transform _lifetimeScopeTransform;

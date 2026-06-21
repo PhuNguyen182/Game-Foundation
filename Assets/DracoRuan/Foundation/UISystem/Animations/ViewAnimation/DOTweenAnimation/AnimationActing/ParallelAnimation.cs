@@ -4,9 +4,9 @@ using UnityEngine;
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing
 {
     [CreateAssetMenu(fileName = "ParallelAnimation", menuName = "DracoRuan/UISystem/AnimationConfig/ParallelAnimation")]
-    public class ParallelAnimation : BaseAnimation
+    public class ParallelAnimation : AnimationConfig
     {
-        public BaseAnimation[] animations;
+        public AnimationConfig[] animations;
         
         private Sequence _sequence;
 

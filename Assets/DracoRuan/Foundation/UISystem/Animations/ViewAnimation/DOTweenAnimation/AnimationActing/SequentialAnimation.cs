@@ -4,13 +4,13 @@ using UnityEngine;
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing
 {
     [CreateAssetMenu(fileName = "SequentialAnimation", menuName = "DracoRuan/UISystem/AnimationConfig/SequentialAnimation")]
-    public class SequentialAnimation : BaseAnimation
+    public class SequentialAnimation : AnimationConfig
     {
-        [SerializeField] private BaseAnimation[] animations;
+        [SerializeField] private AnimationConfig[] animations;
         
         private Sequence _sequence;
 
-        public SequentialAnimation(BaseAnimation[] animations)
+        public SequentialAnimation(AnimationConfig[] animations)
         {
             this.animations = animations;
         }

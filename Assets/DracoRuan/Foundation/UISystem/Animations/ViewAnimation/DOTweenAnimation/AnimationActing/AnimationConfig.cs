@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing
 {
-    public abstract class BaseAnimation : ScriptableObject
+    public abstract class AnimationConfig : ScriptableObject
     {
         protected CanvasGroup Target;
         
