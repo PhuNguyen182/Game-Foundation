@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7558f803bb034604d91d1c9c93fa9521, type: 3}
   m_Name: MoveAnchorAnimation
   m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements.MoveAnchorAnimation
-  duration: 0
+  duration: 0.3
   moveDirection: 0
   moveUpPositionData:
     minAnchor: {x: 0, y: 0}
-    maxAnchor: {x: 0, y: 0}
+    maxAnchor: {x: 1, y: 1}
   moveDownPositionData:
-    minAnchor: {x: 0, y: 0}
-    maxAnchor: {x: 0, y: 0}
+    minAnchor: {x: 0, y: -1}
+    maxAnchor: {x: 1, y: 0}
   moveLeftPositionData:
     minAnchor: {x: 0, y: 0}
     maxAnchor: {x: 0, y: 0}

@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cbd118ec65c3d24c9719d8f4aecf1ac, type: 3}
   m_Name: ScaleAnimation
   m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements.ScaleAnimation
-  duration: 0
+  duration: 0.3
   startScale: {x: 0, y: 0, z: 0}
-  endScale: {x: 0, y: 0, z: 0}
+  endScale: {x: 1, y: 1, z: 1}
   scaleMode: 0
   uniformEasing:
     easingType: 0
@@ -24,7 +24,7 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    ease: 0
+    ease: 4
   xAxisEasing:
     easingType: 0
     curve:

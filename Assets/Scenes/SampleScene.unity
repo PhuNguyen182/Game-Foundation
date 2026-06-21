@@ -645,47 +645,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ExampleMono
   check: 0
   timeout: 3
-  scaleAnimation:
-    duration: 0
-    startScale: {x: 0, y: 0, z: 0}
-    endScale: {x: 0, y: 0, z: 0}
-    scaleMode: 0
-    uniformEasing:
-      easingType: 0
-      curve:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-      ease: 0
-    xAxisEasing:
-      easingType: 0
-      curve:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-      ease: 0
-    yAxisEasing:
-      easingType: 0
-      curve:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-      ease: 0
-    zAxisEasing:
-      easingType: 0
-      curve:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 2
-        m_PostInfinity: 2
-        m_RotationOrder: 4
-      ease: 0
+  animationConfig:
+    animationType: 2
+    dotweenAnimationConfig: {fileID: 0}
+    animationClipName: 
+    animationDuration: 0
+  scaleAnimation: {fileID: 0}
 --- !u!4 &1850842519
 Transform:
   m_ObjectHideFlags: 0
@@ -747,10 +712,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 980259754}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: -1}
+  m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1080, y: 1920}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2041217797
 MonoBehaviour:

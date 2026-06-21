@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6a07871d43ba83846a814d8e47a942ff, type: 3}
+  m_Script: {fileID: 11500000, guid: f9abda09214de82469eaa3734d4e8b12, type: 3}
   m_Name: FadeAndSlideUp
-  m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.SequentialAnimation
-  simultaneouslyAnimations: []
+  m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.DOTweenAnimationConfig
+  animationConfig: {fileID: 11400000, guid: e640c00b267533b4da94c558e07a4d02, type: 2}

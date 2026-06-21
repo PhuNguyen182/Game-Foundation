@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 876ba9edd8c12f2449c7ee92d6c077c6, type: 3}
   m_Name: FadeAnimation
   m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements.FadeAnimation
-  duration: 0
+  duration: 0.3
   startValue: 0
-  endValue: 0
+  endValue: 1
   easing:
     easingType: 0
     curve:
@@ -23,4 +23,4 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    ease: 0
+    ease: 4

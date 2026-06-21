@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation
 {
-    [CreateAssetMenu(fileName = "AnimationConfig", menuName = "DracoRuan/UISystem/AnimationConfig")]
+    [CreateAssetMenu(fileName = "AnimationConfig", menuName = "DracoRuan/UISystem/AnimationConfig/DOTweenAnimationConfig")]
     public class DOTweenAnimationConfig : ScriptableObject
     {
         [SerializeField] public SequentialAnimation animationConfig;
