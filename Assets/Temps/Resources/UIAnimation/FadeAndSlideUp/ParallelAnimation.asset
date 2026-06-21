@@ -12,6 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 557b097b839f173488c3219898d002d6, type: 3}
   m_Name: ParallelAnimation
   m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.ParallelAnimation
-  singleAnimationConfigs:
-  - {fileID: 11400000, guid: 4aae20d5037f70449a8581425036b5b6, type: 2}
-  - {fileID: 11400000, guid: ce279f9a4feeff34eae269650b8adff9, type: 2}
+  animations: []
