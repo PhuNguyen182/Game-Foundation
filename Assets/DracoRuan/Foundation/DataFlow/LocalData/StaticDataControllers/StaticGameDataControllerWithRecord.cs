@@ -1,3 +1,4 @@
+#if USE_CSV_HELPER
 using System;
 using System.Collections.Generic;
 using CsvHelper.Configuration;
@@ -110,3 +111,4 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         ~StaticGameDataControllerWithRecord() => this.Dispose(false);
     }
 }
+#endif

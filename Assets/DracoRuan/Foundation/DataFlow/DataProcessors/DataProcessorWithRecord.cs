@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if USE_CSV_HELPER
+using System;
 using System.Collections.Generic;
 using CsvHelper.Configuration;
 using Cysharp.Threading.Tasks;
@@ -55,3 +56,4 @@ namespace DracoRuan.Foundation.DataFlow.DataProcessors
         }
     }
 }
+#endif
