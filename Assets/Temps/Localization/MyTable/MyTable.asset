@@ -28,7 +28,7 @@ MonoBehaviour:
       type: {class: GoogleSheetsExtension, ns: UnityEditor.Localization.Plugins.Google, asm: Unity.Localization.Editor}
       data:
         m_Collection: {fileID: 11400000}
-        m_SheetsServiceProvider: {fileID: 11400000, guid: 42077fafa41db5e46863e5291cd9482b, type: 2}
+        m_SheetsServiceProvider: {fileID: 11400000, guid: 13d773545ca6dd948bf3d79679623b8b, type: 2}
         m_SpreadsheetId: 1ePn4nQ-B9rFTUYPx2JB1rnOVi1jSLCTZ8yUQrScgg_Q
         m_SheetId: 0
         m_Columns:

@@ -15,7 +15,7 @@ MonoBehaviour:
   m_TableCollectionName: MyTable
   m_TableCollectionNameGuidString: 4a444c33873777540bacf59fdbb2f43b
   m_Entries:
-  - m_Id: 19765546700800
+  - m_Id: 106297762762752
     m_Key: hello_key
     m_Metadata:
       m_Items: []
