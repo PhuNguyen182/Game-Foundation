@@ -30,6 +30,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         
         protected StaticGameDataControllerWithRecord(IDataProviderService dataProviderService)
         {
+            this._isDataInitialized = false;
             this._dataProviderService = dataProviderService;
         }
 
@@ -49,18 +50,19 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 
             await dataSequenceProcessor.Execute();
             if (dataSequenceProcessor.LatestProcessSequence is IProcessSequenceData processSequenceData)
-            {
                 this.SourceData = processSequenceData.GameData as TData;
-                this._isDataInitialized = true;
-            }
             
             this.OnDataInitialized();
         }
 
         protected virtual void OnDataInitialized()
         {
+            this.RefineDataFromSourceData();
             this.OnDataLoaded?.Invoke();
+            this._isDataInitialized = true;
         }
+
+        protected abstract void RefineDataFromSourceData();
         
         protected void CleanupUnusedData()
         {

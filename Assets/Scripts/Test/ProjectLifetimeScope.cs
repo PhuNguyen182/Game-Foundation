@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.DataProviders;
-using DracoRuan.Foundation.DataFlow.MasterDataController;
 using DracoRuan.VContainerInstallerSupport.Generated;
 using Temps.Scripts;
 using Temps.Scripts.TestRiseProgressData;

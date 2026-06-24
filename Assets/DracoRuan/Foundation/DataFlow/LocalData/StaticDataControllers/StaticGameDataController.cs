@@ -25,6 +25,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 
         protected StaticGameDataController(IDataProviderService dataProviderService)
         {
+            this._isDataInitialized = false;
             this._dataProviderService = dataProviderService;
         }
 
