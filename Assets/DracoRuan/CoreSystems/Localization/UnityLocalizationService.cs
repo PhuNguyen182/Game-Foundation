@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.Initializers.Interfaces;
 using UnityEngine.Localization;
@@ -10,6 +11,7 @@ namespace DracoRuan.CoreSystems.Localization
     {
         private bool _isInitialized;
         
+        public event Action<string> OnLanguageChanged;
         public string CurrentLanguageCode => LocalizationSettings.SelectedLocale.Identifier.Code;
 
         public UnityLocalizationService()
@@ -43,6 +45,7 @@ namespace DracoRuan.CoreSystems.Localization
             if (foundLocale)
             {
                 LocalizationSettings.SelectedLocale = foundLocale;
+                this.OnLanguageChanged?.Invoke(languageCode);
                 Debug.Log($"Successfully switched language to: {languageCode}");
                 return true;
             }
@@ -63,6 +66,12 @@ namespace DracoRuan.CoreSystems.Localization
             }
             
             return availableLanguages;
+        }
+
+        public Locale GetAvailableLocale(string languageCode)
+        {
+            Locale result = LocalizationSettings.AvailableLocales.GetLocale(languageCode);
+            return result;
         }
 
         public bool IsInitialized() => this._isInitialized;
