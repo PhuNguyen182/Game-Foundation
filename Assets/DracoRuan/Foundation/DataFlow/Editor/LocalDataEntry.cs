@@ -44,11 +44,11 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // ---------------------------------------------------------------------------
         // Properties
         // ---------------------------------------------------------------------------
-        public Type DataType        => this.dataType;
-        public string TypeName      => this.dataType.Name;
+        public Type DataType => this.dataType;
+        public string TypeName => this.dataType.Name;
         public string ControllerKey => this.controllerKey;
-        public object CurrentData   => this.currentData;
-        public bool HasData         => this.currentData != null;
+        public object CurrentData => this.currentData;
+        public bool HasData => this.currentData != null;
 
         public event Action<LocalDataEntry> OnDataChanged;
         public event Action<LocalDataEntry> OnEntryDeleted;
@@ -58,7 +58,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // ---------------------------------------------------------------------------
         public LocalDataEntry(Type dataType, string controllerKey)
         {
-            this.dataType      = dataType ?? throw new ArgumentNullException(nameof(dataType));
+            this.dataType = dataType ?? throw new ArgumentNullException(nameof(dataType));
             this.controllerKey = controllerKey ?? dataType.Name;
             this.baseSaveFolder = Path.Combine(Application.persistentDataPath, LocalDataFolder);
         }
@@ -80,6 +80,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 if (File.Exists(this.GetFilePath(v)))
                     return v;
             }
+
             return 1;
         }
 
@@ -93,11 +94,11 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             try
             {
                 int version = this.GetMostRecentVersion();
-                string path  = this.GetFilePath(version);
+                string path = this.GetFilePath(version);
 
                 if (!File.Exists(path))
                 {
-                    this.currentData   = Activator.CreateInstance(this.dataType);
+                    this.currentData = Activator.CreateInstance(this.dataType);
                     this.loadedVersion = 1;
                     this.UpdateVersionLabel(version, exists: false);
                     this.UpdateStatus("No saved data (defaults)", "status-warning");
@@ -105,8 +106,8 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                     return;
                 }
 
-                byte[] bytes       = File.ReadAllBytes(path);
-                this.currentData   = MessagePackSerializer.Deserialize(this.dataType, bytes);
+                byte[] bytes = File.ReadAllBytes(path);
+                this.currentData = MessagePackSerializer.Deserialize(this.dataType, bytes);
                 this.loadedVersion = version;
                 this.UpdateVersionLabel(version, exists: true);
                 this.UpdateStatus($"Loaded v{version}", "status-success");
@@ -147,7 +148,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 if (!Directory.Exists(this.baseSaveFolder))
                     Directory.CreateDirectory(this.baseSaveFolder);
 
-                string path  = this.GetFilePath(version);
+                string path = this.GetFilePath(version);
                 byte[] bytes = MessagePackSerializer.Serialize(this.dataType, this.currentData);
                 File.WriteAllBytes(path, bytes);
 
@@ -177,7 +178,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                     any = true;
                 }
 
-                this.currentData   = null;
+                this.currentData = null;
                 this.loadedVersion = 1;
                 this.UpdateStatus(any ? "Deleted" : "No files found", "status-info");
                 this.OnEntryDeleted?.Invoke(this);
@@ -220,8 +221,8 @@ namespace DracoRuan.Foundation.DataFlow.Editor
 
             // --- Title row ---
             var titleRow = new VisualElement();
-            titleRow.style.flexDirection  = FlexDirection.Row;
-            titleRow.style.alignItems     = Align.Center;
+            titleRow.style.flexDirection = FlexDirection.Row;
+            titleRow.style.alignItems = Align.Center;
             titleRow.style.justifyContent = Justify.SpaceBetween;
 
             var titleLbl = new Label($"📄 {this.dataType.Name}");
@@ -238,8 +239,8 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             // --- Info row (controller key + version) ---
             var infoRow = new VisualElement();
             infoRow.style.flexDirection = FlexDirection.Row;
-            infoRow.style.marginTop     = 4;
-            infoRow.style.marginBottom  = 2;
+            infoRow.style.marginTop = 4;
+            infoRow.style.marginBottom = 2;
 
             var keyLbl = new Label($"🔑 {this.controllerKey}");
             keyLbl.AddToClassList("file-path-label");
@@ -253,8 +254,8 @@ namespace DracoRuan.Foundation.DataFlow.Editor
 
             // --- Controls row ---
             var controlsRow = new VisualElement();
-            controlsRow.style.flexDirection  = FlexDirection.Row;
-            controlsRow.style.alignItems     = Align.Center;
+            controlsRow.style.flexDirection = FlexDirection.Row;
+            controlsRow.style.alignItems = Align.Center;
             controlsRow.style.justifyContent = Justify.SpaceBetween;
 
             this.statusLabel = new Label("—");
@@ -359,23 +360,29 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         private VisualElement CreateInput(Type type)
         {
             var t = Nullable.GetUnderlyingType(type) ?? type;
-            if (t == typeof(int))        return new IntegerField();
-            if (t == typeof(long))       return new LongField();
-            if (t == typeof(float))      return new FloatField();
-            if (t == typeof(double))     return new DoubleField();
-            if (t == typeof(string))     return new TextField();
-            if (t == typeof(bool))       return new Toggle();
-            if (t == typeof(Vector2))    return new Vector2Field();
-            if (t == typeof(Vector3))    return new Vector3Field();
+            if (t == typeof(int)) return new IntegerField();
+            if (t == typeof(long)) return new LongField();
+            if (t == typeof(float)) return new FloatField();
+            if (t == typeof(double)) return new DoubleField();
+            if (t == typeof(string)) return new TextField();
+            if (t == typeof(bool)) return new Toggle();
+            if (t == typeof(Vector2)) return new Vector2Field();
+            if (t == typeof(Vector3)) return new Vector3Field();
             if (t == typeof(Vector2Int)) return new Vector2IntField();
             if (t == typeof(Vector3Int)) return new Vector3IntField();
-            if (t == typeof(Color))      return new ColorField();
+            if (t == typeof(Color)) return new ColorField();
             if (t.IsEnum)
             {
-                try   { return new EnumField((Enum)Activator.CreateInstance(t)); }
-                catch { return new TextField(); }
+                try
+                {
+                    return new EnumField((Enum)Activator.CreateInstance(t));
+                }
+                catch
+                {
+                    return new TextField();
+                }
             }
-            
+
             // Fallback for complex types (List, Dictionary, custom objects)
             var jsonField = new TextField { multiline = true };
             jsonField.style.minHeight = 40;
@@ -387,18 +394,18 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         {
             switch (input)
             {
-                case IntegerField    f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
-                case LongField       f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
-                case FloatField      f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
-                case DoubleField     f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
-                case TextField       f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
-                case Toggle          f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
-                case Vector2Field    f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
-                case Vector3Field    f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
+                case IntegerField f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
+                case LongField f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
+                case FloatField f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
+                case DoubleField f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
+                case TextField f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
+                case Toggle f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
+                case Vector2Field f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
+                case Vector3Field f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
                 case Vector2IntField f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
                 case Vector3IntField f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
-                case ColorField      f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
-                case EnumField       f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
+                case ColorField f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
+                case EnumField f: f.RegisterValueChangedCallback(_ => this.OnFieldChanged()); break;
             }
         }
 
@@ -436,7 +443,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 if (!prop.CanWrite || !this.propertyFields.TryGetValue(prop.Name, out var el)) continue;
                 var input = el.Q<VisualElement>($"input-{prop.Name}");
                 if (input == null) continue;
-                
+
                 try
                 {
                     var value = this.GetValue(input, prop.PropertyType);
@@ -454,7 +461,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 if (field.IsInitOnly || !this.propertyFields.TryGetValue(field.Name, out var el)) continue;
                 var input = el.Q<VisualElement>($"input-{field.Name}");
                 if (input == null) continue;
-                
+
                 try
                 {
                     var value = this.GetValue(input, field.FieldType);
@@ -466,7 +473,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                     success = false;
                 }
             }
-            
+
             return success;
         }
 
@@ -478,47 +485,54 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                     tf.value = "null";
                 return;
             }
-            
+
             switch (input)
             {
-                case IntegerField    f: f.value = Convert.ToInt32(value);   break;
-                case LongField       f: f.value = Convert.ToInt64(value);   break;
-                case FloatField      f: f.value = Convert.ToSingle(value);  break;
-                case DoubleField     f: f.value = Convert.ToDouble(value);  break;
-                case TextField       f: 
-                    if (targetType == typeof(string)) 
-                        f.value = value.ToString();         
-                    else 
+                case IntegerField f: f.value = Convert.ToInt32(value); break;
+                case LongField f: f.value = Convert.ToInt64(value); break;
+                case FloatField f: f.value = Convert.ToSingle(value); break;
+                case DoubleField f: f.value = Convert.ToDouble(value); break;
+                case TextField f:
+                    if (targetType == typeof(string))
+                        f.value = value.ToString();
+                    else
                     {
-                        try { f.value = JsonConvert.SerializeObject(value, Formatting.Indented); }
-                        catch { f.value = "{}"; }
+                        try
+                        {
+                            f.value = JsonConvert.SerializeObject(value, Formatting.Indented);
+                        }
+                        catch
+                        {
+                            f.value = "{}";
+                        }
                     }
+
                     break;
-                case Toggle          f: f.value = Convert.ToBoolean(value); break;
-                case Vector2Field    f: f.value = (Vector2)value;           break;
-                case Vector3Field    f: f.value = (Vector3)value;           break;
-                case Vector2IntField f: f.value = (Vector2Int)value;        break;
-                case Vector3IntField f: f.value = (Vector3Int)value;        break;
-                case ColorField      f: f.value = (Color)value;             break;
-                case EnumField       f: f.value = (Enum)value;              break;
+                case Toggle f: f.value = Convert.ToBoolean(value); break;
+                case Vector2Field f: f.value = (Vector2)value; break;
+                case Vector3Field f: f.value = (Vector3)value; break;
+                case Vector2IntField f: f.value = (Vector2Int)value; break;
+                case Vector3IntField f: f.value = (Vector3Int)value; break;
+                case ColorField f: f.value = (Color)value; break;
+                case EnumField f: f.value = (Enum)value; break;
             }
         }
 
         private object GetValue(VisualElement input, Type targetType) => input switch
         {
-            IntegerField    f => (object)f.value,
-            LongField       f => f.value,
-            FloatField      f => f.value,
-            DoubleField     f => f.value,
-            TextField       f => targetType == typeof(string) ? f.value : JsonConvert.DeserializeObject(f.value, targetType),
-            Toggle          f => f.value,
-            Vector2Field    f => f.value,
-            Vector3Field    f => f.value,
+            IntegerField f => (object)f.value,
+            LongField f => f.value,
+            FloatField f => f.value,
+            DoubleField f => f.value,
+            TextField f => targetType == typeof(string) ? f.value : JsonConvert.DeserializeObject(f.value, targetType),
+            Toggle f => f.value,
+            Vector2Field f => f.value,
+            Vector3Field f => f.value,
             Vector2IntField f => f.value,
             Vector3IntField f => f.value,
-            ColorField      f => f.value,
-            EnumField       f => f.value,
-            _               => null
+            ColorField f => f.value,
+            EnumField f => f.value,
+            _ => null
         };
 
         // ---------------------------------------------------------------------------
