@@ -32,12 +32,8 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core
     /// }
     /// </code>
     [AutoInstall(InstallerInstanceType = nameof(InstallerType.PlainCSharp))]
-    public class DataMigrationInstaller : IAsyncInstallable
+    public class DataMigrationInstaller : IInstaller
     {
-        private bool _isInstalled;
-        
-        public bool IsInstalled() => this._isInstalled;
-
         public void Install(IContainerBuilder builder)
         {
             builder.Register<DataMigrationOrchestrator>(Lifetime.Scoped);
@@ -45,7 +41,6 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core
             builder.Register<MigrationManifestStorage>(Lifetime.Scoped);
             builder.Register<MigrationResolver>(Lifetime.Scoped);
             builder.Register<SnapshotManager>(Lifetime.Scoped);
-            this._isInstalled = true;
         }
     }
 }

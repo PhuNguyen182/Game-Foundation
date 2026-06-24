@@ -1,16 +1,15 @@
-using VContainer;
 using DracoRuan.Foundation.Initializers.AutoRegisterAttributes;
 using DracoRuan.CoreSystems.MessageBrokers.CustomEvents.DeleteDynamicData;
 using DracoRuan.CoreSystems.MessageBrokers.CustomEvents.SaveDynamicData;
-using DracoRuan.Foundation.Initializers.Interfaces;
 using MessagePipe;
+using VContainer.Unity;
+using VContainer;
 
 namespace DracoRuan.CoreSystems.MessageBrokers.Core
 {
     [AutoInstall(InstallerKey = nameof(MessageBrokerInstaller))]
-    public class MessageBrokerInstaller : IAsyncInstallable
+    public class MessageBrokerInstaller : IInstaller
     {
-        private bool _isInstalled;
         private IContainerBuilder _builder;
 
         public void Install(IContainerBuilder builder)
@@ -20,7 +19,6 @@ namespace DracoRuan.CoreSystems.MessageBrokers.Core
             builder.Register<EventFactory>(Lifetime.Scoped);
             builder.RegisterMessagePipe(this.OnMessagePipeRegisterOption);
             builder.RegisterBuildCallback(resolver => GlobalMessagePipe.SetProvider(resolver.AsServiceProvider()));
-            this._isInstalled = true;
         }
 
         private void OnMessagePipeRegisterOption(MessagePipeOptions options)
@@ -33,7 +31,5 @@ namespace DracoRuan.CoreSystems.MessageBrokers.Core
             builder.Register<SaveDataEvent>(Lifetime.Singleton);
             builder.Register<DeleteDataEvent>(Lifetime.Singleton);
         }
-
-        public bool IsInstalled() => this._isInstalled;
     }
 }

@@ -3,11 +3,12 @@ using DracoRuan.Foundation.Initializers.AutoRegisterAttributes;
 using DracoRuan.Foundation.Initializers.Interfaces;
 using UnityEngine;
 using VContainer;
+using VContainer.Unity;
 
 namespace Test
 {
     [AutoInstall(InstallerKey = nameof(SampleMonoInstaller2), InstallerInstanceType = nameof(InstallerType.MonoBehaviour))]
-    public class SampleMonoInstaller2 : MonoBehaviour, IAsyncInstallable
+    public class SampleMonoInstaller2 : MonoBehaviour, IInstaller
     {
         private bool _isInstalled;
 
