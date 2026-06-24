@@ -17,7 +17,7 @@ namespace DracoRuan.CoreSystems.MessageBrokers.Core
         {
             this._builder = builder;
             this.RegisterCustomServices(builder);
-            builder.Register<EventFactory>(Lifetime.Singleton);
+            builder.Register<EventFactory>(Lifetime.Scoped);
             builder.RegisterMessagePipe(this.OnMessagePipeRegisterOption);
             builder.RegisterBuildCallback(resolver => GlobalMessagePipe.SetProvider(resolver.AsServiceProvider()));
             this._isInstalled = true;

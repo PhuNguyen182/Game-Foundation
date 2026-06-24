@@ -40,7 +40,7 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core
 
         public void Install(IContainerBuilder builder)
         {
-            builder.RegisterEntryPoint<DataMigrationOrchestrator>(Lifetime.Scoped);
+            builder.Register<DataMigrationOrchestrator>(Lifetime.Scoped);
             builder.Register<MigrationRegistry>(Lifetime.Scoped);
             builder.Register<MigrationManifestStorage>(Lifetime.Scoped);
             builder.Register<MigrationResolver>(Lifetime.Scoped);

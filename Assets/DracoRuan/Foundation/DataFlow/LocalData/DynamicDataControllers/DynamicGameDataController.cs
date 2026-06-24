@@ -97,28 +97,37 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         private async UniTask MigrateData()
         {
             byte[] mostRecentSavedRawData = this.LoadRawData();
-            await UniTask.WaitUntil(this._migrationOrchestrator.AllDataMigratorsRegistered,
-                cancellationToken: this._cancellationToken);
-            
-            string domain = nameof(TData);
-            int mostRecentDataVersion = this.GetMostRecentDataVersion();
-            if (mostRecentDataVersion >= this.CurrentDataVersion)
+            if (mostRecentSavedRawData is not { Length: > 0 })
             {
-                this.SourceData = this._dataSerializer.Deserialize(mostRecentSavedRawData);
+                this.SourceData = new TData();
+                this.SaveData();
             }
             else
             {
-                this.MigrationContext = new MigrationContext
-                {
-                    PlayerId = domain,
-                    CurrentVersion = mostRecentDataVersion,
-                    TargetVersion = this.CurrentDataVersion
-                };
+                await UniTask.WaitUntil(this._migrationOrchestrator.AllDataMigratorsRegistered,
+                    cancellationToken: this._cancellationToken);
 
-                this.MigrationContext.SetRawData(mostRecentDataVersion, mostRecentSavedRawData);
-                MigrationResult migrationResult = await this._migrationOrchestrator.MigrateData(this.MigrationContext);
-                if (migrationResult.IsSuccess)
-                    this.LoadDataFromLatestVersion(this.MigrationContext);
+                string domain = nameof(TData);
+                int mostRecentDataVersion = this.GetMostRecentDataVersion();
+                if (mostRecentDataVersion >= this.CurrentDataVersion)
+                {
+                    this.SourceData = this._dataSerializer.Deserialize(mostRecentSavedRawData);
+                }
+                else
+                {
+                    this.MigrationContext = new MigrationContext
+                    {
+                        PlayerId = domain,
+                        CurrentVersion = mostRecentDataVersion,
+                        TargetVersion = this.CurrentDataVersion
+                    };
+
+                    this.MigrationContext.SetRawData(mostRecentDataVersion, mostRecentSavedRawData);
+                    MigrationResult migrationResult =
+                        await this._migrationOrchestrator.MigrateData(this.MigrationContext);
+                    if (migrationResult.IsSuccess)
+                        this.LoadDataFromLatestVersion(this.MigrationContext);
+                }
             }
 
             this.OnDataChangedInternal?.Invoke(this.SourceData);
@@ -137,7 +146,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             this.SourceData = new TData();
             int mostRecentDataVersion = this.GetMostRecentDataVersion();
             string dataSavePath = this.GetDataSaveKeyByVersion(mostRecentDataVersion);
-            byte[] mostRecentSavedRawData = this._dataSaveService.LoadData(dataSavePath);
+            byte[] mostRecentSavedRawData = this._dataSaveService?.LoadData(dataSavePath);
             return mostRecentSavedRawData;
         }
         

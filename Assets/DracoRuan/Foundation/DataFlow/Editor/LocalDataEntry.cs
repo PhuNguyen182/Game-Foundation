@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using MessagePack;
+using Newtonsoft.Json;
 using DracoRuan.Foundation.DataFlow.LocalData;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -132,7 +133,11 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                     return;
                 }
 
-                this.CollectDataFromUI();
+                if (!this.CollectDataFromUI())
+                {
+                    this.UpdateStatus("Invalid UI data", "status-error");
+                    return;
+                }
 
                 // Prefer IGameData.DataVersion so save key matches the runtime controller
                 int version = this.loadedVersion;
@@ -370,7 +375,12 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 try   { return new EnumField((Enum)Activator.CreateInstance(t)); }
                 catch { return new TextField(); }
             }
-            return null;
+            
+            // Fallback for complex types (List, Dictionary, custom objects)
+            var jsonField = new TextField { multiline = true };
+            jsonField.style.minHeight = 40;
+            jsonField.style.whiteSpace = WhiteSpace.Normal;
+            return jsonField;
         }
 
         private void BindChange(VisualElement input)
@@ -405,28 +415,38 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             {
                 if (!this.propertyFields.TryGetValue(prop.Name, out var el)) continue;
                 var input = el.Q<VisualElement>($"input-{prop.Name}");
-                if (input != null) this.SetValue(input, prop.GetValue(this.currentData));
+                if (input != null) this.SetValue(input, prop.GetValue(this.currentData), prop.PropertyType);
             }
 
             foreach (var field in this.dataType.GetFields(BindingFlags.Public | BindingFlags.Instance))
             {
                 if (!this.propertyFields.TryGetValue(field.Name, out var el)) continue;
                 var input = el.Q<VisualElement>($"input-{field.Name}");
-                if (input != null) this.SetValue(input, field.GetValue(this.currentData));
+                if (input != null) this.SetValue(input, field.GetValue(this.currentData), field.FieldType);
             }
         }
 
-        private void CollectDataFromUI()
+        private bool CollectDataFromUI()
         {
-            if (this.currentData == null) return;
+            if (this.currentData == null) return false;
+            bool success = true;
 
             foreach (var prop in this.dataType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 if (!prop.CanWrite || !this.propertyFields.TryGetValue(prop.Name, out var el)) continue;
                 var input = el.Q<VisualElement>($"input-{prop.Name}");
                 if (input == null) continue;
-                var value = this.GetValue(input);
-                if (value != null) prop.SetValue(this.currentData, value);
+                
+                try
+                {
+                    var value = this.GetValue(input, prop.PropertyType);
+                    prop.SetValue(this.currentData, value);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[LocalDataEntry] Invalid JSON data for {prop.Name}: {e.Message}");
+                    success = false;
+                }
             }
 
             foreach (var field in this.dataType.GetFields(BindingFlags.Public | BindingFlags.Instance))
@@ -434,21 +454,46 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 if (field.IsInitOnly || !this.propertyFields.TryGetValue(field.Name, out var el)) continue;
                 var input = el.Q<VisualElement>($"input-{field.Name}");
                 if (input == null) continue;
-                var value = this.GetValue(input);
-                if (value != null) field.SetValue(this.currentData, value);
+                
+                try
+                {
+                    var value = this.GetValue(input, field.FieldType);
+                    field.SetValue(this.currentData, value);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[LocalDataEntry] Invalid JSON data for {field.Name}: {e.Message}");
+                    success = false;
+                }
             }
+            
+            return success;
         }
 
-        private void SetValue(VisualElement input, object value)
+        private void SetValue(VisualElement input, object value, Type targetType)
         {
-            if (value == null) return;
+            if (value == null)
+            {
+                if (input is TextField tf && targetType != typeof(string))
+                    tf.value = "null";
+                return;
+            }
+            
             switch (input)
             {
                 case IntegerField    f: f.value = Convert.ToInt32(value);   break;
                 case LongField       f: f.value = Convert.ToInt64(value);   break;
                 case FloatField      f: f.value = Convert.ToSingle(value);  break;
                 case DoubleField     f: f.value = Convert.ToDouble(value);  break;
-                case TextField       f: f.value = value.ToString();         break;
+                case TextField       f: 
+                    if (targetType == typeof(string)) 
+                        f.value = value.ToString();         
+                    else 
+                    {
+                        try { f.value = JsonConvert.SerializeObject(value, Formatting.Indented); }
+                        catch { f.value = "{}"; }
+                    }
+                    break;
                 case Toggle          f: f.value = Convert.ToBoolean(value); break;
                 case Vector2Field    f: f.value = (Vector2)value;           break;
                 case Vector3Field    f: f.value = (Vector3)value;           break;
@@ -459,13 +504,13 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             }
         }
 
-        private object GetValue(VisualElement input) => input switch
+        private object GetValue(VisualElement input, Type targetType) => input switch
         {
             IntegerField    f => (object)f.value,
             LongField       f => f.value,
             FloatField      f => f.value,
             DoubleField     f => f.value,
-            TextField       f => f.value,
+            TextField       f => targetType == typeof(string) ? f.value : JsonConvert.DeserializeObject(f.value, targetType),
             Toggle          f => f.value,
             Vector2Field    f => f.value,
             Vector3Field    f => f.value,
@@ -480,16 +525,12 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // Helpers
         // ---------------------------------------------------------------------------
 
-        /// <summary>Only primitive-like types are shown inline; complex objects are skipped.</summary>
+        /// <summary>Only primitive-like types are shown inline; complex objects are edited via JSON.</summary>
         private bool IsSupportedType(Type type)
         {
-            var t = Nullable.GetUnderlyingType(type) ?? type;
-            return t.IsPrimitive
-                || t == typeof(string)
-                || t.IsEnum
-                || t == typeof(Vector2)    || t == typeof(Vector3)
-                || t == typeof(Vector2Int) || t == typeof(Vector3Int)
-                || t == typeof(Color);
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type) || typeof(Delegate).IsAssignableFrom(type))
+                return false;
+            return true;
         }
 
         private string PrettyName(string name) =>

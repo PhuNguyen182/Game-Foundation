@@ -1,12 +1,12 @@
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using System.Collections.Generic;
 using DracoRuan.Foundation.Initializers.Interfaces;
 using DracoRuan.Utilities.SceneUtils;
 using UnityEngine.Pool;
 using VContainer.Unity;
 
-namespace DracoRuan.Foundation.Initializers
+namespace Test
 {
     public class AppInitializationPipelineEntryPoint : IAsyncStartable
     {

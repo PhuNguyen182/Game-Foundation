@@ -638,16 +638,16 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1850842517}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76b8f27a82c2c7a4bb21a817105b2c02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExampleMono
   check: 0
   timeout: 3
-  animationConfig:
-    animationType: 2
-    dotweenAnimationConfig: {fileID: 0}
+  viewAnimationConfig:
+    animationType: 0
+    tweenAnimationConfig: {fileID: 0}
     animationClipName: 
     animationDuration: 0
   scaleAnimation: {fileID: 0}
@@ -712,8 +712,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 980259754}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 2, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}

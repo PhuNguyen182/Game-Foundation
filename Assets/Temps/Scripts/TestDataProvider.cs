@@ -4,10 +4,27 @@ using DracoRuan.CoreSystems.MessageBrokers.CustomEvents.DeleteDynamicData;
 using DracoRuan.CoreSystems.MessageBrokers.CustomEvents.SaveDynamicData;
 using DracoRuan.Foundation.DataFlow.DataProviders;
 using MessagePipe;
+using Temps.Scripts.TestRiseProgressData;
 using UnityEngine;
+using VContainer.Unity;
 
 namespace Temps.Scripts
 {
+    public class TestService : IStartable
+    {
+        private readonly RiseProgressionDataController _riseProgressionDataController;
+
+        public TestService(RiseProgressionDataController riseProgressionDataController)
+        {
+            this._riseProgressionDataController = riseProgressionDataController;
+        }
+
+        public void Start()
+        {
+            UnityEngine.Debug.Log(this._riseProgressionDataController);
+        }
+    }
+    
     public class TestDataProvider : MonoBehaviour
     {
         [SerializeField] private string sourceDataKey;
@@ -18,14 +35,12 @@ namespace Temps.Scripts
 
         private void Awake()
         {
-            this._resourceDataProvider = new ResourcesDataProvider();
-            this._saveDataEvent = new SaveDataEvent(null);
-            this._deleteDataEvent = new DeleteDataEvent(null);
+            
         }
 
         private void Start()
         {
-            this.GetData().Forget();
+            //this.GetData().Forget();
         }
 
         private async UniTask GetData()
