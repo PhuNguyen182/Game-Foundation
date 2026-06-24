@@ -6,6 +6,7 @@ using DracoRuan.Foundation.DataFlow.DataProviders;
 using MessagePipe;
 using Temps.Scripts.TestRiseProgressData;
 using UnityEngine;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using VContainer.Unity;
 
 namespace Temps.Scripts

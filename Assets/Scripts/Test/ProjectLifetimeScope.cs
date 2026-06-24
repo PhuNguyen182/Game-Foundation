@@ -24,8 +24,25 @@ namespace Test
 
         private async UniTask RegisterServicesAndInstaller(IContainerBuilder builder)
         {
-            builder.InstallDataMigrationInstaller().Forget();
-            builder.InstallMessageBrokerInstaller().Forget();
+            await this.LoadAllInstallers(builder);
+            this.RegisterInstaller(builder);
+            this.RegisterServices(builder);
+        }
+
+        private async UniTask LoadAllInstallers(IContainerBuilder builder)
+        {
+            await builder.InitializeDataMigrationInstaller();
+            await builder.InitializeMessageBrokerInstaller();
+        }
+
+        private void RegisterInstaller(IContainerBuilder builder)
+        {
+            builder.InstallDataMigrationInstaller();
+            builder.InstallMessageBrokerInstaller();
+        }
+
+        private void RegisterServices(IContainerBuilder builder)
+        {
             builder.RegisterEntryPoint<TestService>(Lifetime.Scoped);
             builder.Register<IDataProviderService, DataProviderService>(Lifetime.Scoped).AsSelf().AsImplementedInterfaces();
             builder.Register<RiseProgressionDataController>(Lifetime.Scoped);

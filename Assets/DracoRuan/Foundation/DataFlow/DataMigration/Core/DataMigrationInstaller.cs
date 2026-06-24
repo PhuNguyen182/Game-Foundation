@@ -1,4 +1,3 @@
-using DracoRuan.Foundation.Initializers.Interfaces;
 using DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies;
 using DracoRuan.Foundation.DataFlow.DataMigration.Core.Dependencies.Resolver;
 using DracoRuan.Foundation.DataFlow.DataMigration.Core.Manifest;
@@ -17,12 +16,8 @@ namespace DracoRuan.Foundation.DataFlow.DataMigration.Core
     /// </summary>
     /// <code>
     /// [AutoInstall(InstallerInstanceType = nameof(InstallerType.PlainCSharp))]
-    /// public class DataMigratorInstaller : IAsyncInstallable
+    /// public class DataMigratorInstaller : IInstaller
     /// {
-    ///     private bool _isInstalled;
-    /// 
-    ///     public bool IsInstalled() => this._isInstalled;
-    /// 
     ///     public void Install(IContainerBuilder builder)
     ///     {
     ///         builder.Register&lt;IDataMigrator, InventoryDataMigratorV1ToV2&gt;(Lifetime.Scoped).AsSelf();
