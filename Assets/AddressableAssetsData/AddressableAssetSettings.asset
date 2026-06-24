@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 1dd57f283be842547be9a968bfbb6d89
   m_currentHash:
     serializedVersion: 2
-    Hash: 00000000000000000000000000000000
+    Hash: 28068f423a372dfe0c7e42a0914357c9
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_CatalogRequestsTimeout: 0
@@ -24,11 +24,11 @@ MonoBehaviour:
   m_InternalBundleIdMode: 1
   m_AssetLoadMode: 0
   m_BundledAssetProviderType:
-    m_AssemblyName: 
-    m_ClassName: 
+    m_AssemblyName: Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    m_ClassName: UnityEngine.ResourceManagement.ResourceProviders.BundledAssetProvider
   m_AssetBundleProviderType:
-    m_AssemblyName: 
-    m_ClassName: 
+    m_AssemblyName: Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+    m_ClassName: UnityEngine.ResourceManagement.ResourceProviders.AssetBundleProvider
   m_IgnoreUnsupportedFilesInBuild: 0
   m_UniqueBundleIds: 0
   m_EnableJsonCatalog: 0
@@ -61,8 +61,14 @@ MonoBehaviour:
   m_BuildAddressablesWithPlayerBuild: 0
   m_overridePlayerVersion: '[UnityEditor.PlayerSettings.bundleVersion]'
   m_GroupAssets:
+  - {fileID: 11400000, guid: 3d7a0911d7b38cb498b781310e2487d2, type: 2}
   - {fileID: 11400000, guid: 96d84031ae554a047b7205cd4b66a19c, type: 2}
+  - {fileID: 11400000, guid: cffbe91d8a75ea64386bc448af662d2c, type: 2}
+  - {fileID: 11400000, guid: 77521944d03893341941f08540974d01, type: 2}
   - {fileID: 11400000, guid: 01d6d436d37b0b840acc1604494d56ea, type: 2}
+  - {fileID: 11400000, guid: da487ba897db5d64e81c991830ff50b9, type: 2}
+  - {fileID: 11400000, guid: a4a175fd1b10cb742928cc5995ec50cf, type: 2}
+  - {fileID: 11400000, guid: 526aab59f97e8d740b48afc3bbc8873e, type: 2}
   m_BuildSettings:
     m_LogResourceManagerExceptions: 1
     m_BundleBuildPath: Temp/com.unity.addressables/AssetBundles
@@ -102,6 +108,12 @@ MonoBehaviour:
   m_LabelTable:
     m_LabelNames:
     - default
+    - Locale
+    - Locale-zh-Hans
+    - Locale-en
+    - Locale-ja
+    - Locale-es
+    - Preload
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: 9bae5ba176f7f9f419ac858d7da4b87d, type: 2}
