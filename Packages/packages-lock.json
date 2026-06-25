@@ -65,6 +65,13 @@
       "dependencies": {},
       "hash": "1b53ae8b7681340199faf337bcbb0eb5aed702de"
     },
+    "com.google.external-dependency-manager": {
+      "version": "1.2.187",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://package.openupm.com"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,
