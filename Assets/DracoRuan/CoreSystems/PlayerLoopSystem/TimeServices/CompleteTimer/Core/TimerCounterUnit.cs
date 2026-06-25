@@ -13,7 +13,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
         private bool _isFirstTickCounterPlay;
         private bool _isActive;
 
-        public Action OnTimerTierChanged;
+        public Action<int> OnTimerTierChanged;
         public Action<long> OnTimerUpdate;
         public Action OnTimerCompleted;
         public Action OnTimerRemoved;
@@ -33,30 +33,33 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 
         private void TimerUpdate()
         {
-            int zeroTier = 0;
-            int tierCount = this._timerModel.TierCount;
+            int countingTier = 0;
+            int numberOfTimerTiers = this._timerModel.TierCount;
             long currentTimestamp = this._timeValidator.CurrentUnixTimestamp();
             long startTimestamp = this._timerModel.StartUnixTime;
             long timeDifference = currentTimestamp - startTimestamp;
             long timeOffset = 0;
+            bool isFirstActiveTier = true;  // ← thay thế sentinel
 
-            for (int i = 0; i < tierCount; i++)
+            for (int i = 0; i < numberOfTimerTiers; i++)
             {
                 long currentTierTime = this._timerModel.TicksByTier[i];
                 if (currentTierTime <= 0)
                 {
-                    zeroTier += 1;
+                    countingTier++;
                     continue;
                 }
 
-                timeOffset = timeOffset < 0
-                    ? currentTierTime - timeDifference + timeOffset
-                    : currentTierTime - timeDifference;
+                timeOffset = isFirstActiveTier
+                    ? currentTierTime - timeDifference   // tier đầu: trừ tổng thời gian đã qua
+                    : currentTierTime + timeOffset;      // tier sau: cộng overflow âm từ tier trước
+                isFirstActiveTier = false;
+
                 if (timeOffset <= 0)
                 {
                     this._timerModel.TicksByTier[i] = 0;
                     this.OnTimerUpdate?.Invoke(this._timerModel.TicksByTier[i]);
-                    this.OnTimerTierChanged?.Invoke();
+                    this.OnTimerTierChanged?.Invoke(i);
                 }
                 else
                 {
@@ -66,7 +69,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
                 }
             }
 
-            if (zeroTier != tierCount)
+            if (countingTier != numberOfTimerTiers)
                 return;
 
             this.OnTimerCompleted?.Invoke();
