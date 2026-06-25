@@ -64,6 +64,9 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 
         public void Tick(float deltaTime)
         {
+            if (this._timerCounters.Count <= 0)
+                return;
+            
             foreach (var kvp in this._timerCounters)
             {
                 kvp.Value?.Tick(deltaTime);
