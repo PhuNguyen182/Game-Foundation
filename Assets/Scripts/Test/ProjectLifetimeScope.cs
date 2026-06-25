@@ -36,8 +36,8 @@ namespace Test
 
         private void RegisterInstaller(IContainerBuilder builder)
         {
-            builder.InstallDataMigrationInstaller();
-            builder.InstallMessageBrokerInstaller();
+            builder.LoadAndInstallDataMigrationInstaller();
+            builder.LoadAndInstallMessageBrokerInstaller();
         }
 
         private void RegisterServices(IContainerBuilder builder)
