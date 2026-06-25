@@ -208,9 +208,16 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("              }");
         stringBuilder.AppendLine("        }");
         
+        stringBuilder.AppendLine($"        public static void LoadAndInstall{registrationModel.MinimalInstallerName}(this IContainerBuilder builder)");
+        stringBuilder.AppendLine("        {");
+        stringBuilder.AppendLine($"               installer ??= new {registrationModel.FullInstallerName}();");
+        stringBuilder.AppendLine("                installer.Install(builder);");
+        stringBuilder.AppendLine("        }");
+        
         stringBuilder.AppendLine($"        public static async UniTask Initialize{registrationModel.MinimalInstallerName}(this IContainerBuilder builder)");
         stringBuilder.AppendLine("        {");
         stringBuilder.AppendLine($"              installer = new {registrationModel.FullInstallerName}();");
+        stringBuilder.AppendLine("              await UniTask.CompletedTask;");
         stringBuilder.AppendLine("        }");
         stringBuilder.AppendLine("    }");
         
