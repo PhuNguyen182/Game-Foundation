@@ -6,6 +6,8 @@ namespace DracoRuan.Tracking.Tracker
 {
     public class FirebaseTracker : IEventTracker
     {
+        private const string TrackerTag = "FirebaseTracker";
+        
         public void TrackEvent(string eventName, string parameterName, string parameterValue)
         {
             Parameter parameter = new Parameter(parameterName, parameterValue);
@@ -43,6 +45,12 @@ namespace DracoRuan.Tracking.Tracker
                 Parameter[] logParams = parameterList.ToArray();
                 FirebaseAnalytics.LogEvent(eventName, logParams);
             }
+        }
+        
+        public void SetUserProperty(string propertyName, string propertyValue)
+        {
+            FirebaseAnalytics.SetUserProperty(propertyName, propertyValue);
+            Debug.Log($"[{TrackerTag}] Set user property: {propertyName}, value: {propertyValue}");
         }
 
         private Parameter GetParameterFromKeyValuePair(string paramKey, object paramValue)
