@@ -53,8 +53,7 @@ namespace Temps.Scripts
         
         private void SubscribeDataEvents()
         {
-            this._saveDataEvent.SaveDataSubscriber.Subscribe(OnSaveDataMessageReceived);
-            this._deleteDataEvent.DeleteDataSubscriber.Subscribe(OnDeleteDataMessageReceived);
+            
         }
         
         private void OnSaveDataMessageReceived(SaveDataMessage message)

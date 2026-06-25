@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.DataProviders;
+using DracoRuan.RemoteConfig;
 using DracoRuan.VContainerInstallerSupport.Generated;
 using Temps.Scripts;
 using Temps.Scripts.TestRiseProgressData;
@@ -10,7 +11,7 @@ using VContainer.Unity;
 namespace Test
 {
     [DefaultExecutionOrder(-50)]
-    public class ProjectLifetimeScope : LifetimeScope
+    public class SampleProjectLifetimeScope : LifetimeScope
     {
         public static Transform LifetimeScopeInstallerRoot;
         
@@ -43,6 +44,7 @@ namespace Test
         private void RegisterServices(IContainerBuilder builder)
         {
             builder.RegisterEntryPoint<TestService>(Lifetime.Scoped);
+            builder.Register<IRemoteConfigService, FirebaseRemoteConfigService>(Lifetime.Scoped);
             builder.Register<IDataProviderService, DataProviderService>(Lifetime.Scoped).AsSelf().AsImplementedInterfaces();
             builder.Register<RiseProgressionDataController>(Lifetime.Scoped);
         }

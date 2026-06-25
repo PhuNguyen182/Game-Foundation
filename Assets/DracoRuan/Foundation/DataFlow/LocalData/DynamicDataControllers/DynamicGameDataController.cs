@@ -68,10 +68,10 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
 
         private void SubscribeDataEvents()
         {
-            this._saveDataEvent.SaveDataSubscriber
+            this._saveDataEvent.EventSubscriber
                 .Subscribe(this.OnSaveDataMessageReceived)
                 .AddTo(this._cancellationToken);
-            this._deleteDataEvent.DeleteDataSubscriber
+            this._deleteDataEvent.EventSubscriber
                 .Subscribe(this.OnDeleteDataMessageReceived)
                 .AddTo(this._cancellationToken);
         }

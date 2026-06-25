@@ -14,7 +14,7 @@ namespace Test
 
         private void Awake()
         {
-            this.transform.SetParent(ProjectLifetimeScope.LifetimeScopeInstallerRoot);
+            this.transform.SetParent(SampleProjectLifetimeScope.LifetimeScopeInstallerRoot);
         }
 
         public void Install(IContainerBuilder builder)
