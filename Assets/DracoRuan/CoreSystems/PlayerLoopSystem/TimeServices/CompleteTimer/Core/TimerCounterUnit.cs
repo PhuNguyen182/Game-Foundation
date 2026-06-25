@@ -39,7 +39,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
             long startTimestamp = this._timerModel.StartUnixTime;
             long timeDifference = currentTimestamp - startTimestamp;
             long timeOffset = 0;
-            bool isFirstActiveTier = true;  // ← thay thế sentinel
+            bool isFirstActiveTier = true;
 
             for (int i = 0; i < numberOfTimerTiers; i++)
             {
@@ -51,8 +51,8 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
                 }
 
                 timeOffset = isFirstActiveTier
-                    ? currentTierTime - timeDifference   // tier đầu: trừ tổng thời gian đã qua
-                    : currentTierTime + timeOffset;      // tier sau: cộng overflow âm từ tier trước
+                    ? currentTierTime - timeDifference   // First tier: subtract total passed time
+                    : currentTierTime + timeOffset;      // Next tier: add negative overflow from previous tier
                 isFirstActiveTier = false;
 
                 if (timeOffset <= 0)
