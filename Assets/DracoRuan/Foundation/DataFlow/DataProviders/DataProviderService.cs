@@ -1,5 +1,6 @@
 using DracoRuan.Foundation.DataFlow.SaveSystem;
 using DracoRuan.Foundation.DataFlow.SaveSystem.CustomDataSaverService;
+using DracoRuan.RemoteConfig;
 
 namespace DracoRuan.Foundation.DataFlow.DataProviders
 {
@@ -14,13 +15,18 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
         
         #region Data Providers
         
-        private readonly IDataProvider _firebaseRemoteConfigDataProvider = new FirebaseRemoteConfigDataProvider();
+        private readonly IDataProvider _firebaseRemoteConfigDataProvider;
         private readonly IDataProvider _resourcesDataProvider = new ResourcesDataProvider();
         private readonly IDataProvider _addressableDataProvider = new AddressableDataProvider();
         private readonly IDataProvider _playerPrefDataProvider = new PlayerPrefDataProvider();
         private readonly IDataProvider _fileDataProvider = new FileDataProvider();
 
         #endregion
+
+        public DataProviderService(IRemoteConfigService remoteConfigService)
+        {
+            this._firebaseRemoteConfigDataProvider = new RemoteConfigDataProvider(remoteConfigService);
+        }
 
         public IDataProvider GetDataProviderByType(DataSourceType dataSourceType)
         {
@@ -30,7 +36,7 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
                 DataSourceType.Addressable => this._addressableDataProvider,
                 DataSourceType.PlayerPrefs => this._playerPrefDataProvider,
                 DataSourceType.File => this._fileDataProvider,
-                DataSourceType.FirebaseRemoteConfig => this._firebaseRemoteConfigDataProvider,
+                DataSourceType.RemoteConfig => this._firebaseRemoteConfigDataProvider,
                 _ => null
             };
             

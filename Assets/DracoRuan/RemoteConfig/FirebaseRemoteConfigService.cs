@@ -7,7 +7,7 @@ using Firebase.RemoteConfig;
 
 namespace DracoRuan.RemoteConfig
 {
-    public class FirebaseRemoteConfigService : IRemoteConfigService, IDisposable, IAsyncInitializable
+    public class FirebaseRemoteConfigService : IRemoteConfigService, IAsyncInitializable
     {
         private const string LogTag = "FirebaseRemoteConfig";
         
@@ -149,7 +149,7 @@ namespace DracoRuan.RemoteConfig
             
             if (disposing)
             {
-                ReleaseUnmanagedResources();
+                this.ReleaseUnmanagedResources();
             }
             
             this._disposed = true;

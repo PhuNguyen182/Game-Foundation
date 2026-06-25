@@ -2,12 +2,20 @@ using System;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.SaveSystem;
 using DracoRuan.Foundation.DataFlow.Serialization;
+using DracoRuan.RemoteConfig;
 
 namespace DracoRuan.Foundation.DataFlow.DataProviders
 {
-    public class FirebaseRemoteConfigDataProvider : IDataProvider
+    public class RemoteConfigDataProvider : IDataProvider
     {
-        private const string LogKey = "FirebaseRemoteConfigDataProvider";
+        private const string LogKey = "RemoteConfigDataProvider";
+        
+        private readonly IRemoteConfigService _remoteConfigService;
+
+        public RemoteConfigDataProvider(IRemoteConfigService remoteConfigService)
+        {
+            this._remoteConfigService = remoteConfigService;
+        }
         
         public async UniTask<TData> LoadDataAsync<TData>(string pathToData, IDataSerializer<TData> serializer = null,
             IDataSaveService dataSaveService = null)
@@ -20,7 +28,7 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
                     return default;
                 }
                     
-                string remoteConfigPath = ""; // TODO: This value would be fetch from firebase remote config later
+                string remoteConfigPath = this._remoteConfigService.GetStringValue(pathToData);
                 TData data = serializer.Deserialize(remoteConfigPath);
                 return data;
             }
