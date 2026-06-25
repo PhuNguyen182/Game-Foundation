@@ -34,7 +34,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
         private void TimerUpdate()
         {
             int countingTier = 0;
-            int numberOfTimerTiers = this._timerModel.TierCount;
+            int numberOfTimerTiers = this._timerModel.TimerTierCount;
             long currentTimestamp = this._timeValidator.CurrentUnixTimestamp();
             long startTimestamp = this._timerModel.StartUnixTime;
             long timeDifference = currentTimestamp - startTimestamp;

@@ -8,7 +8,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Mode
         public readonly long StartUnixTime;
 
         public string TimerId { get; private set; }
-        public int TierCount => this.TicksByTier?.Count ?? 0; 
+        public int TimerTierCount => this.TicksByTier?.Count ?? 0; 
         public List<long> TicksByTier { get; private set; }
 
         public TimerModel(string timerId, long startUnixTime, long duration)

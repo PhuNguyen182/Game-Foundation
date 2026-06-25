@@ -45,7 +45,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
             {
                 TimerId = timer.TimerId,
                 StartUnixTime = timer.TimerModel.StartUnixTime,
-                TierCount = timer.TimerModel.TierCount,
+                TierCount = timer.TimerModel.TimerTierCount,
                 TicksByTier = timer.TimerModel.TicksByTier,
             };
             
@@ -57,7 +57,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
         {
             TimerSaveUnitModel timerUnitModel = this._timerSaveData.TimerSaveDataUnits[timer.TimerId];
             timerUnitModel.StartUnixTime = timer.TimerModel.StartUnixTime;
-            timerUnitModel.TierCount = timer.TimerModel.TierCount;
+            timerUnitModel.TierCount = timer.TimerModel.TimerTierCount;
             timerUnitModel.TicksByTier = timer.TimerModel.TicksByTier;
             this._timerSaveData.TimerSaveDataUnits[timer.TimerId] = timerUnitModel;
             return TimerUpdateState.Update;
