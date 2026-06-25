@@ -56,16 +56,32 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.Extensions
             new DateTimeOffset(dateTime).ToUnixTimeMilliseconds();
 
         public static DateTime UnixToLocalDateTime(long timestamp)
-            => LocalEpoch.AddSeconds(timestamp).ToLocalTime();
+        {
+            DateTime localEpoch = LocalEpoch;
+            DateTime result = localEpoch.AddSeconds(timestamp).ToLocalTime();
+            return result;
+        }
 
         public static DateTime UnixMillisecondsToLocalDateTime(long timestamp)
-            => LocalEpoch.AddMilliseconds(timestamp).ToLocalTime();
+        {
+            DateTime localEpoch = LocalEpoch;
+            DateTime result = localEpoch.AddMilliseconds(timestamp).ToLocalTime();
+            return result;
+        }
 
         public static DateTime UnixToUtcDateTime(long timestamp)
-            => UtcEpoch.AddSeconds(timestamp).ToUniversalTime();
+        {
+            DateTime localEpoch = UtcEpoch;
+            DateTime result = localEpoch.AddSeconds(timestamp).ToUniversalTime();
+            return result;
+        }
 
         public static DateTime UnixMillisecondsToUtcDateTime(long timestamp)
-            => UtcEpoch.AddMilliseconds(timestamp).ToUniversalTime();
+        {
+            DateTime localEpoch = UtcEpoch;
+            DateTime result = localEpoch.AddMilliseconds(timestamp).ToUniversalTime();
+            return result;
+        }
 
         #endregion
 
