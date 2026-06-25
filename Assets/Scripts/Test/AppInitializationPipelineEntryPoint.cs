@@ -21,12 +21,15 @@ namespace Test
         {
             using (ListPool<UniTask>.Get(out List<UniTask> waitServiceInitializeTasks))
             {
-                foreach (IAsyncInitializable initializable in _asyncInitializableCollection)
+                foreach (IAsyncInitializable initializable in this._asyncInitializableCollection)
                 {
                     UniTask waitServiceTask = UniTask.WaitUntil(initializable.IsInitialized, cancellationToken: cancellation);
                     waitServiceInitializeTasks.Add(waitServiceTask);
                 }
 
+                if (cancellation.IsCancellationRequested)
+                    return;
+                
                 await UniTask.WhenAll(waitServiceInitializeTasks);
             }
 
