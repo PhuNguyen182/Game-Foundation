@@ -4,7 +4,7 @@ using DracoRuan.CoreSystems.DesignPatterns.Factory;
 
 namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.SimpleTimer.Creation
 {
-    public class SimpleTimerFactory : BaseFactory<TimerConfig, BaseTimer>, IDisposable
+    public class SimpleTimerFactory : BaseFactory<TimerConfig, BaseTimer>
     {
         private bool _isDisposed;
         private DisposableBag _disposableBag;
@@ -41,7 +41,7 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.SimpleTimer.Creati
             this._isDisposed = true;
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);

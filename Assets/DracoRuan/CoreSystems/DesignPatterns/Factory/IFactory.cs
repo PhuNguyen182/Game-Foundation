@@ -1,6 +1,8 @@
+using System;
+
 namespace DracoRuan.CoreSystems.DesignPatterns.Factory
 {
-    public interface IFactory
+    public interface IFactory : IDisposable
     {
         
     }

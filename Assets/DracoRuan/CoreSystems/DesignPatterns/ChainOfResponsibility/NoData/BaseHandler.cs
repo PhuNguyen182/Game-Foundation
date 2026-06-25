@@ -21,5 +21,7 @@ namespace DracoRuan.CoreSystems.DesignPatterns.ChainOfResponsibility.NoData
         {
             this._nextHandler?.Handle();
         }
+
+        public abstract void Dispose();
     }
 } 
