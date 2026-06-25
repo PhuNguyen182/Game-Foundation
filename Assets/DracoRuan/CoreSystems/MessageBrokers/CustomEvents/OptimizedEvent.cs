@@ -6,16 +6,16 @@ namespace DracoRuan.CoreSystems.MessageBrokers.CustomEvents
     public abstract class OptimizedEvent<TMessage> : IDisposable
     {
         private bool _isDisposed;
-        private readonly IDisposablePublisher<TMessage> _eventPublisher;
-
+        
+        public IDisposablePublisher<TMessage> EventPublisher { get; }
         public ISubscriber<TMessage> EventSubscriber { get; }
 
         protected OptimizedEvent(EventFactory eventFactory)
         {
-            (this._eventPublisher, this.EventSubscriber) = eventFactory.CreateEvent<TMessage>();
+            (this.EventPublisher, this.EventSubscriber) = eventFactory.CreateEvent<TMessage>();
         }
 
-        public void SendMessage(TMessage message) => this._eventPublisher?.Publish(message);
+        public void SendMessage(TMessage message) => this.EventPublisher?.Publish(message);
         
         protected virtual void ReleaseUnmanagedResources()
         {
@@ -24,7 +24,7 @@ namespace DracoRuan.CoreSystems.MessageBrokers.CustomEvents
 
         protected virtual void ReleaseManagedResources()
         {
-            this._eventPublisher?.Dispose();
+            this.EventPublisher?.Dispose();
         }
 
         protected void Dispose(bool disposing)
