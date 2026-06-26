@@ -1,4 +1,5 @@
-﻿using DracoRuan.MobileNotification.UnityMobileNotifications.Core;
+﻿using DracoRuan.Foundation.Initializers.AutoRegisterAttributes;
+using DracoRuan.MobileNotification.UnityMobileNotifications.Core;
 using DracoRuan.MobileNotification.UnityMobileNotifications.Data;
 using UnityEngine;
 using VContainer.Unity;
@@ -6,6 +7,7 @@ using VContainer;
 
 namespace DracoRuan.MobileNotification.UnityMobileNotifications.Installer
 {
+    [AutoInstall(InstallerInstanceType = nameof(InstallerType.ScriptableObject))]
     [CreateAssetMenu(fileName = "MobileNotificationInstaller",menuName = "DracoRuan/MobileNotifications/MobileNotificationInstaller")]
     public class MobileNotificationInstaller : ScriptableObject, IInstaller
     {

@@ -163,7 +163,7 @@ public class RegisterInstallerGenerator : IIncrementalGenerator
         stringBuilder.AppendLine("        }");
         stringBuilder.AppendLine("");
         
-        stringBuilder.AppendLine($"        public async UniTask Initialize{registrationModel.MinimalInstallerName}(this IContainerBuilder builder, string installerKey)");
+        stringBuilder.AppendLine($"        public static async UniTask Initialize{registrationModel.MinimalInstallerName}(this IContainerBuilder builder, string installerKey)");
         stringBuilder.AppendLine("        {");
         stringBuilder.AppendLine($"             AsyncOperationHandle<{registrationModel.FullInstallerName}> handle = Addressables.LoadAssetAsync<{registrationModel.FullInstallerName}>(installerKey);");
         stringBuilder.AppendLine("              await handle;");
