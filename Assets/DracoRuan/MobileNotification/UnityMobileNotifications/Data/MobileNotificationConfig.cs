@@ -10,7 +10,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Data
     /// ScriptableObject này chứa tất cả settings và configurations
     /// cần thiết để setup notification system cho game.
     /// </remarks>
-    [CreateAssetMenu(fileName = "MobileNotificationConfig", menuName = "DracoRuan/Mobile Notifications/MobileNotificationConfig")]
+    [CreateAssetMenu(fileName = "MobileNotificationConfig", menuName = "DracoRuan/MobileNotifications/MobileNotificationConfig")]
     public class MobileNotificationConfig : ScriptableObject
     {
         [Header("General Settings")]

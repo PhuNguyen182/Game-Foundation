@@ -10,7 +10,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Data
     /// Scenario cho phép tạo một chuỗi notifications theo kịch bản
     /// như daily reminder, engagement campaign, hoặc checkpoint rewards.
     /// </remarks>
-    [CreateAssetMenu(fileName = "NotificationScenario", menuName = "DracoRuan/Mobile Notifications/NotificationScenario")]
+    [CreateAssetMenu(fileName = "NotificationScenario", menuName = "DracoRuan/MobileNotifications/NotificationScenario")]
     public class NotificationScenario : ScriptableObject
     {
         [Header("Scenario Information")]

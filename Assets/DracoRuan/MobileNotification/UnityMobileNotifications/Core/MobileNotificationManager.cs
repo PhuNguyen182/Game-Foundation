@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using DracoRuan.CoreSystems.PlayerLoopSystem.Core.Handlers;
 using DracoRuan.MobileNotification.UnityMobileNotifications.Data;
 using DracoRuan.MobileNotification.UnityMobileNotifications.Interfaces;
 using Unity.Notifications.Android;
-using UnityEngine;
+using VContainer.Unity;
+
 #if UNITY_ANDROID
 
 #elif UNITY_IOS
@@ -21,7 +21,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
     /// Class này là entry point chính để sử dụng notification system.
     /// Nó orchestrate tất cả các components: permission, scheduler, và service.
     /// </remarks>
-    public class MobileNotificationManager : IMobileNotificationManager, IDisposable, IUpdateHandler
+    public class MobileNotificationManager : IMobileNotificationManager, IDisposable, ITickable
     {
         /// <summary>
         /// Configuration cho notification system
@@ -71,18 +71,6 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
             this.TryInitializeAsync().Forget();
         }
 
-        /// <summary>
-        /// Unity Awake lifecycle
-        /// </summary>
-        private void Awake()
-        {
-            // Khởi tạo dependencies
-            this.InitializeDependencies();
-        }
-
-        /// <summary>
-        /// Unity Start lifecycle
-        /// </summary>
         private async UniTask TryInitializeAsync()
         {
             // Auto initialize nếu có config
@@ -93,7 +81,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
         /// <summary>
         /// Unity Update lifecycle
         /// </summary>
-        public void Tick(float deltaTime)
+        public void Tick()
         {
             if (this._isInitialized && !this._isCheckingNotifications)
             {
@@ -446,10 +434,12 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
         private void InitializeDependencies()
         {
             // Create temporary config nếu chưa có
-            var tempConfig = this._mobileNotificationConfig ? this._mobileNotificationConfig : MobileNotificationConfig.CreateDevelopmentPreset();
+            MobileNotificationConfig config = this._mobileNotificationConfig
+                ? this._mobileNotificationConfig
+                : MobileNotificationConfig.CreateDevelopmentPreset();
 
             // Initialize dependencies
-            this._permissionHandler = new NotificationPermissionHandler(tempConfig);
+            this._permissionHandler = new NotificationPermissionHandler(config);
             this._scheduler = new NotificationScheduler();
             this._service = new MobileNotificationService();
         }
