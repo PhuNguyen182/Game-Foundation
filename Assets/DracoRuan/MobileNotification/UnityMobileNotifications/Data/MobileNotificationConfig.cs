@@ -15,50 +15,50 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Data
     {
         [Header("General Settings")]
         [Tooltip("Enable debug logs cho notification system")]
-        public bool enableDebugLogs = true;
+        [SerializeField] public bool enableDebugLogs = true;
 
         [Tooltip("Tự động request permission khi initialize")]
-        public bool autoRequestPermission = true;
+        [SerializeField] public bool autoRequestPermission = true;
 
         [Tooltip("Maximum số notifications có thể schedule cùng lúc")]
-        public int maxScheduledNotifications = 64;
+        [SerializeField] public int maxScheduledNotifications = 64;
 
         [Header("Android Settings")]
         [Tooltip("Default notification channel cho Android")]
-        public string androidDefaultChannelId = "default_channel";
+        [SerializeField] public string androidDefaultChannelId = "default_channel";
 
         [Tooltip("Default notification channel name")]
-        public string androidDefaultChannelName = "Default Notifications";
+        [SerializeField] public string androidDefaultChannelName = "Default Notifications";
 
         [Tooltip("Default notification channel description")]
-        public string androidDefaultChannelDescription = "General game notifications";
+        [SerializeField] public string androidDefaultChannelDescription = "General game notifications";
 
         [Tooltip("Default small icon name (phải có trong res/drawable)")]
-        public string androidSmallIcon = "icon_notification";
+        [SerializeField] public string androidSmallIcon = "icon_notification";
 
         [Tooltip("Default large icon name (optional)")]
-        public string androidLargeIcon = string.Empty;
+        [SerializeField] public string androidLargeIcon = string.Empty;
 
         [Header("iOS Settings")]
         [Tooltip("Request authorization options cho iOS")]
-        public bool iosRequestAlert = true;
+        [SerializeField] public bool iosRequestAlert = true;
 
         [Tooltip("Request badge authorization cho iOS")]
-        public bool iosRequestBadge = true;
+        [SerializeField] public bool iosRequestBadge = true;
 
         [Tooltip("Request sound authorization cho iOS")]
-        public bool iosRequestSound = true;
+        [SerializeField] public bool iosRequestSound = true;
 
         [Header("Notification Channels")]
         [Tooltip("Danh sách custom notification channels (Android)")]
-        public List<NotificationChannelData> customChannels;
+        [SerializeField] public List<NotificationChannelData> customChannels;
 
         [Header("Default Values")]
         [Tooltip("Default badge number cho notifications")]
-        public int defaultBadge = 1;
+        [SerializeField] public int defaultBadge = 1;
 
         [Tooltip("Default category/channel cho notifications")]
-        public string defaultCategory = string.Empty;
+        [SerializeField] public string defaultCategory = string.Empty;
 
         /// <summary>
         /// Constructor mặc định

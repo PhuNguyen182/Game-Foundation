@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4afb69e9385edb4ebf3f5cfccc96c9f, type: 3}
+  m_Name: MobileNotificationConfig
+  m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.MobileNotification.UnityMobileNotifications.Data.MobileNotificationConfig
+  enableDebugLogs: 0
+  autoRequestPermission: 1
+  maxScheduledNotifications: 64
+  androidDefaultChannelId: default_channel
+  androidDefaultChannelName: Default Notifications
+  androidDefaultChannelDescription: General game notifications
+  androidSmallIcon: icon_notification
+  androidLargeIcon: 
+  iosRequestAlert: 1
+  iosRequestBadge: 1
+  iosRequestSound: 1
+  customChannels: []
+  defaultBadge: 1
+  defaultCategory: 

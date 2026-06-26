@@ -10,34 +10,34 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Data
     /// Scenario cho phép tạo một chuỗi notifications theo kịch bản
     /// như daily reminder, engagement campaign, hoặc checkpoint rewards.
     /// </remarks>
-    [CreateAssetMenu(fileName = "NotificationScenario", menuName = "MBDK/Mobile Notifications/Notification Scenario")]
+    [CreateAssetMenu(fileName = "NotificationScenario", menuName = "DracoRuan/Mobile Notifications/NotificationScenario")]
     public class NotificationScenario : ScriptableObject
     {
         [Header("Scenario Information")]
         [Tooltip("Tên scenario để dễ nhận biết")]
-        public string scenarioName;
+        [SerializeField] public string scenarioName;
 
         [Tooltip("Mô tả về scenario này")]
         [TextArea(3, 6)]
-        public string description;
+        [SerializeField] public string description;
 
         [Header("Checkpoint Settings")]
         [Tooltip("Scenario này dựa vào checkpoint hay không")]
-        public bool useCheckpoint;
+        [SerializeField] public bool useCheckpoint;
 
         [Tooltip("Tên checkpoint để tính toán timing (nếu useCheckpoint = true)")]
-        public string checkpointName;
+        [SerializeField] public string checkpointName;
 
         [Header("Notifications")]
         [Tooltip("Danh sách notifications trong scenario")]
-        public List<NotificationData> notifications;
+        [SerializeField] public List<NotificationData> notifications;
 
         [Header("Scheduling Options")]
         [Tooltip("Tự động hủy scenario cũ trước khi schedule scenario mới")]
-        public bool cancelPreviousOnSchedule;
+        [SerializeField] public bool cancelPreviousOnSchedule;
 
         [Tooltip("Group key chung cho tất cả notifications trong scenario")]
-        public string groupKey;
+        [SerializeField] public string groupKey;
 
         /// <summary>
         /// Constructor mặc định
