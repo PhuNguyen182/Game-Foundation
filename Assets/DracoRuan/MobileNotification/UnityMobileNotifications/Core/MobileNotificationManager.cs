@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using DracoRuan.CoreSystems.PlayerLoopSystem.Core.Handlers;
 using DracoRuan.MobileNotification.UnityMobileNotifications.Data;
 using DracoRuan.MobileNotification.UnityMobileNotifications.Interfaces;
 using Unity.Notifications.Android;
@@ -20,12 +21,12 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
     /// Class này là entry point chính để sử dụng notification system.
     /// Nó orchestrate tất cả các components: permission, scheduler, và service.
     /// </remarks>
-    public class MobileNotificationManager : MonoBehaviour, IMobileNotificationManager
+    public class MobileNotificationManager : IMobileNotificationManager, IDisposable, IUpdateHandler
     {
-        [Header("Configuration")]
-        [SerializeField] 
-        [Tooltip("Configuration cho notification system")]
-        private MobileNotificationConfig config;
+        /// <summary>
+        /// Configuration cho notification system
+        /// </summary>
+        private MobileNotificationConfig _mobileNotificationConfig;
 
         // Dependencies
         private INotificationPermissionHandler _permissionHandler;
@@ -63,6 +64,13 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
         /// </summary>
         public event Action<string> OnNotificationError;
 
+        public MobileNotificationManager(MobileNotificationConfig config)
+        {
+            this._mobileNotificationConfig = config;
+            this.InitializeDependencies();
+            this.TryInitializeAsync().Forget();
+        }
+
         /// <summary>
         /// Unity Awake lifecycle
         /// </summary>
@@ -75,32 +83,26 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
         /// <summary>
         /// Unity Start lifecycle
         /// </summary>
-        private void Start()
+        private async UniTask TryInitializeAsync()
         {
             // Auto initialize nếu có config
-            if (this.config != null)
-            {
-                this.InitializeAsync(this.config).Forget();
-            }
+            if (this._mobileNotificationConfig)
+                await this.InitializeAsync(this._mobileNotificationConfig);
         }
 
         /// <summary>
         /// Unity Update lifecycle
         /// </summary>
-        private void Update()
+        public void Tick(float deltaTime)
         {
             if (this._isInitialized && !this._isCheckingNotifications)
             {
                 this.CheckReceivedNotifications();
             }
         }
-
-        /// <summary>
-        /// Unity OnDestroy lifecycle
-        /// </summary>
-        private void OnDestroy()
+        
+        public void Dispose()
         {
-            // Unsubscribe events
             if (this._permissionHandler != null)
             {
                 this._permissionHandler.OnPermissionStatusChanged -= this.HandlePermissionChanged;
@@ -121,37 +123,37 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
 
             try
             {
-                this.config = notificationConfig;
+                this._mobileNotificationConfig = notificationConfig;
 
-                if (this.config == null || !this.config.IsValid())
+                if (!this._mobileNotificationConfig || !this._mobileNotificationConfig.IsValid())
                 {
                     Debug.LogError("❌ [NotificationManager] Invalid configuration!");
                     return;
                 }
 
-                if (this.config.enableDebugLogs)
+                if (this._mobileNotificationConfig.enableDebugLogs)
                 {
                     Debug.Log("🔔 [NotificationManager] Initializing notification system...");
                 }
 
                 // Initialize service
-                await this._service.InitializeAsync(this.config);
+                await this._service.InitializeAsync(this._mobileNotificationConfig);
 
                 // Initialize scheduler
-                await this._scheduler.InitializeAsync(this.config);
+                await this._scheduler.InitializeAsync(this._mobileNotificationConfig);
 
                 // Subscribe to permission events
                 this._permissionHandler.OnPermissionStatusChanged += this.HandlePermissionChanged;
 
                 // Auto request permission nếu config yêu cầu
-                if (this.config.autoRequestPermission)
+                if (this._mobileNotificationConfig.autoRequestPermission)
                 {
                     await this.RequestPermissionAsync();
                 }
 
                 this._isInitialized = true;
 
-                if (this.config.enableDebugLogs)
+                if (this._mobileNotificationConfig.enableDebugLogs)
                 {
                     Debug.Log("✅ [NotificationManager] Notification system initialized successfully!");
                 }
@@ -171,14 +173,14 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
         {
             try
             {
-                if (this.config.enableDebugLogs)
+                if (this._mobileNotificationConfig.enableDebugLogs)
                 {
                     Debug.Log("🔐 [NotificationManager] Requesting notification permission...");
                 }
 
                 var granted = await this._permissionHandler.RequestPermissionAsync();
 
-                if (this.config.enableDebugLogs)
+                if (this._mobileNotificationConfig.enableDebugLogs)
                 {
                     Debug.Log($"✅ [NotificationManager] Permission {(granted ? "granted" : "denied")}");
                 }
@@ -224,7 +226,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
                 // Schedule notification
                 var notificationId = await this._scheduler.ScheduleAsync(notificationData);
 
-                if (this.config.enableDebugLogs)
+                if (this._mobileNotificationConfig.enableDebugLogs)
                 {
                     Debug.Log($"✅ [NotificationManager] Notification #{notificationId} scheduled: {notificationData.title}");
                 }
@@ -260,14 +262,14 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
 
             try
             {
-                if (this.config.enableDebugLogs)
+                if (this._mobileNotificationConfig.enableDebugLogs)
                 {
                     Debug.Log($"📅 [NotificationManager] Scheduling {notifications.Count} notifications...");
                 }
 
                 var scheduledIds = await this._scheduler.ScheduleMultipleAsync(notifications);
 
-                if (this.config.enableDebugLogs)
+                if (this._mobileNotificationConfig.enableDebugLogs)
                 {
                     Debug.Log($"✅ [NotificationManager] {scheduledIds.Count} notifications scheduled");
                 }
@@ -303,7 +305,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
 
             try
             {
-                if (this.config.enableDebugLogs)
+                if (this._mobileNotificationConfig.enableDebugLogs)
                 {
                     Debug.Log($"📋 [NotificationManager] Scheduling scenario: {scenario.scenarioName}");
                 }
@@ -326,7 +328,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
                 // Schedule all notifications
                 var scheduledIds = await this._scheduler.ScheduleMultipleAsync(notifications);
 
-                if (this.config.enableDebugLogs)
+                if (this._mobileNotificationConfig.enableDebugLogs)
                 {
                     Debug.Log($"✅ [NotificationManager] Scenario scheduled: {scheduledIds.Count} notifications");
                 }
@@ -357,7 +359,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
             {
                 this._scheduler.Cancel(notificationId);
 
-                if (this.config.enableDebugLogs)
+                if (this._mobileNotificationConfig.enableDebugLogs)
                 {
                     Debug.Log($"🗑️ [NotificationManager] Notification #{notificationId} cancelled");
                 }
@@ -384,7 +386,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
             {
                 this._scheduler.CancelAll();
 
-                if (this.config.enableDebugLogs)
+                if (this._mobileNotificationConfig.enableDebugLogs)
                 {
                     Debug.Log("🗑️ [NotificationManager] All notifications cancelled");
                 }
@@ -411,7 +413,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
             {
                 this._scheduler.ClearDelivered();
 
-                if (this.config.enableDebugLogs)
+                if (this._mobileNotificationConfig.enableDebugLogs)
                 {
                     Debug.Log("🧹 [NotificationManager] Delivered notifications cleared");
                 }
@@ -444,7 +446,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
         private void InitializeDependencies()
         {
             // Create temporary config nếu chưa có
-            var tempConfig = this.config != null ? this.config : MobileNotificationConfig.CreateDevelopmentPreset();
+            var tempConfig = this._mobileNotificationConfig ? this._mobileNotificationConfig : MobileNotificationConfig.CreateDevelopmentPreset();
 
             // Initialize dependencies
             this._permissionHandler = new NotificationPermissionHandler(tempConfig);
@@ -457,7 +459,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
         /// </summary>
         private void HandlePermissionChanged(bool granted)
         {
-            if (this.config.enableDebugLogs)
+            if (this._mobileNotificationConfig.enableDebugLogs)
             {
                 Debug.Log($"🔐 [NotificationManager] Permission changed: {granted}");
             }
@@ -503,7 +505,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
                 var notificationId = notificationIntentData.Id;
                 var customData = notificationIntentData.Notification.IntentData;
 
-                if (this.config.enableDebugLogs)
+                if (this._mobileNotificationConfig.enableDebugLogs)
                 {
                     Debug.Log($"📬 [NotificationManager] Received Android notification #{notificationId}");
                 }

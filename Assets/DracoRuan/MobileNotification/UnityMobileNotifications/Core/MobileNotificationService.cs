@@ -14,8 +14,29 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
     /// Service này xử lý các tác vụ như validate, transform data,
     /// quản lý checkpoints và tính toán timing cho notifications.
     /// </remarks>
-    public class MobileNotificationService : IMobileNotificationService
+    public class MobileNotificationService : IMobileNotificationService, IDisposable
     {
+        /// <summary>
+        /// Serializable data structure cho checkpoints
+        /// </summary>
+        [Serializable]
+        private class CheckpointData
+        {
+            public List<CheckpointEntry> checkpoints = new();
+        }
+
+        /// <summary>
+        /// Serializable checkpoint entry
+        /// </summary>
+        [Serializable]
+        private class CheckpointEntry
+        {
+            public string name;
+            public long timestamp;
+        }
+        
+        private const string CheckpointDataKey = "MobileNotifications_Checkpoints";
+        
         private MobileNotificationConfig _config;
         private readonly Dictionary<string, long> _checkpoints;
 
@@ -127,7 +148,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
         {
             var processedNotifications = new List<NotificationData>();
 
-            if (scenario == null || !scenario.IsValid())
+            if (!scenario || !scenario.IsValid())
             {
                 if (this._config.enableDebugLogs)
                 {
@@ -271,13 +292,12 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
         {
             try
             {
-                var checkpointsJson = PlayerPrefs.GetString("MobileNotifications_Checkpoints", "{}");
+                var checkpointsJson = PlayerPrefs.GetString(CheckpointDataKey, "{}");
                 var checkpointDict = JsonUtility.FromJson<CheckpointData>(checkpointsJson);
 
-                if (checkpointDict != null && checkpointDict.checkpoints != null)
+                if (checkpointDict is { checkpoints: not null })
                 {
                     this._checkpoints.Clear();
-                    
                     for (int i = 0; i < checkpointDict.checkpoints.Count; i++)
                     {
                         var checkpoint = checkpointDict.checkpoints[i];
@@ -317,8 +337,8 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
                     });
                 }
 
-                var json = JsonUtility.ToJson(checkpointData);
-                PlayerPrefs.SetString("MobileNotifications_Checkpoints", json);
+                string json = JsonUtility.ToJson(checkpointData);
+                PlayerPrefs.SetString(CheckpointDataKey, json);
                 PlayerPrefs.Save();
 
                 if (this._config.enableDebugLogs)
@@ -332,23 +352,9 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
             }
         }
 
-        /// <summary>
-        /// Serializable data structure cho checkpoints
-        /// </summary>
-        [Serializable]
-        private class CheckpointData
+        public void Dispose()
         {
-            public List<CheckpointEntry> checkpoints = new();
-        }
-
-        /// <summary>
-        /// Serializable checkpoint entry
-        /// </summary>
-        [Serializable]
-        private class CheckpointEntry
-        {
-            public string name;
-            public long timestamp;
+            this._checkpoints?.Clear();
         }
     }
 }

@@ -19,7 +19,7 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
     /// Class này xử lý việc schedule, cancel và query notifications
     /// trên cả Android và iOS platforms sử dụng Unity Mobile Notifications API.
     /// </remarks>
-    public class NotificationScheduler : INotificationScheduler
+    public class NotificationScheduler : INotificationScheduler, IDisposable
     {
         private MobileNotificationConfig _config;
         private readonly Dictionary<int, NotificationData> _scheduledNotifications;
@@ -489,6 +489,11 @@ namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
             await UniTask.CompletedTask;
         }
 #endif
+
+        public void Dispose()
+        {
+            this._scheduledNotifications?.Clear();
+        }
     }
 }
 
