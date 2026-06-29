@@ -44,7 +44,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
             dataSequenceProcessor.Clear();
             foreach (DataProcessSequence dataProcessSequence in this.DataProcessSequences)
             {
-                IProcessSequence processSequence = GetDataProcessorByType(dataProcessSequence);
+                IProcessSequence processSequence = this.GetDataProcessorByType(dataProcessSequence);
                 if (processSequence == null)
                     continue;
 
