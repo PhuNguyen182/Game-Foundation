@@ -1,15 +1,18 @@
-﻿using DracoRuan.CoreSystems.PlayerLoopSystem.Core.Handlers;
+﻿using System;
+using DracoRuan.CoreSystems.PlayerLoopSystem.Core.Handlers;
 using DracoRuan.CoreSystems.PlayerLoopSystem.UpdateServices;
 using UnityEngine;
 
 namespace DracoRuan.Utilities.ObjectPooling
 {
-    public class AutoDespawn : MonoBehaviour, IUpdateHandler
+    public class AutoDespawnByTimer : MonoBehaviour, IUpdateHandler
     {
         [SerializeField] private float duration = 1f;
 
         private bool _isExpired;
         private float _timeCounter;
+        
+        public event Action OnDespawned; 
         
         private void OnEnable()
         {
@@ -28,7 +31,7 @@ namespace DracoRuan.Utilities.ObjectPooling
                 return;
             
             this._isExpired = true;
-            ObjectPooling.Despawn(this);
+            this.OnDespawned?.Invoke();
         }
 
         private void OnDisable()
