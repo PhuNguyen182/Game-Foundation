@@ -69,12 +69,12 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
             TPopup result = ObjectPooling.Spawn(targetPopup, Vector3.zero, Quaternion.identity, parent);
             result.transform.SetAsLastSibling();
             result.SetPopupManager(this);
-            result.BindModelData(model);
             
             if (!this._popupDictionary.TryAdd(popupName, result))
                 this._popupDictionary[popupName] = result;
             
             this._objectResolver.Inject(result);
+            result.BindModelData(model);
             result.Show();
             return result;
         }
