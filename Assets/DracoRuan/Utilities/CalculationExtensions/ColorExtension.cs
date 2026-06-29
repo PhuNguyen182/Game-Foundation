@@ -9,25 +9,29 @@ namespace DracoRuan.Utilities.CalculationExtensions
         /// Normalize the RGB values of Color from range of 0 - 255 into range of 0 - 1
         /// </summary>
         public static Color Normalize(this Color color)
-            => new Color(color.r / 255, color.g / 255, color.b / 255, color.a);
+        {
+            Color result = new Color(color.r / 255, color.g / 255, color.b / 255, color.a);
+            return result;
+        }
 
         /// <summary>
         /// Lighten a color if <i>factor</i> is greater then 1, darken if <i>factor</i> is smaller than 1.
         /// </summary>
         public static Color Adjust(this Color color, float factor)
         {
-            return new Color(
-            Mathf.Clamp01(color.r * factor),
-            Mathf.Clamp01(color.g * factor),
-            Mathf.Clamp01(color.b * factor),
-            color.a);
+            Color result = new Color(Mathf.Clamp01(color.r * factor), Mathf.Clamp01(color.g * factor),
+                Mathf.Clamp01(color.b * factor), color.a);
+            return result;
         }
 
         /// <summary>
         /// Convert from RGBA Color into HEX Color.
         /// </summary>
         public static string ToHex(this Color color)
-            => $"#{(int)(color.r * 255):X2}{(int)(color.g * 255):X2}{(int)(color.b * 255):X2}";
+        {
+            string result = $"#{(int)(color.r * 255):X2}{(int)(color.g * 255):X2}{(int)(color.b * 255):X2}"; 
+            return result;
+        }
 
         /// <summary>
         /// Convert from HEX Color into RGBA Color.
@@ -47,20 +51,20 @@ namespace DracoRuan.Utilities.CalculationExtensions
                     Debug.Log("Format Exception: Invalid HEX Color Format!");
                     return color;
                 }
-                
-                if (newHex.Length == 6)
+
+                switch (newHex.Length)
                 {
-                    color.r = newHex.Substring(0, 2).HexToInt() / (float)255;
-                    color.g = newHex.Substring(2, 2).HexToInt() / (float)255;
-                    color.b = newHex.Substring(4, 2).HexToInt() / (float)255;
-                }
-                
-                else if (newHex.Length == 8)
-                {
-                    color.r = newHex.Substring(0, 2).HexToInt() / (float)255;
-                    color.g = newHex.Substring(2, 2).HexToInt() / (float)255;
-                    color.b = newHex.Substring(4, 2).HexToInt() / (float)255;
-                    color.a = newHex.Substring(6, 2).HexToInt() / (float)255;
+                    case 6:
+                        color.r = newHex.Substring(0, 2).HexToInt() / (float)255;
+                        color.g = newHex.Substring(2, 2).HexToInt() / (float)255;
+                        color.b = newHex.Substring(4, 2).HexToInt() / (float)255;
+                        break;
+                    case 8:
+                        color.r = newHex.Substring(0, 2).HexToInt() / (float)255;
+                        color.g = newHex.Substring(2, 2).HexToInt() / (float)255;
+                        color.b = newHex.Substring(4, 2).HexToInt() / (float)255;
+                        color.a = newHex.Substring(6, 2).HexToInt() / (float)255;
+                        break;
                 }
             }
             catch (FormatException)
@@ -79,7 +83,8 @@ namespace DracoRuan.Utilities.CalculationExtensions
             int r = UnityEngine.Random.Range(min, max);
             int g = UnityEngine.Random.Range(min, max);
             int b = UnityEngine.Random.Range(min, max);
-            return new Color(r, g, b, alpha).Normalize();
+            Color result = new Color(r, g, b, alpha).Normalize();
+            return result;
         }
     }
 }

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace PracticalUtilities.CalculationExtensions.Comparers
+namespace DracoRuan.Utilities.CalculationExtensions.Comparers
 {
     public class Vector3IntComparer : IComparer<Vector3Int>
     {

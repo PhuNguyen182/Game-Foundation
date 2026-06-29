@@ -1,18 +1,37 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace DracoRuan.Utilities.CalculationExtensions
 {
+    public enum FlatPlane
+    {
+        XY,
+        XZ,
+        YZ,
+    }
+    
     public static class VectorExtension
     {
-        public static Vector3 GetFlatVector(this Vector3 vector) => new(vector.x, 0, vector.z);
-        
+        public static Vector3 GetFlatVector(this Vector3 vector, FlatPlane flatPlane = FlatPlane.XZ)
+        {
+            Vector3 result = flatPlane switch
+            {
+                FlatPlane.XY => new Vector3(vector.x, vector.y, 0),
+                FlatPlane.YZ => new Vector3(0, vector.y, vector.z),
+                FlatPlane.XZ => new Vector3(vector.x, 0, vector.z),
+                _ => Vector3.zero
+            };
+            
+            return result;
+        }
+
         /// <summary>
         /// Use this instead of adding normal Vector3 for performance. It's ~17 - 18 % faster. Use this version if you want to add optimizing for performance in an efficiency sense'.
         /// </summary>
         /// <param name="vector"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public static Vector3 FasterAdd(this Vector3 vector, Vector3 value = default)
+        public static Vector3 FasterAdd(this Vector3 vector, Vector3 value)
         {
             vector.x += value.x;
             vector.y += value.y;
@@ -92,8 +111,8 @@ namespace DracoRuan.Utilities.CalculationExtensions
             return quantizedVector;
         }
 
-        public static Vector3 Quantize(this Vector3Int vector, float xQuantization = 0, float yQuantization = 0,
-            float zQuantization = 0)
+        public static Vector3 Quantize(this Vector3Int vector, float xQuantization = 1, float yQuantization = 1,
+            float zQuantization = 1)
         {
             Vector3 scaleVector = new()
             {

@@ -144,18 +144,18 @@ namespace DracoRuan.Utilities.CalculationExtensions
             if (transform.childCount == 0)
                 return false;
 
-            Transform checkinTransform = transform;
+            Transform checkInTransform = transform;
             int count = hierarchyIndexes.Length;
             for (int i = 0; i < count; i++)
             {
                 int childIndex = hierarchyIndexes[i];
-                if (checkinTransform.childCount == 0 || childIndex >= checkinTransform.childCount)
+                if (checkInTransform.childCount == 0 || childIndex >= checkInTransform.childCount)
                     return false;
 
-                checkinTransform = checkinTransform.GetChild(childIndex);
+                checkInTransform = checkInTransform.GetChild(childIndex);
             }
 
-            return checkinTransform.TryGetComponent(out component);
+            return checkInTransform.TryGetComponent(out component);
         }
     }
 }

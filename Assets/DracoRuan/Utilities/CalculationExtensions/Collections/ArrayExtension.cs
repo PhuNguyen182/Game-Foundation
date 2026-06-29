@@ -98,6 +98,6 @@ namespace DracoRuan.Utilities.CalculationExtensions.Collections
             => array == null;
         
         public static bool IsNullOrEmpty<T>(this T[] array)
-            => array == null || array.Length <= 0;
+            => array is not { Length: > 0 };
     }
 }
