@@ -34,7 +34,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
             this._dataProviderService = dataProviderService;
         }
 
-        public bool IsDataControllerIInitialized() => this._isDataInitialized;
+        public bool IsDataControllerInitialized() => this._isDataInitialized;
 
         public async UniTask InitializeData(IDataSequenceProcessor dataSequenceProcessor)
         {

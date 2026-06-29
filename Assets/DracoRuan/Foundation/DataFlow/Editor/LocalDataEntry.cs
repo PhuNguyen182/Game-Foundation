@@ -416,7 +416,35 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             {
                 if (parentProperty.Tree.WeakTargets != null && parentProperty.Tree.WeakTargets.Count > 0)
                 {
-                    if (parentProperty.Tree.WeakTargets[0] is IGameData) return true;
+                    if (parentProperty.Tree.WeakTargets[0] is IGameData)
+                    {
+                        // ONLY apply to user data classes. 
+                        // Do NOT apply to System collections (List, Dictionary) or Unity/Odin types, 
+                        // otherwise we break their optimized custom drawers and cause massive lag!
+                        var declaringType = member.DeclaringType;
+                        if (declaringType != null)
+                        {
+                            // NEVER mess with the internal properties of any collection type.
+                            // Odin has highly optimized drawers for arrays, lists, and dictionaries.
+                            if (typeof(System.Collections.IEnumerable).IsAssignableFrom(declaringType))
+                            {
+                                return false;
+                            }
+
+                            if (declaringType.Namespace != null)
+                            {
+                                if (declaringType.Namespace.StartsWith("System") ||
+                                    declaringType.Namespace.StartsWith("UnityEngine") ||
+                                    declaringType.Namespace.StartsWith("Sirenix") ||
+                                    declaringType.Namespace.StartsWith("AYellowpaper"))
+                                {
+                                    return false;
+                                }
+                            }
+                        }
+                        
+                        return true;
+                    }
                 }
 
                 return false;

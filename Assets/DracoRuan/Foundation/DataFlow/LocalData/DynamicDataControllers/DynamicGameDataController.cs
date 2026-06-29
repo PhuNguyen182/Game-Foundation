@@ -64,7 +64,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             this.MigrateData().Forget();
         }
         
-        public bool IsDataControllerIInitialized() => this._isDataInitialized;
+        public bool IsDataControllerInitialized() => this._isDataInitialized;
 
         private void SubscribeDataEvents()
         {
