@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 
 namespace DracoRuan.Foundation.DataFlow.DataProcessors
 {
-    public class DataSequenceProcessor : IDataSequenceProcessor
+    public class DataSequenceProcessor : IDataSequenceProcessor, IDisposable
+
     {
         private readonly Queue<IProcessSequence> _processSequences = new();
         public IProcessSequence LatestProcessSequence { get; private set; }
@@ -13,7 +15,7 @@ namespace DracoRuan.Foundation.DataFlow.DataProcessors
             this._processSequences.Enqueue(processSequence);
             return this;
         }
-        
+
         public async UniTask Execute()
         {
             foreach (IProcessSequence processSequence in this._processSequences)
@@ -23,14 +25,30 @@ namespace DracoRuan.Foundation.DataFlow.DataProcessors
                 if (isSuccess)
                     break;
             }
-            
+
             this._processSequences.Clear();
         }
-        
+
         public void Clear()
         {
             this._processSequences.Clear();
             this.LatestProcessSequence = null;
+        }
+
+        private void ReleaseUnmanagedResources()
+        {
+            this.Clear();
+        }
+
+        public void Dispose()
+        {
+            this.ReleaseUnmanagedResources();
+            GC.SuppressFinalize(this);
+        }
+
+        ~DataSequenceProcessor()
+        {
+            this.ReleaseUnmanagedResources();
         }
     }
 }

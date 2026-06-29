@@ -23,7 +23,7 @@ namespace DracoRuan.RemoteConfig
                 this._isInitialized = false;
                 this._remoteConfig = FirebaseRemoteConfig.DefaultInstance;
                 this._remoteConfig.OnConfigUpdateListener += this.OnConfigUpdated;
-                var configSettings = new ConfigSettings
+                ConfigSettings configSettings = new ConfigSettings
                 {
                     MinimumFetchIntervalInMilliseconds = 1000
                 };

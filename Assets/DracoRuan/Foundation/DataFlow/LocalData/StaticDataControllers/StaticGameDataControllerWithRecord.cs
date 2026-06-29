@@ -18,6 +18,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         private bool _isDataInitialized;
         
         private readonly IDataProviderService _dataProviderService;
+        private readonly IDataSequenceProcessor _dataSequenceProcessor;
         private IDataProvider _dataProvider;
         
         protected abstract TData SourceData { get; set; }
@@ -32,6 +33,8 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         {
             this._isDataInitialized = false;
             this._dataProviderService = dataProviderService;
+            this._dataSequenceProcessor = new DataSequenceProcessor();
+            this.InitializeData(this._dataSequenceProcessor).Forget();
         }
 
         public bool IsDataControllerInitialized() => this._isDataInitialized;
@@ -95,7 +98,8 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         
         protected virtual void ReleaseUnmanagedResources()
         {
-            
+            if (this._dataSequenceProcessor is IDisposable disposable)
+                disposable.Dispose();
         }
 
         protected virtual void Dispose(bool disposing)

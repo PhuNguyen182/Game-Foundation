@@ -2,6 +2,7 @@ using System;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.SaveSystem;
 using DracoRuan.Foundation.DataFlow.Serialization;
+using DracoRuan.Foundation.Initializers.Interfaces;
 using DracoRuan.RemoteConfig;
 
 namespace DracoRuan.Foundation.DataFlow.DataProviders
@@ -27,7 +28,8 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
                     Debug.LogError($"{LogKey} Serializer of type {typeof(IDataSerializer<TData>)} cannot be null.");
                     return default;
                 }
-                    
+
+                await UniTask.WaitUntil(this.IsRemoteConfigServiceInitialized);
                 string remoteConfigPath = this._remoteConfigService.GetStringValue(pathToData);
                 TData data = serializer.Deserialize(remoteConfigPath);
                 return data;
@@ -37,13 +39,19 @@ namespace DracoRuan.Foundation.DataFlow.DataProviders
                 Debug.LogException(e);
             }
             
-            await UniTask.CompletedTask;
             return default;
         }
 
         public void UnloadData<TData>(TData data)
         {
             
+        }
+
+        private bool IsRemoteConfigServiceInitialized()
+        {
+            bool result = this._remoteConfigService is IAsyncInitializable initializable &&
+                          initializable.IsInitialized();
+            return result;
         }
     }
 }
