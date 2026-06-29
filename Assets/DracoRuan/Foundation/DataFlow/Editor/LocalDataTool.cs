@@ -7,7 +7,6 @@ using DracoRuan.Foundation.DataFlow.LocalData;
 using DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace DracoRuan.Foundation.DataFlow.Editor
 {
@@ -21,87 +20,53 @@ namespace DracoRuan.Foundation.DataFlow.Editor
     ///
     /// The tool always loads the highest available version, mirroring the runtime behaviour of
     /// DynamicGameDataController.GetMostRecentDataVersion().
+    ///
+    /// Rendering: standard EditorWindow IMGUI.
+    /// Data fields are rendered via Odin Inspector's PropertyTree (in LocalDataEntry).
     /// </summary>
     public class LocalDataTool : EditorWindow
     {
         private const string LocalDataFolder = "GameData";
 
         // ---------------------------------------------------------------------------
-        // Cached UI elements
+        // Data  (private, not serialized — intentionally transient)
         // ---------------------------------------------------------------------------
-        private VisualElement root;
-        private ScrollView    dataScrollView;
-        private VisualElement dataContainer;
-        private VisualElement emptyState;
-        private Button        loadAllButton;
-        private Button        saveAllButton;
-        private Button        deleteAllButton;
-        private Button        openFolderButton;
-        private Label         dataCountLabel;
-        private Label         lastActionLabel;
-        private Label         fileCountLabel;
-        private Label         folderPathLabel;
-        private TextField     searchField;
-        private Button        clearSearchButton;
+        private readonly List<LocalDataEntry>             entries    = new();
+        private readonly Dictionary<Type, LocalDataEntry> entryMap   = new();
+        private          List<LocalDataEntry>             visibleEntries = new();
+
+        private string  searchFilter = "";
+        private string  statusText   = "Ready";
+        private Vector2 scrollPos;
+
+        // Cached GUIStyles (lazy-initialised on first OnGUI)
+        private GUIStyle _toolbarButtonStyle;
 
         // ---------------------------------------------------------------------------
-        // Data
-        // ---------------------------------------------------------------------------
-        private readonly List<LocalDataEntry>          entries  = new();
-        private readonly Dictionary<Type, LocalDataEntry> entryMap = new();
-
-        // ---------------------------------------------------------------------------
-        // Menu items
+        // Menu item
         // ---------------------------------------------------------------------------
         [MenuItem("Tools/Foundations/Local Data Editor/Local Data Manager", false, 100)]
         public static void ShowWindow()
         {
             var window = GetWindow<LocalDataTool>();
             window.titleContent = new GUIContent("🎮 Local Data Manager");
-            window.minSize = new Vector2(700, 500);
+            window.minSize      = new Vector2(700, 500);
             window.Show();
         }
 
         // ---------------------------------------------------------------------------
-        // Lifecycle
+        // Lifecycle  (standard EditorWindow — no base class overrides needed)
         // ---------------------------------------------------------------------------
-        public void CreateGUI()
+        private void OnEnable()
         {
-            // ---- Load UXML by asset name (no hard-coded path) ----
-            var uxmlGuids = AssetDatabase.FindAssets("LocalDataTool t:VisualTreeAsset");
-            if (uxmlGuids.Length == 0)
-            {
-                Debug.LogError("[LocalDataTool] LocalDataTool.uxml not found in project.");
-                return;
-            }
-            var uxmlPath  = AssetDatabase.GUIDToAssetPath(uxmlGuids[0]);
-            var visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(uxmlPath);
-            if (visualTree == null)
-            {
-                Debug.LogError($"[LocalDataTool] Failed to load LocalDataTool.uxml at: {uxmlPath}");
-                return;
-            }
-
-            this.root = visualTree.CloneTree();
-
-            // ---- Load USS by asset name (no hard-coded path) ----
-            var ussGuids = AssetDatabase.FindAssets("LocalDataTool t:StyleSheet");
-            if (ussGuids.Length > 0)
-            {
-                var ussPath    = AssetDatabase.GUIDToAssetPath(ussGuids[0]);
-                var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(ussPath);
-                if (styleSheet != null)
-                    this.root.styleSheets.Add(styleSheet);
-            }
-
-            this.rootVisualElement.Add(this.root);
-            this.CacheUIElements();
-            this.BindEvents();
-            this.UpdateUI();
+            // Defer the first scan so Unity is fully initialised
+            EditorApplication.delayCall += this.ScanForControllers;
         }
 
         private void OnDisable()
         {
+            EditorApplication.delayCall -= this.ScanForControllers;
+
             foreach (var entry in this.entries)
             {
                 entry.OnDataChanged  -= this.OnEntryChanged;
@@ -110,38 +75,109 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         }
 
         // ---------------------------------------------------------------------------
-        // Cache + Bind
+        // Main draw  (standard IMGUI)
         // ---------------------------------------------------------------------------
-        private void CacheUIElements()
+        private void OnGUI()
         {
-            this.dataScrollView    = this.root.Q<ScrollView>("data-scroll-view");
-            this.dataContainer     = this.root.Q<VisualElement>("data-container");
-            this.emptyState        = this.root.Q<VisualElement>("empty-state");
-            this.loadAllButton     = this.root.Q<Button>("load-all-button");
-            this.saveAllButton     = this.root.Q<Button>("save-all-button");
-            this.deleteAllButton   = this.root.Q<Button>("delete-all-button");
-            this.openFolderButton  = this.root.Q<Button>("open-folder-button");
-            this.dataCountLabel    = this.root.Q<Label>("data-count-label");
-            this.lastActionLabel   = this.root.Q<Label>("last-action-label");
-            this.fileCountLabel    = this.root.Q<Label>("file-count-label");
-            this.folderPathLabel   = this.root.Q<Label>("folder-path-label");
-            this.searchField       = this.root.Q<TextField>("search-field");
-            this.clearSearchButton = this.root.Q<Button>("clear-search-button");
+            // Lazy-init styles (must be inside OnGUI so GUISkin is available)
+            if (this._toolbarButtonStyle == null)
+                this._toolbarButtonStyle = EditorStyles.toolbarButton;
 
-            this.RefreshFolderPathLabel();
+            this.DrawToolbar();
+            this.DrawStatusBar();
+            this.DrawEntries();
         }
 
-        private void BindEvents()
+        // ---------------------------------------------------------------------------
+        // Toolbar
+        // ---------------------------------------------------------------------------
+        private void DrawToolbar()
         {
-            this.loadAllButton?.RegisterCallback<ClickEvent>(_ => this.LoadAllData());
-            this.saveAllButton?.RegisterCallback<ClickEvent>(_ => this.SaveAllData());
-            this.deleteAllButton?.RegisterCallback<ClickEvent>(_ => this.ShowDeleteAllConfirmation());
-            this.openFolderButton?.RegisterCallback<ClickEvent>(_ => this.OpenDataFolder());
-            this.searchField?.RegisterValueChangedCallback(evt => this.FilterEntries(evt.newValue));
-            this.clearSearchButton?.RegisterCallback<ClickEvent>(_ => this.ClearSearch());
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+            {
+                if (GUILayout.Button("📥 Load All",    this._toolbarButtonStyle, GUILayout.Width(90)))
+                {
+                    this.LoadAllData();
+                    this.Repaint();
+                }
+                if (GUILayout.Button("💾 Save All",    this._toolbarButtonStyle, GUILayout.Width(90)))
+                {
+                    this.SaveAllData();
+                    this.Repaint();
+                }
+                if (GUILayout.Button("🗑️ Delete All", this._toolbarButtonStyle, GUILayout.Width(95)))
+                    this.ShowDeleteAllConfirmation();
+                if (GUILayout.Button("📁 Open Folder", this._toolbarButtonStyle, GUILayout.Width(100)))
+                    this.OpenDataFolder();
+                if (GUILayout.Button("🔄 Refresh",     this._toolbarButtonStyle, GUILayout.Width(80)))
+                {
+                    this.ScanForControllers();
+                    this.Repaint();
+                }
 
-            // Defer initial scan so the window is fully initialised first
-            EditorApplication.delayCall += this.ScanForControllers;
+                GUILayout.FlexibleSpace();
+
+                // Entry counter
+                int total    = this.entries.Count;
+                int withData = this.entries.Count(e => e.HasData);
+                GUILayout.Label($"📊 {total} controller(s)  ({withData} loaded)",
+                    EditorStyles.miniLabel);
+                GUILayout.Space(8);
+
+                // Search field
+                EditorGUI.BeginChangeCheck();
+                this.searchFilter = EditorGUILayout.TextField(
+                    this.searchFilter, EditorStyles.toolbarSearchField, GUILayout.MinWidth(160));
+                if (EditorGUI.EndChangeCheck())
+                {
+                    this.FilterEntries(this.searchFilter);
+                    this.Repaint();
+                }
+
+                if (GUILayout.Button("✕", this._toolbarButtonStyle, GUILayout.Width(22)))
+                    this.ClearSearch();
+            }
+        }
+
+        // ---------------------------------------------------------------------------
+        // Status bar
+        // ---------------------------------------------------------------------------
+        private void DrawStatusBar()
+        {
+            var path = Path.Combine(Application.persistentDataPath, LocalDataFolder);
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox))
+            {
+                GUILayout.Label($"📁 {path}", EditorStyles.miniLabel);
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(this.statusText, EditorStyles.miniLabel);
+            }
+        }
+
+        // ---------------------------------------------------------------------------
+        // Entry list
+        // ---------------------------------------------------------------------------
+        private void DrawEntries()
+        {
+            if (this.visibleEntries.Count == 0)
+            {
+                GUILayout.Space(16);
+                EditorGUILayout.HelpBox(
+                    this.entries.Count == 0
+                        ? "No DynamicGameDataController found.\nClick '🔄 Refresh' or '📥 Load All' to scan the project."
+                        : "No results match the current search.",
+                    this.entries.Count == 0 ? MessageType.Info : MessageType.Warning);
+                return;
+            }
+
+            this.scrollPos = GUILayout.BeginScrollView(this.scrollPos);
+
+            foreach (var entry in this.visibleEntries)
+            {
+                entry.Draw(this);
+                GUILayout.Space(3);
+            }
+
+            GUILayout.EndScrollView();
         }
 
         // ---------------------------------------------------------------------------
@@ -192,8 +228,8 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 }
             }
 
-            this.UpdateUI();
-            this.UpdateLastAction($"Discovered {this.entries.Count} controller(s)");
+            this.FilterEntries(this.searchFilter);
+            this.UpdateStatus($"Discovered {this.entries.Count} controller(s)");
             Debug.Log($"[LocalDataTool] Discovered {this.entries.Count} DynamicGameDataController(s).");
         }
 
@@ -232,8 +268,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 }
             }
 
-            this.UpdateDataCount();
-            this.UpdateLastAction(errors > 0
+            this.UpdateStatus(errors > 0
                 ? $"Loaded {loaded} entries ({errors} errors)"
                 : $"✅ Loaded {loaded} entries");
         }
@@ -251,7 +286,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 }
             }
 
-            this.UpdateLastAction(errors > 0
+            this.UpdateStatus(errors > 0
                 ? $"Saved {saved} entries ({errors} errors)"
                 : $"✅ Saved {saved} entries");
         }
@@ -279,65 +314,34 @@ namespace DracoRuan.Foundation.DataFlow.Editor
 
             this.entries.Clear();
             this.entryMap.Clear();
-            this.UpdateUI();
-            this.UpdateLastAction($"🗑️ Cleared data for {deleted} controller(s)");
+            this.visibleEntries.Clear();
+            this.UpdateStatus($"🗑️ Cleared data for {deleted} controller(s)");
+            this.Repaint();
         }
 
         // ---------------------------------------------------------------------------
-        // UI
+        // UI helpers
         // ---------------------------------------------------------------------------
-        private void UpdateUI()
-        {
-            this.dataContainer?.Clear();
-
-            bool hasEntries = this.entries.Count > 0;
-            if (this.emptyState    != null) this.emptyState.style.display    = hasEntries ? DisplayStyle.None : DisplayStyle.Flex;
-            if (this.dataScrollView != null) this.dataScrollView.style.display = hasEntries ? DisplayStyle.Flex : DisplayStyle.None;
-
-            if (hasEntries)
-                this.FilterEntries(this.searchField?.value ?? string.Empty);
-
-            this.UpdateDataCount();
-        }
-
         private void FilterEntries(string search)
         {
-            this.dataContainer?.Clear();
-
-            IEnumerable<LocalDataEntry> visible = string.IsNullOrWhiteSpace(search)
-                ? this.entries
+            this.visibleEntries = string.IsNullOrWhiteSpace(search)
+                ? this.entries.ToList()
                 : this.entries.Where(e =>
                     e.TypeName.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    e.ControllerKey.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0);
-
-            foreach (var entry in visible)
-                this.dataContainer?.Add(entry.CreateUI());
-
-            this.UpdateDataCount();
+                    e.ControllerKey.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
         }
 
-        private void UpdateDataCount()
+        private void UpdateStatus(string msg)
         {
-            int total    = this.entries.Count;
-            int withData = this.entries.Count(e => e.HasData);
-
-            if (this.dataCountLabel != null)
-                this.dataCountLabel.text = $"📊 {total} controller(s)  ({withData} loaded)";
-
-            if (this.fileCountLabel != null)
-                this.fileCountLabel.text = $"{withData}/{total}";
+            this.statusText = $"[{DateTime.Now:HH:mm:ss}]  {msg}";
+            this.Repaint();
         }
 
-        private void UpdateLastAction(string msg)
+        private void ClearSearch()
         {
-            if (this.lastActionLabel != null) this.lastActionLabel.text = msg;
-        }
-
-        private void RefreshFolderPathLabel()
-        {
-            if (this.folderPathLabel == null) return;
-            var path = Path.Combine(Application.persistentDataPath, LocalDataFolder);
-            this.folderPathLabel.text = $"📁 {path}";
+            this.searchFilter = "";
+            this.FilterEntries(string.Empty);
+            this.Repaint();
         }
 
         private void OpenDataFolder()
@@ -347,27 +351,22 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             EditorUtility.RevealInFinder(path);
         }
 
-        private void ClearSearch()
-        {
-            if (this.searchField != null) this.searchField.value = string.Empty;
-            this.FilterEntries(string.Empty);
-        }
-
         // ---------------------------------------------------------------------------
         // Entry events
         // ---------------------------------------------------------------------------
         private void OnEntryChanged(LocalDataEntry entry)
         {
-            this.UpdateDataCount();
-            this.UpdateLastAction($"✏️ Modified: {entry.TypeName}");
+            this.UpdateStatus($"✏️ Modified: {entry.TypeName}");
+            this.Repaint();
         }
 
         private void HandleEntryDeleted(LocalDataEntry entry)
         {
             this.entries.Remove(entry);
             this.entryMap.Remove(entry.DataType);
-            this.FilterEntries(this.searchField?.value ?? string.Empty);
-            this.UpdateLastAction($"🗑️ Deleted: {entry.TypeName}");
+            this.FilterEntries(this.searchFilter);
+            this.UpdateStatus($"🗑️ Deleted: {entry.TypeName}");
+            this.Repaint();
         }
     }
 }
