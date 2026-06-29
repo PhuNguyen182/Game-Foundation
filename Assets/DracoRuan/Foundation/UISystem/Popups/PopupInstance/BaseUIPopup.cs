@@ -34,7 +34,7 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupInstance
             this._popupManager = popupManager;
         }
 
-        protected virtual void OnDestroy()
+        protected new virtual void OnDestroy()
         {
             if (this.closeButton)
                 this.closeButton.OnClick -= this.OnCloseButtonClicked;
