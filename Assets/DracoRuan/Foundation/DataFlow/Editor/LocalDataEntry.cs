@@ -30,15 +30,15 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // ---------------------------------------------------------------------------
         // Fields
         // ---------------------------------------------------------------------------
-        private readonly Type dataType;
-        private readonly string controllerKey;
-        private readonly string baseSaveFolder;
+        private readonly Type _dataType;
+        private readonly string _controllerKey;
+        private readonly string _baseSaveFolder;
 
-        private object currentData;
-        private int loadedVersion = 1;
-        private string statusText = "—";
-        private bool isExpanded;
-        private PropertyTree propertyTree;
+        private object _currentData;
+        private int _loadedVersion = 1;
+        private string _statusText = "—";
+        private bool _isExpanded;
+        private PropertyTree _propertyTree;
 
         // ---------------------------------------------------------------------------
         // Shared styles (static, lazy-initialised during OnGUI)
@@ -53,10 +53,10 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // ---------------------------------------------------------------------------
         // Properties
         // ---------------------------------------------------------------------------
-        public Type DataType => this.dataType;
-        public string TypeName => this.dataType.Name;
-        public string ControllerKey => this.controllerKey;
-        public bool HasData => this.currentData != null;
+        public Type DataType => this._dataType;
+        public string TypeName => this._dataType.Name;
+        public string ControllerKey => this._controllerKey;
+        public bool HasData => this._currentData != null;
 
         public event Action<LocalDataEntry> OnDataChanged;
         public event Action<LocalDataEntry> OnEntryDeleted;
@@ -66,16 +66,16 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // ---------------------------------------------------------------------------
         public LocalDataEntry(Type dataType, string controllerKey)
         {
-            this.dataType = dataType ?? throw new ArgumentNullException(nameof(dataType));
-            this.controllerKey = controllerKey ?? dataType.Name;
-            this.baseSaveFolder = Path.Combine(Application.persistentDataPath, LocalDataFolder);
+            this._dataType = dataType ?? throw new ArgumentNullException(nameof(dataType));
+            this._controllerKey = controllerKey ?? dataType.Name;
+            this._baseSaveFolder = Path.Combine(Application.persistentDataPath, LocalDataFolder);
         }
 
         // ---------------------------------------------------------------------------
         // Version helpers
         // ---------------------------------------------------------------------------
         private string GetFilePath(int version) =>
-            Path.Combine(this.baseSaveFolder, $"{this.dataType.Name}_v{version}{FileExtension}");
+            Path.Combine(this._baseSaveFolder, $"{this._dataType.Name}_v{version}{FileExtension}");
 
         /// <summary>
         /// Scans from MaxVersionScan down to 1 and returns the highest version that has a saved file.
@@ -103,26 +103,26 @@ namespace DracoRuan.Foundation.DataFlow.Editor
 
                 if (!File.Exists(path))
                 {
-                    this.currentData = Activator.CreateInstance(this.dataType);
-                    this.loadedVersion = 1;
-                    this.statusText = "⚠️ No saved data (defaults)";
+                    this._currentData = Activator.CreateInstance(this._dataType);
+                    this._loadedVersion = 1;
+                    this._statusText = "⚠️ No saved data (defaults)";
                 }
                 else
                 {
                     byte[] bytes = File.ReadAllBytes(path);
-                    this.currentData = MessagePackSerializer.Deserialize(this.dataType, bytes);
-                    this.loadedVersion = version;
-                    this.statusText = $"✅ Loaded v{version}";
+                    this._currentData = MessagePackSerializer.Deserialize(this._dataType, bytes);
+                    this._loadedVersion = version;
+                    this._statusText = $"✅ Loaded v{version}";
                 }
 
                 this.RebuildPropertyTree();
-                this.isExpanded = true;
+                this._isExpanded = true;
                 this.OnDataChanged?.Invoke(this);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[LocalDataEntry] Error loading {this.dataType.Name}: {ex.Message}");
-                this.statusText = "❌ Load failed";
+                Debug.LogError($"[LocalDataEntry] Error loading {this._dataType.Name}: {ex.Message}");
+                this._statusText = "❌ Load failed";
             }
         }
 
@@ -135,36 +135,36 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         {
             try
             {
-                if (this.currentData == null)
+                if (this._currentData == null)
                 {
-                    this.statusText = "⚠️ No data to save";
+                    this._statusText = "⚠️ No data to save";
                     return;
                 }
 
                 // Flush any in-progress Odin edits to the underlying object
-                this.propertyTree?.ApplyChanges();
+                this._propertyTree?.ApplyChanges();
 
                 // Prefer IGameData.DataVersion so the save key matches the runtime controller
-                int version = this.loadedVersion;
-                if (this.currentData is IGameData gameData && gameData.DataVersion > 0)
+                int version = this._loadedVersion;
+                if (this._currentData is IGameData gameData && gameData.DataVersion > 0)
                     version = gameData.DataVersion;
 
-                if (!Directory.Exists(this.baseSaveFolder))
-                    Directory.CreateDirectory(this.baseSaveFolder);
+                if (!Directory.Exists(this._baseSaveFolder))
+                    Directory.CreateDirectory(this._baseSaveFolder);
 
                 string path = this.GetFilePath(version);
-                byte[] bytes = MessagePackSerializer.Serialize(this.dataType, this.currentData);
+                byte[] bytes = MessagePackSerializer.Serialize(this._dataType, this._currentData);
                 File.WriteAllBytes(path, bytes);
 
-                this.loadedVersion = version;
-                this.statusText = $"✅ Saved v{version}";
-                Debug.Log($"[LocalDataEntry] Saved {this.dataType.Name} v{version} → {path}");
+                this._loadedVersion = version;
+                this._statusText = $"✅ Saved v{version}";
+                Debug.Log($"[LocalDataEntry] Saved {this._dataType.Name} v{version} → {path}");
                 this.OnDataChanged?.Invoke(this);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[LocalDataEntry] Error saving {this.dataType.Name}: {ex.Message}");
-                this.statusText = "❌ Save failed";
+                Debug.LogError($"[LocalDataEntry] Error saving {this._dataType.Name}: {ex.Message}");
+                this._statusText = "❌ Save failed";
             }
         }
 
@@ -182,19 +182,19 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                     any = true;
                 }
 
-                this.currentData = null;
-                this.loadedVersion = 1;
-                this.statusText = any ? "🗑️ Deleted" : "⚠️ No files found";
+                this._currentData = null;
+                this._loadedVersion = 1;
+                this._statusText = any ? "🗑️ Deleted" : "⚠️ No files found";
 
-                this.propertyTree?.Dispose();
-                this.propertyTree = null;
+                this._propertyTree?.Dispose();
+                this._propertyTree = null;
 
                 this.OnEntryDeleted?.Invoke(this);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[LocalDataEntry] Error deleting {this.dataType.Name}: {ex.Message}");
-                this.statusText = "❌ Delete failed";
+                Debug.LogError($"[LocalDataEntry] Error deleting {this._dataType.Name}: {ex.Message}");
+                this._statusText = "❌ Delete failed";
             }
         }
 
@@ -208,11 +208,11 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         /// </summary>
         private void RebuildPropertyTree()
         {
-            this.propertyTree?.Dispose();
-            this.propertyTree = null;
+            this._propertyTree?.Dispose();
+            this._propertyTree = null;
 
-            if (this.currentData != null)
-                this.propertyTree = PropertyTree.Create(this.currentData);
+            if (this._currentData != null)
+                this._propertyTree = PropertyTree.Create(this._currentData);
         }
 
         // ---------------------------------------------------------------------------
@@ -234,7 +234,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             {
                 this.DrawHeader(window);
 
-                if (this.isExpanded)
+                if (this._isExpanded)
                 {
                     EditorGUILayout.Space(2);
                     using (new EditorGUILayout.VerticalScope(_contentBoxStyle))
@@ -253,29 +253,29 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             using (new EditorGUILayout.HorizontalScope())
             {
                 // ---- Expand / collapse toggle ----
-                string arrow = this.isExpanded ? "▼" : "▶";
+                string arrow = this._isExpanded ? "▼" : "▶";
                 if (GUILayout.Button(arrow, EditorStyles.miniButtonLeft,
                         GUILayout.Width(24), GUILayout.Height(20)))
                 {
-                    this.isExpanded = !this.isExpanded;
+                    this._isExpanded = !this._isExpanded;
                     window.Repaint();
                 }
 
                 // ---- Type name ----
-                GUILayout.Label($"📄 {this.PrettyName(this.dataType.Name)}", _entryTitleStyle);
+                GUILayout.Label($"📄 {this.PrettyName(this._dataType.Name)}", _entryTitleStyle);
 
                 GUILayout.FlexibleSpace();
 
                 // ---- Controller key ----
-                GUILayout.Label($"🔑 {this.controllerKey}", _keyLabelStyle, GUILayout.Width(180));
+                GUILayout.Label($"🔑 {this._controllerKey}", _keyLabelStyle, GUILayout.Width(180));
 
                 // ---- Version badge ----
                 if (this.HasData)
-                    GUILayout.Label($"v{this.loadedVersion}",
+                    GUILayout.Label($"v{this._loadedVersion}",
                         EditorStyles.centeredGreyMiniLabel, GUILayout.Width(36));
 
                 // ---- Status ----
-                GUILayout.Label(this.statusText, _statusLabelStyle, GUILayout.Width(170));
+                GUILayout.Label(this._statusText, _statusLabelStyle, GUILayout.Width(170));
 
                 // ---- Action buttons ----
                 if (GUILayout.Button("📥 Load", EditorStyles.miniButton, GUILayout.Width(65)))
@@ -303,7 +303,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // ---------------------------------------------------------------------------
         private void DrawDataContent(EditorWindow window)
         {
-            if (this.currentData == null)
+            if (this._currentData == null)
             {
                 EditorGUILayout.HelpBox(
                     "No data loaded. Click '📥 Load' to load data from disk.",
@@ -312,10 +312,10 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             }
 
             // Lazily build the tree in case the entry was loaded before the first Draw call
-            if (this.propertyTree == null)
+            if (this._propertyTree == null)
                 this.RebuildPropertyTree();
 
-            if (this.propertyTree != null)
+            if (this._propertyTree != null)
             {
                 // Draw all properties with Odin's full inspector.
                 // Odin automatically applies the correct drawer per type:
@@ -327,7 +327,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 //   • Nested types         → foldout groups
                 //   • Vector / Color       → Unity widget
                 EditorGUI.BeginChangeCheck();
-                this.propertyTree.Draw(false);
+                this._propertyTree.Draw(false);
                 if (EditorGUI.EndChangeCheck())
                 {
                     this.OnDataChanged?.Invoke(this);
@@ -342,7 +342,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                     MessageType.Warning);
                 try
                 {
-                    string json = JsonConvert.SerializeObject(this.currentData, Formatting.Indented);
+                    string json = JsonConvert.SerializeObject(this._currentData, Formatting.Indented);
                     EditorGUILayout.TextArea(json, GUILayout.ExpandHeight(true), GUILayout.MinHeight(60));
                 }
                 catch (Exception ex)
@@ -358,8 +358,8 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         private void ShowDeleteConfirmation()
         {
             bool ok = EditorUtility.DisplayDialog(
-                $"Delete {this.dataType.Name}",
-                $"Delete all saved data files for '{this.dataType.Name}'?\n\nThis cannot be undone.",
+                $"Delete {this._dataType.Name}",
+                $"Delete all saved data files for '{this._dataType.Name}'?\n\nThis cannot be undone.",
                 "Delete", "Cancel");
             if (ok) this.DeleteAllVersions();
         }

@@ -31,13 +31,13 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // ---------------------------------------------------------------------------
         // Data  (private, not serialized — intentionally transient)
         // ---------------------------------------------------------------------------
-        private readonly List<LocalDataEntry>             entries    = new();
-        private readonly Dictionary<Type, LocalDataEntry> entryMap   = new();
-        private          List<LocalDataEntry>             visibleEntries = new();
+        private readonly List<LocalDataEntry> _entries = new();
+        private readonly Dictionary<Type, LocalDataEntry> _entryMap = new();
+        private List<LocalDataEntry> _visibleEntries = new();
 
-        private string  searchFilter = "";
-        private string  statusText   = "Ready";
-        private Vector2 scrollPos;
+        private string _searchFilter = "";
+        private string _statusText = "Ready";
+        private Vector2 _scrollPos;
 
         // Cached GUIStyles (lazy-initialised on first OnGUI)
         private GUIStyle _toolbarButtonStyle;
@@ -50,7 +50,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         {
             var window = GetWindow<LocalDataTool>();
             window.titleContent = new GUIContent("🎮 Local Data Manager");
-            window.minSize      = new Vector2(700, 500);
+            window.minSize = new Vector2(700, 500);
             window.Show();
         }
 
@@ -67,9 +67,9 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         {
             EditorApplication.delayCall -= this.ScanForControllers;
 
-            foreach (var entry in this.entries)
+            foreach (var entry in this._entries)
             {
-                entry.OnDataChanged  -= this.OnEntryChanged;
+                entry.OnDataChanged -= this.OnEntryChanged;
                 entry.OnEntryDeleted -= this.HandleEntryDeleted;
             }
         }
@@ -95,21 +95,23 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         {
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {
-                if (GUILayout.Button("📥 Load All",    this._toolbarButtonStyle, GUILayout.Width(90)))
+                if (GUILayout.Button("📥 Load All", this._toolbarButtonStyle, GUILayout.Width(90)))
                 {
                     this.LoadAllData();
                     this.Repaint();
                 }
-                if (GUILayout.Button("💾 Save All",    this._toolbarButtonStyle, GUILayout.Width(90)))
+
+                if (GUILayout.Button("💾 Save All", this._toolbarButtonStyle, GUILayout.Width(90)))
                 {
                     this.SaveAllData();
                     this.Repaint();
                 }
+
                 if (GUILayout.Button("🗑️ Delete All", this._toolbarButtonStyle, GUILayout.Width(95)))
                     this.ShowDeleteAllConfirmation();
                 if (GUILayout.Button("📁 Open Folder", this._toolbarButtonStyle, GUILayout.Width(100)))
                     this.OpenDataFolder();
-                if (GUILayout.Button("🔄 Refresh",     this._toolbarButtonStyle, GUILayout.Width(80)))
+                if (GUILayout.Button("🔄 Refresh", this._toolbarButtonStyle, GUILayout.Width(80)))
                 {
                     this.ScanForControllers();
                     this.Repaint();
@@ -118,19 +120,19 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 GUILayout.FlexibleSpace();
 
                 // Entry counter
-                int total    = this.entries.Count;
-                int withData = this.entries.Count(e => e.HasData);
+                int total = this._entries.Count;
+                int withData = this._entries.Count(e => e.HasData);
                 GUILayout.Label($"📊 {total} controller(s)  ({withData} loaded)",
                     EditorStyles.miniLabel);
                 GUILayout.Space(8);
 
                 // Search field
                 EditorGUI.BeginChangeCheck();
-                this.searchFilter = EditorGUILayout.TextField(
-                    this.searchFilter, EditorStyles.toolbarSearchField, GUILayout.MinWidth(160));
+                this._searchFilter = EditorGUILayout.TextField(
+                    this._searchFilter, EditorStyles.toolbarSearchField, GUILayout.MinWidth(160));
                 if (EditorGUI.EndChangeCheck())
                 {
-                    this.FilterEntries(this.searchFilter);
+                    this.FilterEntries(this._searchFilter);
                     this.Repaint();
                 }
 
@@ -149,7 +151,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             {
                 GUILayout.Label($"📁 {path}", EditorStyles.miniLabel);
                 GUILayout.FlexibleSpace();
-                GUILayout.Label(this.statusText, EditorStyles.miniLabel);
+                GUILayout.Label(this._statusText, EditorStyles.miniLabel);
             }
         }
 
@@ -158,20 +160,20 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // ---------------------------------------------------------------------------
         private void DrawEntries()
         {
-            if (this.visibleEntries.Count == 0)
+            if (this._visibleEntries.Count == 0)
             {
                 GUILayout.Space(16);
                 EditorGUILayout.HelpBox(
-                    this.entries.Count == 0
+                    this._entries.Count == 0
                         ? "No DynamicGameDataController found.\nClick '🔄 Refresh' or '📥 Load All' to scan the project."
                         : "No results match the current search.",
-                    this.entries.Count == 0 ? MessageType.Info : MessageType.Warning);
+                    this._entries.Count == 0 ? MessageType.Info : MessageType.Warning);
                 return;
             }
 
-            this.scrollPos = GUILayout.BeginScrollView(this.scrollPos);
+            this._scrollPos = GUILayout.BeginScrollView(this._scrollPos);
 
-            foreach (var entry in this.visibleEntries)
+            foreach (var entry in this._visibleEntries)
             {
                 entry.Draw(this);
                 GUILayout.Space(3);
@@ -191,20 +193,30 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         /// </summary>
         private void ScanForControllers()
         {
-            foreach (var entry in this.entries)
+            foreach (var entry in this._entries)
             {
-                entry.OnDataChanged  -= this.OnEntryChanged;
+                entry.OnDataChanged -= this.OnEntryChanged;
                 entry.OnEntryDeleted -= this.HandleEntryDeleted;
             }
-            this.entries.Clear();
-            this.entryMap.Clear();
+
+            this._entries.Clear();
+            this._entryMap.Clear();
 
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 Type[] types;
-                try   { types = assembly.GetTypes(); }
-                catch (ReflectionTypeLoadException ex) { types = ex.Types.Where(t => t != null).ToArray(); }
-                catch { continue; }
+                try
+                {
+                    types = assembly.GetTypes();
+                }
+                catch (ReflectionTypeLoadException ex)
+                {
+                    types = ex.Types.Where(t => t != null).ToArray();
+                }
+                catch
+                {
+                    continue;
+                }
 
                 foreach (var type in types)
                 {
@@ -221,16 +233,16 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                     }
 
                     var entry = new LocalDataEntry(dataType, attr.DataControllerKey);
-                    entry.OnDataChanged  += this.OnEntryChanged;
+                    entry.OnDataChanged += this.OnEntryChanged;
                     entry.OnEntryDeleted += this.HandleEntryDeleted;
-                    this.entries.Add(entry);
-                    this.entryMap[dataType] = entry;
+                    this._entries.Add(entry);
+                    this._entryMap[dataType] = entry;
                 }
             }
 
-            this.FilterEntries(this.searchFilter);
-            this.UpdateStatus($"Discovered {this.entries.Count} controller(s)");
-            Debug.Log($"[LocalDataTool] Discovered {this.entries.Count} DynamicGameDataController(s).");
+            this.FilterEntries(this._searchFilter);
+            this.UpdateStatus($"Discovered {this._entries.Count} controller(s)");
+            Debug.Log($"[LocalDataTool] Discovered {this._entries.Count} DynamicGameDataController(s).");
         }
 
         /// <summary>
@@ -247,6 +259,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                     return current.GetGenericArguments()[0];
                 current = current.BaseType;
             }
+
             return null;
         }
 
@@ -258,9 +271,13 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             this.ScanForControllers();
 
             int loaded = 0, errors = 0;
-            foreach (var entry in this.entries)
+            foreach (var entry in this._entries)
             {
-                try   { entry.LoadData(); loaded++; }
+                try
+                {
+                    entry.LoadData();
+                    loaded++;
+                }
                 catch (Exception ex)
                 {
                     Debug.LogError($"[LocalDataTool] Load failed for {entry.TypeName}: {ex.Message}");
@@ -276,9 +293,13 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         private void SaveAllData()
         {
             int saved = 0, errors = 0;
-            foreach (var entry in this.entries.Where(e => e.HasData))
+            foreach (var entry in this._entries.Where(e => e.HasData))
             {
-                try   { entry.SaveData(); saved++; }
+                try
+                {
+                    entry.SaveData();
+                    saved++;
+                }
                 catch (Exception ex)
                 {
                     Debug.LogError($"[LocalDataTool] Save failed for {entry.TypeName}: {ex.Message}");
@@ -303,18 +324,22 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         private void DeleteAllData()
         {
             int deleted = 0;
-            foreach (var entry in this.entries.ToList())
+            foreach (var entry in this._entries.ToList())
             {
-                try   { entry.DeleteAllVersions(); deleted++; }
+                try
+                {
+                    entry.DeleteAllVersions();
+                    deleted++;
+                }
                 catch (Exception ex)
                 {
                     Debug.LogError($"[LocalDataTool] Delete failed for {entry.TypeName}: {ex.Message}");
                 }
             }
 
-            this.entries.Clear();
-            this.entryMap.Clear();
-            this.visibleEntries.Clear();
+            this._entries.Clear();
+            this._entryMap.Clear();
+            this._visibleEntries.Clear();
             this.UpdateStatus($"🗑️ Cleared data for {deleted} controller(s)");
             this.Repaint();
         }
@@ -324,22 +349,22 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // ---------------------------------------------------------------------------
         private void FilterEntries(string search)
         {
-            this.visibleEntries = string.IsNullOrWhiteSpace(search)
-                ? this.entries.ToList()
-                : this.entries.Where(e =>
+            this._visibleEntries = string.IsNullOrWhiteSpace(search)
+                ? this._entries.ToList()
+                : this._entries.Where(e =>
                     e.TypeName.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0 ||
                     e.ControllerKey.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
         }
 
         private void UpdateStatus(string msg)
         {
-            this.statusText = $"[{DateTime.Now:HH:mm:ss}]  {msg}";
+            this._statusText = $"[{DateTime.Now:HH:mm:ss}]  {msg}";
             this.Repaint();
         }
 
         private void ClearSearch()
         {
-            this.searchFilter = "";
+            this._searchFilter = "";
             this.FilterEntries(string.Empty);
             this.Repaint();
         }
@@ -362,9 +387,9 @@ namespace DracoRuan.Foundation.DataFlow.Editor
 
         private void HandleEntryDeleted(LocalDataEntry entry)
         {
-            this.entries.Remove(entry);
-            this.entryMap.Remove(entry.DataType);
-            this.FilterEntries(this.searchFilter);
+            this._entries.Remove(entry);
+            this._entryMap.Remove(entry.DataType);
+            this.FilterEntries(this._searchFilter);
             this.UpdateStatus($"🗑️ Deleted: {entry.TypeName}");
             this.Repaint();
         }
