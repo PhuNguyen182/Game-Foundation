@@ -99,7 +99,12 @@ namespace DracoRuan.Utilities.ObjectPooling
                 return;
             }
 
-            Debug.Log($"This Object {instance.name} with instance id {instance.gameObject.GetInstanceID()} has not been spawned in any object pool. Destroy it instead!");
+#if UNITY_6000_0_OR_NEWER
+            EntityId hashId = instance.gameObject.GetEntityId();
+#else
+            int hashId = instance.GetInstanceID();
+#endif
+            Debug.Log($"This Object {instance.name} with instance id {hashId} has not been spawned in any object pool. Destroy it instead!");
             Object.Destroy(instance);
         }
 
