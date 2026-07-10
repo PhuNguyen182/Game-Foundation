@@ -110,11 +110,21 @@ namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
         {
             foreach (var kvp in this._popupDictionary)
             {
-                if (kvp.Value.gameObject.GetInstanceID() != popupInstance.gameObject.GetInstanceID()) 
+                if (IsNotSamePopup(kvp.Value, popupInstance)) 
                     continue;
                 
                 this.ClosePopup(kvp.Key);
                 return;
+            }
+
+            bool IsNotSamePopup(BaseUIPopup a, BaseUIPopup b)
+            {
+#if UNITY_6000_0_OR_NEWER
+                bool isNotSamePopup = a.gameObject.GetEntityId() != b.gameObject.GetEntityId();
+#else
+                bool isNotSamePopup = a.gameObject.GetInstanceID() != b.gameObject.GetInstanceID();
+#endif
+                return isNotSamePopup;
             }
         }
 

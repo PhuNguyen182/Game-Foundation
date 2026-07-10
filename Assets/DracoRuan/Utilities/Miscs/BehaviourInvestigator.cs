@@ -49,7 +49,12 @@ namespace DracoRuan.Utilities.Miscs
         
         private void LogBehaviourMessage(string behaviourName = null)
         {
-            Debug.Log($"This game object {gameObject.name} with instance id: {gameObject.GetInstanceID()} is now triggered by {behaviourName} behaviour.");
+#if UNITY_6000_0_OR_NEWER
+            EntityId hashId = gameObject.GetEntityId();
+#else
+            int hashId = gameObject.GetInstanceID();
+#endif
+            Debug.Log($"This game object {gameObject.name} with instance id: {hashId} is now triggered by {behaviourName} behaviour.");
         }
     }
 }
