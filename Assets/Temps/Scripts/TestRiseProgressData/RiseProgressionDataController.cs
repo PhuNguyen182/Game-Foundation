@@ -24,5 +24,10 @@ namespace Temps.Scripts.TestRiseProgressData
         {
             
         }
+
+        protected override void SyncFromConfigDataIfNeeded()
+        {
+            
+        }
     }
 }
