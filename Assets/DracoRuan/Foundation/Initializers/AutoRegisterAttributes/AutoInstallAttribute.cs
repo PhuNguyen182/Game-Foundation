@@ -1,4 +1,7 @@
 using System;
+using System.Diagnostics;
+
+#if USE_EXTENDED_VCONTAINER
 
 namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
 {
@@ -11,6 +14,7 @@ namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
     /// <param name="InstallerInstanceType"> Your installer instance type: Plain C#, MonoBehaviour, ScriptableObject</param>
     /// <param name="Priority"> Priority of installer</param>
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
+    [Conditional("USE_EXTENDED_VCONTAINER")]
     public class AutoInstallAttribute : Attribute
     {
         public string InstallerKey { get; set; }
@@ -18,3 +22,5 @@ namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
         public int Priority { get; set; }
     }
 }
+
+#endif

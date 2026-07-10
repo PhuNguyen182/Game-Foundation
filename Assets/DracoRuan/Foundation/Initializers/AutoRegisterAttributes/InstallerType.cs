@@ -1,4 +1,6 @@
-﻿namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
+﻿#if USE_EXTENDED_VCONTAINER
+
+namespace DracoRuan.Foundation.Initializers.AutoRegisterAttributes
 {
     public enum InstallerType
     {
@@ -8,3 +10,5 @@
         ScriptableObject = 3,
     }
 }
+
+#endif

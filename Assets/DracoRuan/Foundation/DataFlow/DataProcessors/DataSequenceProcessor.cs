@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 namespace DracoRuan.Foundation.DataFlow.DataProcessors
 {
     public class DataSequenceProcessor : IDataSequenceProcessor, IDisposable
-
     {
         private readonly Queue<IProcessSequence> _processSequences = new();
         public IProcessSequence LatestProcessSequence { get; private set; }
