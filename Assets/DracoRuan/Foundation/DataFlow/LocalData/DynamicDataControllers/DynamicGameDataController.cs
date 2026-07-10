@@ -61,7 +61,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             this._deleteDataEvent = deleteDataEvent;
             this._saveDataEvent = saveDataEvent;
             this.SubscribeDataEvents();
-            this.MigrateData().Forget();
+            this.LoadAndTryMigrateData().Forget();
         }
         
         public bool IsDataControllerInitialized() => this._isDataInitialized;
@@ -94,7 +94,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             this.DeleteData();
         }
 
-        private async UniTask MigrateData()
+        private async UniTask LoadAndTryMigrateData()
         {
             byte[] mostRecentSavedRawData = this.LoadRawData();
             if (mostRecentSavedRawData is not { Length: > 0 })
