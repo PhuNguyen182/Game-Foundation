@@ -61,9 +61,10 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
             this._deleteDataEvent = deleteDataEvent;
             this._saveDataEvent = saveDataEvent;
             this.SubscribeDataEvents();
-            this.LoadAndTryMigrateData().Forget();
+            _ = this.LoadAndTryMigrateData()
+                .ContinueWith(this.SyncFromConfigDataIfNeeded);
         }
-        
+
         public bool IsDataControllerInitialized() => this._isDataInitialized;
 
         private void SubscribeDataEvents()
@@ -136,6 +137,8 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers
         }
 
         protected abstract void LoadDataFromLatestVersion(MigrationContext migrationContext);
+        
+        protected abstract void SyncFromConfigDataIfNeeded();
         
         #endregion
 
