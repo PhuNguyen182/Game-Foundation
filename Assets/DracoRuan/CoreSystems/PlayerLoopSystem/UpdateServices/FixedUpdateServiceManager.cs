@@ -5,8 +5,12 @@ namespace DracoRuan.CoreSystems.PlayerLoopSystem.UpdateServices
 {
     public static class FixedUpdateServiceManager
     {
-        private static readonly List<IFixedUpdateHandler> FixedUpdateTimeServices = new(capacity: 1000);
-        private static readonly List<IFixedUpdateHandler> PendingFixedUpdateTimeServices = new(capacity: 1000);
+        private static readonly List<IFixedUpdateHandler> FixedUpdateTimeServices =
+            new(capacity: UpdateHandlerConstants.InitializedCapacity);
+
+        private static readonly List<IFixedUpdateHandler> PendingFixedUpdateTimeServices =
+            new(capacity: UpdateHandlerConstants.InitializedCapacity);
+        
         private static int _currentIndex;
         
         public static void FixedUpdateTime()
