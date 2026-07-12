@@ -1,7 +1,7 @@
 ﻿using System;
 using MessagePipe;
 
-namespace DracoRuan.CoreSystems.MessageBrokers.CustomEvents
+namespace DracoRuan.PrebuildServices.MessageBrokers.CustomEvents
 {
     public abstract class OptimizedEvent<TMessage> : IDisposable
     {

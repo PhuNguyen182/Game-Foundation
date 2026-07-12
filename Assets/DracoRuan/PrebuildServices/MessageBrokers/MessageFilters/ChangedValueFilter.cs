@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using MessagePipe;
 
-namespace DracoRuan.CoreSystems.MessageBrokers.MessageFilters
+namespace DracoRuan.PrebuildServices.MessageBrokers.MessageFilters
 {
     public class ChangedValueFilter<T> : MessageHandlerFilter<T>
     {

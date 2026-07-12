@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
-using DracoRuan.CoreSystems.MessageBrokers.MessageTypes;
+using DracoRuan.PrebuildServices.MessageBrokers.MessageTypes;
 using MessagePipe;
 
-namespace DracoRuan.CoreSystems.MessageBrokers.Utils
+namespace DracoRuan.PrebuildServices.MessageBrokers.Utils
 {
     public struct MessageBrokerUtils<TAsyncMessageData, TAsyncMessage>
         where TAsyncMessageData : IAsyncMessageData

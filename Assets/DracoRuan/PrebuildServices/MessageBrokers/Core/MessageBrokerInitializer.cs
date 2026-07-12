@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using DracoRuan.CoreSystems.MessageBrokers.MessageTypes;
+using DracoRuan.PrebuildServices.MessageBrokers.MessageTypes;
 using MessagePipe;
 using ZLinq;
 
-namespace DracoRuan.CoreSystems.MessageBrokers.Core
+namespace DracoRuan.PrebuildServices.MessageBrokers.Core
 {
     [Obsolete]
     public class MessageBrokerInitializer

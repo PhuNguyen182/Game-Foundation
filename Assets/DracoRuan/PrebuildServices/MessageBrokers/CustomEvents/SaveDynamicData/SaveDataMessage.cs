@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DracoRuan.CoreSystems.MessageBrokers.CustomEvents.SaveDynamicData
+namespace DracoRuan.PrebuildServices.MessageBrokers.CustomEvents.SaveDynamicData
 {
     public struct SaveDataMessage
     {

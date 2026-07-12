@@ -3,7 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using MessagePipe;
 
-namespace DracoRuan.CoreSystems.MessageBrokers.MessageFilters
+namespace DracoRuan.PrebuildServices.MessageBrokers.MessageFilters
 {
     public class DelayRequestFilter : AsyncRequestHandlerFilter<int, int>
     {

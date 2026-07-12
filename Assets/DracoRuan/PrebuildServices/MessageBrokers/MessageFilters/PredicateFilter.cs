@@ -1,7 +1,7 @@
 using System;
 using MessagePipe;
 
-namespace DracoRuan.CoreSystems.MessageBrokers.MessageFilters
+namespace DracoRuan.PrebuildServices.MessageBrokers.MessageFilters
 {
     public class PredicateFilter<T> : MessageHandlerFilter<T>
     {

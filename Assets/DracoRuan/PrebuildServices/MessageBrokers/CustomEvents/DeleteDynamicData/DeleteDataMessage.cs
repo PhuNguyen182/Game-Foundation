@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DracoRuan.CoreSystems.MessageBrokers.CustomEvents.DeleteDynamicData
+namespace DracoRuan.PrebuildServices.MessageBrokers.CustomEvents.DeleteDynamicData
 {
     public struct DeleteDataMessage
     {

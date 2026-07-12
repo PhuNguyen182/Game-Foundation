@@ -1,4 +1,4 @@
-namespace DracoRuan.CoreSystems.MessageBrokers.MessageTypes
+namespace DracoRuan.PrebuildServices.MessageBrokers.MessageTypes
 {
     public interface IMessageType
     {

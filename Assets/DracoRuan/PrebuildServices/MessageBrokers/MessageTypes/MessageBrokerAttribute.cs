@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DracoRuan.CoreSystems.MessageBrokers.MessageTypes
+namespace DracoRuan.PrebuildServices.MessageBrokers.MessageTypes
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
     public class MessageBrokerAttribute : Attribute

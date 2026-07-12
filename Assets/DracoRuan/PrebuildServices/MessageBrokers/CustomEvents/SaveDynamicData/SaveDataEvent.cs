@@ -1,6 +1,6 @@
 using MessagePipe;
 
-namespace DracoRuan.CoreSystems.MessageBrokers.CustomEvents.SaveDynamicData
+namespace DracoRuan.PrebuildServices.MessageBrokers.CustomEvents.SaveDynamicData
 {
     public class SaveDataEvent : OptimizedEvent<SaveDataMessage>
     {
