@@ -1,8 +1,8 @@
-﻿using UnityEngine;
+﻿using TMPro;
+using UnityEngine;
 using UnityEngine.Localization;
-using TMPro;
 
-namespace DracoRuan.CoreSystems.Localization
+namespace DracoRuan.PrebuildServices.Localization
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(TMP_Text))]

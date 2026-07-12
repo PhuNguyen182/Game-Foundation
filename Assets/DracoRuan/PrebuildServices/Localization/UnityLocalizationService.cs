@@ -5,7 +5,7 @@ using DracoRuan.Foundation.Initializers.Interfaces;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
 
-namespace DracoRuan.CoreSystems.Localization
+namespace DracoRuan.PrebuildServices.Localization
 {
     public class UnityLocalizationService : ILocalizationService, IAsyncInitializable
     {

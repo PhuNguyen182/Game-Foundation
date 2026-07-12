@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DracoRuan.CoreSystems.Localization
+namespace DracoRuan.PrebuildServices.Localization
 {
     public interface ILocalizationService
     {
