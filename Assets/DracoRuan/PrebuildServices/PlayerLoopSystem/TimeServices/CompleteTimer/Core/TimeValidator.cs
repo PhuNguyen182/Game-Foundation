@@ -1,7 +1,7 @@
 using System;
-using DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.Extensions;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.Extensions;
 
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 {
     public class TimeValidator
     {

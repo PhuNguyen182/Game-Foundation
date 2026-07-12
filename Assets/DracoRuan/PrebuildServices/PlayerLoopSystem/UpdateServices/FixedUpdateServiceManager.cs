@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using DracoRuan.CoreSystems.PlayerLoopSystem.Core.Handlers;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.Core.Handlers;
 
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.UpdateServices
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices
 {
     public static class FixedUpdateServiceManager
     {

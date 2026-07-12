@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using DracoRuan.CoreSystems.PlayerLoopSystem.Core.Handlers;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.Core.Handlers;
 using UnityEngine;
 
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.UpdateServices
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices
 {
     public static class UpdateServiceManager
     {

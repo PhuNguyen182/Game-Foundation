@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.Extensions
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.Extensions
 {
     public static class TimeExtensions
     {

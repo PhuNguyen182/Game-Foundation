@@ -1,4 +1,4 @@
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.Core.Handlers
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.Core.Handlers
 {
     public interface IFixedUpdateHandler
     {

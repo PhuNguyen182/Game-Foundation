@@ -1,11 +1,11 @@
-using DracoRuan.CoreSystems.PlayerLoopSystem.UpdateServices;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.LowLevel;
 using FixedUpdate = UnityEngine.PlayerLoop.FixedUpdate;
 using Update = UnityEngine.PlayerLoop.Update;
 
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.Core
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.Core
 {
     public static class PlayerLoopBootstrapper
     {

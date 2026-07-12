@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using DracoRuan.CoreSystems.PlayerLoopSystem.UpdateServices;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices;
 
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Core
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Core
 {
     public class TimerCounterService
     {

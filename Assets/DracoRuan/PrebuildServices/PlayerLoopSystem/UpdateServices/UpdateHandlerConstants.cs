@@ -1,4 +1,4 @@
-﻿namespace DracoRuan.CoreSystems.PlayerLoopSystem.UpdateServices
+﻿namespace DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices
 {
     public static class UpdateHandlerConstants
     {

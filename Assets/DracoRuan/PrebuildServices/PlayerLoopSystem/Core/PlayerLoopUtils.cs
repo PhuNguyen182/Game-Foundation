@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.Core
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.Core
 {
     public static class PlayerLoopUtils
     {

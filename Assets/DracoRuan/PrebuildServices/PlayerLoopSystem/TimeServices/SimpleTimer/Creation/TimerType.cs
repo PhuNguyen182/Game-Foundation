@@ -1,4 +1,4 @@
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.SimpleTimer.Creation
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.SimpleTimer.Creation
 {
     public enum TimerType
     {

@@ -1,8 +1,8 @@
-using R3;
 using System;
 using DracoRuan.PrebuildServices.DesignPatterns.Factory;
+using R3;
 
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.SimpleTimer.Creation
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.SimpleTimer.Creation
 {
     public class SimpleTimerFactory : BaseFactory<TimerConfig, BaseTimer>
     {

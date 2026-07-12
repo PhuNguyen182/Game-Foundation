@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.SimpleTimer
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.SimpleTimer
 {
     /// <summary>
     /// Timer that ticks at a specific frequency. (N times per second)

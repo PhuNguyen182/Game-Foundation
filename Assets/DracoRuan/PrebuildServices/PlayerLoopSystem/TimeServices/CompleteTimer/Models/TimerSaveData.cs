@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using MemoryPack;
 
-namespace DracoRuan.CoreSystems.PlayerLoopSystem.TimeServices.CompleteTimer.Models
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Models
 {
     [MemoryPackable]
     public partial class TimerSaveData
