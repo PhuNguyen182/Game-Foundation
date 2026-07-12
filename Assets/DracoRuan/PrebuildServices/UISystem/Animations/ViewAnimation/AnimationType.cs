@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
+namespace DracoRuan.PrebuildServices.UISystem.Animations.ViewAnimation
 {
     [Serializable]
     public enum AnimationType

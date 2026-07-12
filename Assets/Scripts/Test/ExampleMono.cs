@@ -1,8 +1,8 @@
 using System;
-using DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
-using DracoRuan.Foundation.UISystem.Animations.ViewAnimation;
+using DracoRuan.PrebuildServices.UISystem.Animations.ViewAnimation;
+using DracoRuan.PrebuildServices.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using VContainer;

@@ -1,7 +1,7 @@
 using DG.Tweening;
 using UnityEngine;
 
-namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
+namespace DracoRuan.PrebuildServices.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
 {
     [CreateAssetMenu(fileName = "FadeAnimation", menuName = "DracoRuan/UISystem/AnimationConfig/FadeAnimation")]
     public class FadeAnimation : SingleAnimation

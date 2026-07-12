@@ -1,8 +1,7 @@
 using System;
-using Cysharp.Threading.Tasks;
-using DracoRuan.Foundation.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.Views;
 
-namespace DracoRuan.Foundation.UISystem.Popups.PopupInstance
+namespace DracoRuan.PrebuildServices.UISystem.Popups.PopupInstance
 {
     public abstract class GeneralPopupWithModel<TModel> : BaseUIPopup, IUIModel<TModel>
     {

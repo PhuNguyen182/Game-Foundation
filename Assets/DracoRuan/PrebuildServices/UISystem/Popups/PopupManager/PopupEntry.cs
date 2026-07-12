@@ -1,7 +1,7 @@
 ﻿using System;
-using DracoRuan.Foundation.UISystem.Popups.PopupInstance;
+using DracoRuan.PrebuildServices.UISystem.Popups.PopupInstance;
 
-namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
+namespace DracoRuan.PrebuildServices.UISystem.Popups.PopupManager
 {
     [Serializable]
     public class PopupEntry

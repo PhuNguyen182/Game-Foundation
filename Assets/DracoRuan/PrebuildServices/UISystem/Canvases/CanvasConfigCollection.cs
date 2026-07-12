@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DracoRuan.Foundation.UISystem.Canvases
+namespace DracoRuan.PrebuildServices.UISystem.Canvases
 {
     [CreateAssetMenu(fileName = "CanvasConfigCollection", menuName = "DracoRuan/UISystem/Canvases/CanvasConfigCollection")]
     public class CanvasConfigCollection : ScriptableObject

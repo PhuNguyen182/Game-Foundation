@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DracoRuan.Foundation.UISystem.Canvases
+namespace DracoRuan.PrebuildServices.UISystem.Canvases
 {
     public class UICanvasManager : MonoBehaviour, IUICanvasManager
     {

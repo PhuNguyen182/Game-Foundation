@@ -1,8 +1,8 @@
 using System;
-using UnityEngine;
 using DG.Tweening;
+using UnityEngine;
 
-namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
+namespace DracoRuan.PrebuildServices.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
 {
     public abstract class SingleAnimation : AnimationConfig
     {

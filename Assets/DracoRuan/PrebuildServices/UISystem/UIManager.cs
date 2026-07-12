@@ -1,10 +1,10 @@
-using DracoRuan.Foundation.UISystem.Canvases;
-using DracoRuan.Foundation.UISystem.Popups.PopupInstance;
-using DracoRuan.Foundation.UISystem.Popups.PopupManager;
-using DracoRuan.Foundation.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.Canvases;
+using DracoRuan.PrebuildServices.UISystem.Popups.PopupInstance;
+using DracoRuan.PrebuildServices.UISystem.Popups.PopupManager;
+using DracoRuan.PrebuildServices.UISystem.Views;
 using UnityEngine;
 
-namespace DracoRuan.Foundation.UISystem
+namespace DracoRuan.PrebuildServices.UISystem
 {
     public class UIManager
     {

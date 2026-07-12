@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
-using DracoRuan.Foundation.UISystem.Popups.PopupInstance;
-using DracoRuan.Foundation.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.Popups.PopupInstance;
+using DracoRuan.PrebuildServices.UISystem.Views;
 using DracoRuan.Utilities.ObjectPooling;
 using UnityEngine;
 using UnityEngine.Pool;
 using VContainer;
 
-namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
+namespace DracoRuan.PrebuildServices.UISystem.Popups.PopupManager
 {
     public class UIPopupManager : IUIPopupManager, IDisposable
     {

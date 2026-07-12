@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.Foundation.UISystem.Views
+namespace DracoRuan.PrebuildServices.UISystem.Views
 {
     public interface IUIView
     {

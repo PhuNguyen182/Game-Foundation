@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
+namespace DracoRuan.PrebuildServices.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
 {
     [Serializable]
     public enum AnimationEasingType

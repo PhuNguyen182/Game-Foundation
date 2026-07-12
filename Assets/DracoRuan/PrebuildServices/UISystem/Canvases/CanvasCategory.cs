@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.Foundation.UISystem.Canvases
+namespace DracoRuan.PrebuildServices.UISystem.Canvases
 {
     [Serializable]
     public enum CanvasCategory

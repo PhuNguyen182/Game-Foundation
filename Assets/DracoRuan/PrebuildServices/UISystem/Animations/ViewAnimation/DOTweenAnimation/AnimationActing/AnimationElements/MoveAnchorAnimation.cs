@@ -2,7 +2,7 @@ using System;
 using DG.Tweening;
 using UnityEngine;
 
-namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
+namespace DracoRuan.PrebuildServices.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
 {
     [CreateAssetMenu(fileName = "MoveAnchorAnimation", menuName = "DracoRuan/UISystem/AnimationConfig/MoveAnchorAnimation")]
     public class MoveAnchorAnimation : SingleAnimation

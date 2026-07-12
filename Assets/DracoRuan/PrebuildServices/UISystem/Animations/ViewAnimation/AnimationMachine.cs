@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
+namespace DracoRuan.PrebuildServices.UISystem.Animations.ViewAnimation
 {
     public class AnimationMachine : MonoBehaviour
     {

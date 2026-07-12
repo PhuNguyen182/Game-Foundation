@@ -1,4 +1,4 @@
-namespace DracoRuan.Foundation.UISystem.Popups.PopupInstance
+namespace DracoRuan.PrebuildServices.UISystem.Popups.PopupInstance
 {
     public abstract class GeneralPopup : BaseUIPopup
     {

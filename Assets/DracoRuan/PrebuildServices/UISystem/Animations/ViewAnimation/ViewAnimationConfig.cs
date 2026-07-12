@@ -1,10 +1,10 @@
 using System;
 using DG.Tweening;
-using DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing;
+using DracoRuan.PrebuildServices.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
-namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation
+namespace DracoRuan.PrebuildServices.UISystem.Animations.ViewAnimation
 {
     [Serializable]
     public class ViewAnimationConfig

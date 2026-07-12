@@ -1,9 +1,9 @@
 using System;
 using Cysharp.Threading.Tasks;
-using DracoRuan.Foundation.UISystem.Animations.ViewAnimation;
+using DracoRuan.PrebuildServices.UISystem.Animations.ViewAnimation;
 using UnityEngine;
 
-namespace DracoRuan.Foundation.UISystem.Views
+namespace DracoRuan.PrebuildServices.UISystem.Views
 {
     [RequireComponent(typeof(AnimationMachine))]
     public abstract class BaseUIView : MonoBehaviour, IUIView

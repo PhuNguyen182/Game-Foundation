@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using DracoRuan.Foundation.UISystem.Popups.PopupInstance;
+using DracoRuan.PrebuildServices.UISystem.Popups.PopupInstance;
 using UnityEngine;
 
-namespace DracoRuan.Foundation.UISystem.Popups.PopupManager
+namespace DracoRuan.PrebuildServices.UISystem.Popups.PopupManager
 {
     [CreateAssetMenu(fileName = "PopupCollection", menuName = "DracoRuan/UISystem/Popups/PopupCollection")]
     public class PopupCollection : ScriptableObject

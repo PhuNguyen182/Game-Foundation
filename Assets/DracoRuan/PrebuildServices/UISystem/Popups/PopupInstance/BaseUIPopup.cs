@@ -1,10 +1,10 @@
-using DracoRuan.Foundation.UISystem.Popups.PopupManager;
-using DracoRuan.Foundation.UISystem.UIElements;
-using DracoRuan.Foundation.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.Popups.PopupManager;
+using DracoRuan.PrebuildServices.UISystem.UIElements;
+using DracoRuan.PrebuildServices.UISystem.Views;
 using UnityEngine;
 using VContainer;
 
-namespace DracoRuan.Foundation.UISystem.Popups.PopupInstance
+namespace DracoRuan.PrebuildServices.UISystem.Popups.PopupInstance
 {
     public abstract class BaseUIPopup : BaseUIView
     {

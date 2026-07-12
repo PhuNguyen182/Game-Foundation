@@ -2,7 +2,7 @@ using System;
 using DG.Tweening;
 using UnityEngine;
 
-namespace DracoRuan.Foundation.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
+namespace DracoRuan.PrebuildServices.UISystem.Animations.ViewAnimation.DOTweenAnimation.AnimationActing.AnimationElements
 {
     [CreateAssetMenu(fileName = "ScaleAnimation", menuName = "DracoRuan/UISystem/AnimationConfig/ScaleAnimation")]
     public class ScaleAnimation : SingleAnimation

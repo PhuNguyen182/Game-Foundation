@@ -1,9 +1,9 @@
 using System;
-using DracoRuan.Foundation.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.Views;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DracoRuan.Foundation.UISystem.UIElements
+namespace DracoRuan.PrebuildServices.UISystem.UIElements
 {
     [RequireComponent(typeof(Slider))]
     public abstract class BaseUISlider : BaseUIView
