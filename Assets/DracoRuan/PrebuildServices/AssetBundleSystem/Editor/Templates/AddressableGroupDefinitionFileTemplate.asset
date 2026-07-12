@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6ec2c1115b36cc499bf34580c5e2532, type: 3}
+  m_Name: AddressableGroupDefinitionFileTemplate
+  m_EditorClassIdentifier: 
+  localTemplateGroup: {fileID: 11400000, guid: 4dba1f8616af4a242b8c17b8b9e6d750, type: 2}
+  remoteTemplateGroup: {fileID: 11400000, guid: 501d3c1dc444c6444900de93bae5d532, type: 2}
+  buildPlatformConstraints: []
+  buildVersionConstraints: []
