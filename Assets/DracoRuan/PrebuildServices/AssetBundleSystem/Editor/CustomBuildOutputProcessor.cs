@@ -7,7 +7,7 @@ using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 
-namespace DracoRuan.CoreSystems.AssetBundleSystem.Editor
+namespace DracoRuan.PrebuildServices.AssetBundleSystem.Editor
 {
     public class CustomBuildOutputProcessor : IPostprocessBuildWithReport
     {

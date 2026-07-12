@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
 
-namespace DracoRuan.CoreSystems.AssetBundleSystem.Editor.AddressableGroupDefinition
+namespace DracoRuan.PrebuildServices.AssetBundleSystem.Editor.AddressableGroupDefinition
 {
     [CreateAssetMenu(fileName = "AddressableGroupDefinitionFileTemplate",
         menuName = "ExtendedAddressable/Group Definition/AddressableGroupDefinitionFileTemplate", order = 1000)]

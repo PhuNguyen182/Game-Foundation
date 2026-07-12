@@ -8,7 +8,7 @@ using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-namespace DracoRuan.CoreSystems.AssetBundleSystem.Editor.AddressableGroupDefinition
+namespace DracoRuan.PrebuildServices.AssetBundleSystem.Editor.AddressableGroupDefinition
 {
     // TODO: Fix the bug: if I update remote or local to target group, it crash if I delete AGDF file
     [InfoBox(

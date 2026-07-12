@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Object = UnityEngine.Object;
 
-namespace DracoRuan.CoreSystems.AssetBundleSystem.Editor.AddressableGroupDefinition
+namespace DracoRuan.PrebuildServices.AssetBundleSystem.Editor.AddressableGroupDefinition
 {
     [Serializable]
     public class AssetEntryInfo

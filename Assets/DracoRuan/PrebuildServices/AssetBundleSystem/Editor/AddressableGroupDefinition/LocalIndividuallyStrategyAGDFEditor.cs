@@ -8,7 +8,7 @@ using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine.AddressableAssets;
 
-namespace DracoRuan.CoreSystems.AssetBundleSystem.Editor.AddressableGroupDefinition
+namespace DracoRuan.PrebuildServices.AssetBundleSystem.Editor.AddressableGroupDefinition
 {
     [CustomEditor(typeof(LocalIndividuallyStrategyAGDF))]
     public class LocalIndividuallyStrategyAGDFEditor : OdinEditor

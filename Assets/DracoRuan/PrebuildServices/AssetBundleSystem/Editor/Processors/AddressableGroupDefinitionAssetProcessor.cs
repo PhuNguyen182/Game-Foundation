@@ -1,12 +1,12 @@
 #if USE_EXTENDED_ADDRESSABLE
 using System.IO;
-using DracoRuan.CoreSystems.AssetBundleSystem.Editor.AddressableGroupDefinition;
+using DracoRuan.PrebuildServices.AssetBundleSystem.Editor.AddressableGroupDefinition;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
 
-namespace DracoRuan.CoreSystems.AssetBundleSystem.Editor.Processors
+namespace DracoRuan.PrebuildServices.AssetBundleSystem.Editor.Processors
 {
     public class AddressableGroupDefinitionAssetProcessor : AssetModificationProcessor
     {
