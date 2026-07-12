@@ -14,7 +14,10 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.SimpleTimer
 
         public Action OnTick;
 
-        public FrequencyTimer(int ticksPerSecond) : base(0) => this.CalculateTimeThreshold(ticksPerSecond);
+        public FrequencyTimer(int ticksPerSecond) : base(0)
+        {
+            this.CalculateTimeThreshold(ticksPerSecond);
+        }
 
         public override void Tick(float deltaTime)
         {
