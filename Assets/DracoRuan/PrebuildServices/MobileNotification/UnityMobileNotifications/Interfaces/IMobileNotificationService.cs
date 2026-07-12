@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using DracoRuan.MobileNotification.UnityMobileNotifications.Data;
+using DracoRuan.PrebuildServices.MobileNotification.UnityMobileNotifications.Data;
 
-namespace DracoRuan.MobileNotification.UnityMobileNotifications.Interfaces
+namespace DracoRuan.PrebuildServices.MobileNotification.UnityMobileNotifications.Interfaces
 {
     /// <summary>
     /// Interface cho service xử lý business logic của notification system

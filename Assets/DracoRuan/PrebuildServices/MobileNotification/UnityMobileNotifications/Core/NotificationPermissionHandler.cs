@@ -1,15 +1,15 @@
 using System;
 using Cysharp.Threading.Tasks;
-using DracoRuan.MobileNotification.UnityMobileNotifications.Data;
-using DracoRuan.MobileNotification.UnityMobileNotifications.Interfaces;
-using Unity.Notifications.Android;
-#if UNITY_ANDROID
+using DracoRuan.PrebuildServices.MobileNotification.UnityMobileNotifications.Data;
+using DracoRuan.PrebuildServices.MobileNotification.UnityMobileNotifications.Interfaces;
 
+#if UNITY_ANDROID
+using Unity.Notifications.Android;
 #elif UNITY_IOS
 using Unity.Notifications.iOS;
 #endif
 
-namespace DracoRuan.MobileNotification.UnityMobileNotifications.Core
+namespace DracoRuan.PrebuildServices.MobileNotification.UnityMobileNotifications.Core
 {
     /// <summary>
     /// Implementation để xử lý quyền truy cập notification

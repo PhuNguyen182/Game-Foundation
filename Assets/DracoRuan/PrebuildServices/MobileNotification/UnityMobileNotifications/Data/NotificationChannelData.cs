@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace DracoRuan.MobileNotification.UnityMobileNotifications.Data
+namespace DracoRuan.PrebuildServices.MobileNotification.UnityMobileNotifications.Data
 {
     /// <summary>
     /// Data cho một notification channel (Android)

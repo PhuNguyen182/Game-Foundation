@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DracoRuan.MobileNotification.UnityMobileNotifications.Data
+namespace DracoRuan.PrebuildServices.MobileNotification.UnityMobileNotifications.Data
 {
     /// <summary>
     /// Configuration cho mobile notification system

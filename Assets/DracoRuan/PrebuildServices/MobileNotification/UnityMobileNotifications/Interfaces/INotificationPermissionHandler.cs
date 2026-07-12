@@ -1,7 +1,7 @@
 using System;
 using Cysharp.Threading.Tasks;
 
-namespace DracoRuan.MobileNotification.UnityMobileNotifications.Interfaces
+namespace DracoRuan.PrebuildServices.MobileNotification.UnityMobileNotifications.Interfaces
 {
     /// <summary>
     /// Interface để xử lý quyền truy cập notification từ người dùng

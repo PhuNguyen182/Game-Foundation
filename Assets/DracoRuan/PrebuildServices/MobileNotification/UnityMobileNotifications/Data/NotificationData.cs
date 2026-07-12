@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DracoRuan.MobileNotification.UnityMobileNotifications.Data
+namespace DracoRuan.PrebuildServices.MobileNotification.UnityMobileNotifications.Data
 {
     /// <summary>
     /// Data model chứa thông tin của một mobile notification

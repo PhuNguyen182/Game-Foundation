@@ -1,7 +1,8 @@
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using DracoRuan.MobileNotification.UnityMobileNotifications.Core;
-using DracoRuan.MobileNotification.UnityMobileNotifications.Data;
+using DracoRuan.PrebuildServices.MobileNotification.UnityMobileNotifications.Core;
+using DracoRuan.PrebuildServices.MobileNotification.UnityMobileNotifications.Data;
 using UnityEngine.SceneManagement;
 
 namespace MBDK.MobileNotifications.Examples

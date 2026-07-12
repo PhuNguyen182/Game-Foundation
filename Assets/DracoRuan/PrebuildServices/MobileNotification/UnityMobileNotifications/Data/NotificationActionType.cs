@@ -1,4 +1,4 @@
-﻿namespace DracoRuan.MobileNotification.UnityMobileNotifications.Data
+﻿namespace DracoRuan.PrebuildServices.MobileNotification.UnityMobileNotifications.Data
 {
     /// <summary>
     /// Enum định nghĩa các loại action có thể xử lý từ notification

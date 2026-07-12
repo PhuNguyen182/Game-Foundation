@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DracoRuan.MobileNotification.UnityMobileNotifications.Data
+namespace DracoRuan.PrebuildServices.MobileNotification.UnityMobileNotifications.Data
 {
     /// <summary>
     /// Scenario chứa nhiều notifications được setup từ trước
