@@ -1,4 +1,4 @@
-namespace DracoRuan.CoreSystems.DesignPatterns.Factory
+namespace DracoRuan.PrebuildServices.DesignPatterns.Factory
 {
     // Use abstract class instead of interface to prevent potential memory leaking
     public abstract class BaseFactory<TResult> : IFactory<TResult>

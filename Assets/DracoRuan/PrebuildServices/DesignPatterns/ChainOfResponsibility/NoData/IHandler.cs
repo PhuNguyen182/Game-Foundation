@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.CoreSystems.DesignPatterns.ChainOfResponsibility.NoData
+namespace DracoRuan.PrebuildServices.DesignPatterns.ChainOfResponsibility.NoData
 {
     public interface IHandler : IDisposable
     {

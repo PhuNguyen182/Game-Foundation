@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine.Pool;
 
-namespace DracoRuan.CoreSystems.DesignPatterns.Command.Core
+namespace DracoRuan.PrebuildServices.DesignPatterns.Command.Core
 {
     public class CommandInvoker : IDisposable
     {

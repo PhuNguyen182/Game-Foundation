@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.CoreSystems.DesignPatterns.Factory
+namespace DracoRuan.PrebuildServices.DesignPatterns.Factory
 {
     public interface IFactory : IDisposable
     {

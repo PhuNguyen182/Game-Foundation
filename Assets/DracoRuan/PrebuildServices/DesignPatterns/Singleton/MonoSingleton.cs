@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DracoRuan.CoreSystems.DesignPatterns.Singleton
+namespace DracoRuan.PrebuildServices.DesignPatterns.Singleton
 {
     public abstract class MonoSingleton<TComponent> : MonoBehaviour where TComponent : Component
     {
@@ -13,13 +13,14 @@ namespace DracoRuan.CoreSystems.DesignPatterns.Singleton
                 if (_instance) 
                     return _instance;
                 
-                _instance = FindFirstObjectByType<TComponent>();
+                _instance = FindAnyObjectByType<TComponent>();
 
                 if (_instance) 
                     return _instance;
                     
                 GameObject newInstanceObject = new GameObject
                 {
+                    name = typeof(TComponent).Name,
                     hideFlags = HideFlags.None
                 };
                         

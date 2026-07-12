@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DracoRuan.CoreSystems.DesignPatterns.ChainOfResponsibility.NoData
+namespace DracoRuan.PrebuildServices.DesignPatterns.ChainOfResponsibility.NoData
 {
     public class ChainBuilder : IDisposable
     {

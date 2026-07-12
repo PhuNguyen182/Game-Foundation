@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 
-namespace DracoRuan.CoreSystems.DesignPatterns.Command.Core
+namespace DracoRuan.PrebuildServices.DesignPatterns.Command.Core
 {
     public abstract class BaseCommand<T> : ICommand<T> where T : class
     {

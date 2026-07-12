@@ -1,4 +1,4 @@
-namespace DracoRuan.CoreSystems.DesignPatterns.Visitors.Core
+namespace DracoRuan.PrebuildServices.DesignPatterns.Visitors.Core
 {
     public interface IVisitable
     {

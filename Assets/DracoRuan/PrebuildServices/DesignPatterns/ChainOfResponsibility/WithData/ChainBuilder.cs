@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DracoRuan.CoreSystems.DesignPatterns.ChainOfResponsibility.WithData
+namespace DracoRuan.PrebuildServices.DesignPatterns.ChainOfResponsibility.WithData
 {
     public class ChainBuilder<TRequest, TResponse> : IDisposable where TRequest : class where TResponse : class
     {

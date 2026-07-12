@@ -1,4 +1,4 @@
-namespace DracoRuan.CoreSystems.DesignPatterns.ChainOfResponsibility.WithData
+namespace DracoRuan.PrebuildServices.DesignPatterns.ChainOfResponsibility.WithData
 {
     public abstract class BaseHandler<TRequest, TResponse> : IHandler<TRequest, TResponse> 
     {
