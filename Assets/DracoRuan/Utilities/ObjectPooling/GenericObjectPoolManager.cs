@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DracoRuan.Utilities.ObjectPooling
 {
-    public static class ObjectPoolManager<TPoolableObject> where TPoolableObject : Component
+    public static class ObjectPoolManager<TPoolableObject> where TPoolableObject : Component, IPoolableObject
     {
 #if UNITY_6000_0_OR_NEWER
         private static readonly Dictionary<EntityId, GameObjectPool<TPoolableObject>> ObjectPools = new();
@@ -89,12 +89,9 @@ namespace DracoRuan.Utilities.ObjectPooling
 
         public static void Despawn(TPoolableObject instance)
         {
-            foreach (var kvp in ObjectPools)
+            var poolHashKey = instance.PoolHashKey;
+            if (ObjectPools.TryGetValue(poolHashKey, out GameObjectPool<TPoolableObject> objectPool))
             {
-                if (!kvp.Value.ContainInstance(instance))
-                    continue;
-
-                GameObjectPool<TPoolableObject> objectPool = kvp.Value;
                 objectPool.Despawn(instance);
                 return;
             }

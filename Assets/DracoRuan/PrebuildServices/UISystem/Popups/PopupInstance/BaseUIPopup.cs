@@ -1,16 +1,23 @@
 using DracoRuan.PrebuildServices.UISystem.Popups.PopupManager;
 using DracoRuan.PrebuildServices.UISystem.UIElements;
 using DracoRuan.PrebuildServices.UISystem.Views;
+using DracoRuan.Utilities.ObjectPooling;
 using UnityEngine;
 using VContainer;
 
 namespace DracoRuan.PrebuildServices.UISystem.Popups.PopupInstance
 {
-    public abstract class BaseUIPopup : BaseUIView
+    public abstract class BaseUIPopup : BaseUIView, IPoolableObject
     {
         [SerializeField] protected BaseUIButton closeButton;
         
         private IUIPopupManager _popupManager;
+        
+#if UNITY_6000_0_OR_NEWER
+        public EntityId PoolHashKey { get; set; }
+#else
+        public int PoolHashKey { get; set; }
+#endif
 
         [Inject]
         public void Initialize(IUIPopupManager popupManager)

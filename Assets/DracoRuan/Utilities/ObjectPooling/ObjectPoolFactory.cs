@@ -5,7 +5,7 @@ namespace DracoRuan.Utilities.ObjectPooling
     public static class ObjectPoolFactory
     {
         public static GameObjectPool<TPoolableObject> CreateObjectPool<TPoolableObject>(TPoolableObject prefab,
-            int defaultCapacity, int preloadCount) where TPoolableObject : Component
+            int defaultCapacity, int preloadCount) where TPoolableObject : Component, IPoolableObject
         {
             GameObjectPool<TPoolableObject> objectPool =
                 new GameObjectPool<TPoolableObject>(prefab, defaultCapacity, preloadCount);

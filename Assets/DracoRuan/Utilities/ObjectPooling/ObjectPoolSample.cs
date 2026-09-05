@@ -13,9 +13,13 @@ namespace DracoRuan.Utilities.ObjectPooling
         }
     }
 
-    public class PoolableObject : MonoBehaviour
+    public class PoolableObject : MonoBehaviour, IPoolableObject
     {
-        public int PoolHashKey { get; private set; }
+#if UNITY_6000_0_OR_NEWER
+        public EntityId PoolHashKey { get; set; }
+#else
+        public int PoolHashKey { get; set; }
+#endif
         
         public void SetPoolHashKey(int hashKey)
         {

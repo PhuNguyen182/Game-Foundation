@@ -58,53 +58,55 @@ namespace DracoRuan.Utilities.ObjectPooling
 
         public static void PreloadPool<TPoolableObject>(TPoolableObject prefab,
             int defaultCapacity = ObjectPoolConstant.PoolCapacity,
-            int preloadCount = ObjectPoolConstant.PoolMaxSize) where TPoolableObject : Component
+            int preloadCount = ObjectPoolConstant.PoolMaxSize) where TPoolableObject : Component, IPoolableObject
         {
             ObjectPoolManager<TPoolableObject>.PreloadPool(prefab, defaultCapacity, preloadCount);
         }
 
-        public static TPoolableObject Spawn<TPoolableObject>(TPoolableObject prefab) where TPoolableObject : Component
+        public static TPoolableObject Spawn<TPoolableObject>(TPoolableObject prefab)
+            where TPoolableObject : Component, IPoolableObject
         {
             return ObjectPoolManager<TPoolableObject>.Spawn(prefab);
         }
 
         public static TPoolableObject Spawn<TPoolableObject>(TPoolableObject prefab, Transform parent)
-            where TPoolableObject : Component
+            where TPoolableObject : Component, IPoolableObject
         {
             return ObjectPoolManager<TPoolableObject>.Spawn(prefab, parent);
         }
 
         public static TPoolableObject Spawn<TPoolableObject>(TPoolableObject prefab, Vector3 position)
-            where TPoolableObject : Component
+            where TPoolableObject : Component, IPoolableObject
         {
             return ObjectPoolManager<TPoolableObject>.Spawn(prefab, position);
         }
 
         public static TPoolableObject Spawn<TPoolableObject>(TPoolableObject prefab, Vector3 position, Transform parent)
-            where TPoolableObject : Component
+            where TPoolableObject : Component, IPoolableObject
         {
             return ObjectPoolManager<TPoolableObject>.Spawn(prefab, position, parent);
         }
 
         public static TPoolableObject Spawn<TPoolableObject>(TPoolableObject prefab, Vector3 position,
-            Quaternion rotation) where TPoolableObject : Component
+            Quaternion rotation) where TPoolableObject : Component, IPoolableObject
         {
             return ObjectPoolManager<TPoolableObject>.Spawn(prefab, position, rotation);
         }
 
         public static TPoolableObject Spawn<TPoolableObject>(TPoolableObject prefab, Vector3 position,
-            Quaternion rotation, Transform parent) where TPoolableObject : Component
+            Quaternion rotation, Transform parent) where TPoolableObject : Component, IPoolableObject
         {
             return ObjectPoolManager<TPoolableObject>.Spawn(prefab, position, rotation, parent);
         }
 
-        public static void Despawn<TPoolableObject>(TPoolableObject instance) where TPoolableObject : Component
+        public static void Despawn<TPoolableObject>(TPoolableObject instance)
+            where TPoolableObject : Component, IPoolableObject
         {
             ObjectPoolManager<TPoolableObject>.Despawn(instance);
         }
 
         public static void ClearObjectPool<TPoolableObject>(TPoolableObject originalPrefab)
-            where TPoolableObject : Component
+            where TPoolableObject : Component, IPoolableObject
         {
             ObjectPoolManager<TPoolableObject>.ClearObjectPool(originalPrefab);
         }

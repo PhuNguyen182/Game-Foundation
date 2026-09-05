@@ -1,19 +1,14 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
 namespace DracoRuan.Utilities.ObjectPooling
 {
-    public class GameObjectPool<TPoolableObject> : IGameObjectPool, IDisposable where TPoolableObject : Component
+    public class GameObjectPool<TPoolableObject> : IGameObjectPool, IDisposable
+        where TPoolableObject : Component, IPoolableObject
     {
         private readonly ObjectPool<TPoolableObject> _objectPool;
-#if UNITY_6000_0_OR_NEWER
-        private readonly HashSet<EntityId> _spawnedInstanceIds;
-#else
-        private readonly HashSet<int> _spawnedInstanceIds;
-#endif
 
         private bool _isDisposed;
 
@@ -26,11 +21,9 @@ namespace DracoRuan.Utilities.ObjectPooling
         public GameObjectPool(TPoolableObject prefab, int defaultCapacity, int preloadCount)
         {
 #if UNITY_6000_0_OR_NEWER
-            this._spawnedInstanceIds = new HashSet<EntityId>(ObjectPoolConstant.PoolMaxSize);
             this.PoolHashKey = prefab.gameObject.GetEntityId();
 #else
             this.PoolHashKey = prefab.gameObject.GetInstanceID();
-            this._spawnedInstanceIds = new HashSet<int>(ObjectPoolConstant.PoolMaxSize);
 #endif
             this._objectPool = this.CreateObjectPool(prefab, defaultCapacity, preloadCount);
         }
@@ -64,35 +57,13 @@ namespace DracoRuan.Utilities.ObjectPooling
         public TPoolableObject Spawn()
         {
             TPoolableObject instance = this._objectPool.Get();
-#if UNITY_6000_0_OR_NEWER
-            EntityId instanceId = instance.gameObject.GetEntityId();
-#else
-            int instanceId = instance.gameObject.GetInstanceID();
-#endif
-            this._spawnedInstanceIds.Add(instanceId);
+            instance.PoolHashKey = this.PoolHashKey;
             return instance;
         }
 
         public void Despawn(TPoolableObject instance)
         {
-#if UNITY_6000_0_OR_NEWER
-            EntityId instanceId = instance.gameObject.GetEntityId();
-#else
-            int instanceId = instance.gameObject.GetInstanceID();
-#endif
             this._objectPool.Release(instance);
-            this._spawnedInstanceIds.Remove(instanceId);
-        }
-
-        public bool ContainInstance(TPoolableObject instance)
-        {
-#if UNITY_6000_0_OR_NEWER
-            EntityId instanceId = instance.gameObject.GetEntityId();
-#else
-            int instanceId = instance.gameObject.GetInstanceID();
-#endif
-            bool containsInstance = this._spawnedInstanceIds.Contains(instanceId);
-            return containsInstance;
         }
 
         private void ReleaseUnmanagedResources()
@@ -109,7 +80,6 @@ namespace DracoRuan.Utilities.ObjectPooling
             if (disposing)
             {
                 this._objectPool?.Dispose();
-                this._spawnedInstanceIds.Clear();
             }
 
             this._isDisposed = true;
