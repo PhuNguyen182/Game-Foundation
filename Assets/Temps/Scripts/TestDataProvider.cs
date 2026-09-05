@@ -1,18 +1,17 @@
-using System;
+using System.Collections;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.PrebuildServices.MessageBrokers.CustomEvents.DeleteDynamicData;
 using DracoRuan.PrebuildServices.MessageBrokers.CustomEvents.SaveDynamicData;
-using MessagePipe;
 using Temps.Scripts.TestRiseProgressData;
 using UnityEngine;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using VContainer.Unity;
 
 namespace Temps.Scripts
 {
     public class TestService : IStartable
     {
+        private MonoBehaviour _behaviour;
         private readonly RiseProgressionDataController _riseProgressionDataController;
 
         public TestService(RiseProgressionDataController riseProgressionDataController)
@@ -22,7 +21,13 @@ namespace Temps.Scripts
 
         public void Start()
         {
+            _behaviour.StartCoroutine(Coroutine());
             UnityEngine.Debug.Log(this._riseProgressionDataController);
+        }
+
+        private IEnumerator Coroutine()
+        {
+            yield return null;
         }
     }
     
