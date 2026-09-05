@@ -29,12 +29,12 @@ namespace DracoRuan.RemoteConfig
                 };
 
                 await this._remoteConfig.SetConfigSettingsAsync(configSettings);
-                Debug.Log("Firebase Remote Config initialized successfully!");
+                Debug.Log($"[{LogTag}] Firebase Remote Config initialized successfully!");
                 await this.FetchDataAsync();
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Remote Config initialization failed: {ex.Message}");
+                Debug.LogError($"[{LogTag}] Remote Config initialization failed: {ex.Message}");
             }
             finally
             {
@@ -47,11 +47,11 @@ namespace DracoRuan.RemoteConfig
             try
             {
                 await this._remoteConfig.FetchAsync(TimeSpan.Zero).ContinueWithOnMainThread(FetchComplete);
-                Debug.Log("Remote Config fetched and activated!");
+                Debug.Log($"[{LogTag}] Remote Config fetched and activated!");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Remote Config fetch failed: {ex.Message}");
+                Debug.LogError($"[{LogTag}] Remote Config fetch failed: {ex.Message}");
             }
         }
         
@@ -59,20 +59,20 @@ namespace DracoRuan.RemoteConfig
         {
             if (!fetchTask.IsCompleted)
             {
-                Debug.LogError("Retrieval hasn't finished.");
+                Debug.LogError($"[{LogTag}] Retrieval hasn't finished.");
                 return;
             }
             
             ConfigInfo configInfo = this._remoteConfig.Info;
             if (configInfo.LastFetchStatus != LastFetchStatus.Success)
             {
-                Debug.LogError($"{nameof(FetchComplete)} was unsuccessful\n{nameof(configInfo.LastFetchStatus)}: {configInfo.LastFetchStatus}");
+                Debug.LogError($"[{LogTag}] {nameof(FetchComplete)} was unsuccessful\n{nameof(configInfo.LastFetchStatus)}: {configInfo.LastFetchStatus}");
                 return;
             }
             
             this._remoteConfig.ActivateAsync().ContinueWithOnMainThread(_ =>
             {
-                Debug.Log($"Remote data loaded and ready for use. Last fetch time {configInfo.FetchTime}.");
+                Debug.Log($"[{LogTag}] Remote data loaded and ready for use. Last fetch time {configInfo.FetchTime}.");
             });
         }
         
@@ -80,12 +80,12 @@ namespace DracoRuan.RemoteConfig
         {
             if (e.Error != RemoteConfigError.None)
             {
-                Debug.Log($"Error occurred while listening: {e.Error}");
+                Debug.Log($"[{LogTag}] Error occurred while listening: {e.Error}");
                 return;
             }
 
             string updatedKey = string.Join(", ", e.UpdatedKeys);
-            Debug.Log($"Updated keys: {updatedKey}");
+            Debug.Log($"[{LogTag}] Updated keys: {updatedKey}");
 
             this._remoteConfig.ActivateAsync().ContinueWithOnMainThread(_ =>
             {
@@ -95,7 +95,7 @@ namespace DracoRuan.RemoteConfig
 
             void DisplayWelcomeMessage()
             {
-                Debug.Log("You are now on the latest version of remote config!");
+                Debug.Log($"[{LogTag}] You are now on the latest version of remote config!");
             }
         }
         
