@@ -23,7 +23,7 @@ namespace DracoRuan.Utilities.ObjectPooling
         public int PoolHashKey { get; }
 #endif
 
-        public GameObjectPool(GameObject prefab, int defaultCapacity, int preloadCount)
+        public GameObjectPool(GameObject prefab, int defaultCapacity, int maxSize)
         {
 #if UNITY_6000_0_OR_NEWER
             this.PoolHashKey = prefab.GetEntityId();
@@ -32,10 +32,10 @@ namespace DracoRuan.Utilities.ObjectPooling
             this.PoolHashKey = prefab.GetInstanceID();
             this._spawnedInstanceIds = new HashSet<int>(ObjectPoolConstant.PoolMaxSize);
 #endif
-            this._objectPool = this.CreateObjectPool(prefab, defaultCapacity, preloadCount);
+            this._objectPool = this.CreateObjectPool(prefab, defaultCapacity, maxSize);
         }
 
-        private ObjectPool<GameObject> CreateObjectPool(GameObject prefab, int defaultCapacity, int preloadCount)
+        private ObjectPool<GameObject> CreateObjectPool(GameObject prefab, int defaultCapacity, int maxSize)
         {
             ObjectPool<GameObject> objectPool = new ObjectPool<GameObject>(
                 createFunc: CreateInstance,
@@ -44,7 +44,7 @@ namespace DracoRuan.Utilities.ObjectPooling
                 actionOnDestroy: OnDestroyInstance,
                 collectionCheck: true,
                 defaultCapacity: defaultCapacity,
-                maxSize: preloadCount);
+                maxSize: maxSize);
             return objectPool;
 
             GameObject CreateInstance()
