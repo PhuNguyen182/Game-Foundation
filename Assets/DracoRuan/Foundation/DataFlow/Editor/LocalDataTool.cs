@@ -38,9 +38,21 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         private const string SelectedDomainPrefsKey = "DracoRuan.LocalDataTool.SelectedDomain";
         private const string SplitWidthPrefsKey = "DracoRuan.LocalDataTool.SplitWidth";
 
-        private const float MinListWidth = 160f;
-        private const float MaxListWidth = 420f;
-        private const float SplitterWidth = 4f;
+        private const float MinListWidth = 200f;
+        private const float MaxListWidth = 460f;
+        private const float SplitterWidth = 6f;
+        private const float EntryRowHeight = 44f;
+        private const int EntriesPerPage = 10;
+
+        private static readonly Color SplitterColor = new(0.13f, 0.13f, 0.13f, 1f);
+        private static readonly Color SplitterHoverColor = new(0.24f, 0.48f, 0.90f, 0.9f);
+        private static readonly Color SelectedRowColor = new(0.24f, 0.48f, 0.90f, 0.28f);
+        private static readonly Color AlternateRowColor = new(0f, 0f, 0f, 0.06f);
+
+        private static readonly Color LoadAllColor = new(0.45f, 0.68f, 0.98f, 1f);
+        private static readonly Color SaveAllColor = new(0.45f, 0.78f, 0.55f, 1f);
+        private static readonly Color NeutralButtonColor = new(0.85f, 0.85f, 0.85f, 1f);
+        private static readonly Color DeleteAllColor = new(0.95f, 0.45f, 0.45f, 1f);
 
         private readonly List<LocalDataEntry> _entries = new();
         private readonly List<LocalDataEntry> _visibleEntries = new();
@@ -57,6 +69,8 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         private Vector2 _detailScroll;
         private float _listWidth = 240f;
         private bool _isDraggingSplitter;
+        private bool _isHoveringSplitter;
+        private int _currentPage;
 
         /// <summary>
         /// Repaints are coalesced to one per editor frame. Previously every changed control fired a
@@ -165,51 +179,114 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // Toolbar
         // -----------------------------------------------------------------
 
+        private GUIStyle _commandButtonStyle;
+        private GUIStyle _searchFieldStyle;
+
+        /// <summary>
+        /// A taller, bolder button than <see cref="EditorStyles.toolbarButton"/>, built lazily since
+        /// <see cref="GUIStyle"/> construction touches <see cref="GUI.skin"/> and must happen inside
+        /// an IMGUI call, not a constructor or <c>OnEnable</c>.
+        /// </summary>
+        private GUIStyle CommandButtonStyle => this._commandButtonStyle ??= new GUIStyle(GUI.skin.button)
+        {
+            fontSize = 12,
+            fontStyle = FontStyle.Bold,
+            fixedHeight = 26f,
+            alignment = TextAnchor.MiddleCenter,
+        };
+
+        private GUIStyle SearchFieldStyle => this._searchFieldStyle ??= new GUIStyle(EditorStyles.textField)
+        {
+            fontSize = 12,
+            fixedHeight = 24f,
+            padding = new RectOffset(20, 6, 3, 3),
+        };
+
         private void DrawToolbar()
         {
-            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar, GUILayout.Height(32f)))
             {
-                if (GUILayout.Button("Load All", EditorStyles.toolbarButton, GUILayout.Width(70)))
-                    this.LoadAll();
+                GUILayout.Space(4);
 
-                if (GUILayout.Button("Save All", EditorStyles.toolbarButton, GUILayout.Width(70)))
-                    this.SaveAll();
+                this.DrawCommandButton("📥 Load All", LoadAllColor, GUILayout.Width(96), clicked: this.LoadAll);
+                this.DrawCommandButton("💾 Save All", SaveAllColor, GUILayout.Width(96), clicked: this.SaveAll);
 
-                GUILayout.Space(12);
+                GUILayout.Space(10);
 
-                if (GUILayout.Button("Refresh", EditorStyles.toolbarButton, GUILayout.Width(65)))
-                    this.Rescan();
-
-                if (GUILayout.Button("Open Folder", EditorStyles.toolbarButton, GUILayout.Width(85)))
-                    this.OpenSaveFolder();
+                this.DrawCommandButton("🔄 Refresh", NeutralButtonColor, GUILayout.Width(90), clicked: this.Rescan);
+                this.DrawCommandButton("📁 Open Folder", NeutralButtonColor, GUILayout.Width(112),
+                    clicked: this.OpenSaveFolder);
 
                 GUILayout.FlexibleSpace();
 
-                // Destructive action kept apart from the rest so it is not clicked by reflex.
-                Color previousBackground = GUI.backgroundColor;
-                GUI.backgroundColor = new Color(1f, 0.45f, 0.45f);
-                if (GUILayout.Button("Delete All", EditorStyles.toolbarButton, GUILayout.Width(75)))
-                    this.DeleteAll();
-                GUI.backgroundColor = previousBackground;
+                this.DrawSearchField();
 
-                GUILayout.Space(8);
+                GUILayout.Space(10);
 
-                EditorGUI.BeginChangeCheck();
-                this._searchFilter = GUILayout.TextField(
-                    this._searchFilter, EditorStyles.toolbarSearchField, GUILayout.Width(180));
-                if (EditorGUI.EndChangeCheck())
-                    this.ApplyFilter();
+                // Destructive action kept apart from the rest, at the far end, so it is never
+                // clicked by reflex while reaching for something else.
+                this.DrawCommandButton("🗑 Delete All", DeleteAllColor, GUILayout.Width(104),
+                    clicked: this.DeleteAll);
+
+                GUILayout.Space(4);
             }
+        }
+
+        private void DrawSearchField()
+        {
+            const float fieldWidth = 240f;
+
+            Rect fieldRect = GUILayoutUtility.GetRect(fieldWidth, 24f, GUILayout.Width(fieldWidth));
+
+            EditorGUI.BeginChangeCheck();
+            string newFilter = EditorGUI.TextField(fieldRect, this._searchFilter, this.SearchFieldStyle);
+            if (EditorGUI.EndChangeCheck())
+            {
+                this._searchFilter = newFilter;
+                this.ApplyFilter();
+            }
+
+            Rect iconRect = new(fieldRect.x + 4f, fieldRect.y + 3f, 16f, 16f);
+            GUI.Label(iconRect, "🔍");
+
+            if (string.IsNullOrEmpty(this._searchFilter))
+            {
+                Rect placeholderRect = new(fieldRect.x + 22f, fieldRect.y, fieldRect.width - 26f, fieldRect.height);
+                using (new EditorGUI.DisabledScope(true))
+                    GUI.Label(placeholderRect, "Search domains…", EditorStyles.label);
+            }
+        }
+
+        private void DrawCommandButton(string label, Color tint, GUILayoutOption widthOption, Action clicked)
+        {
+            Color previous = GUI.backgroundColor;
+            GUI.backgroundColor = tint;
+
+            if (GUILayout.Button(label, this.CommandButtonStyle, widthOption, GUILayout.Height(26f)))
+                clicked();
+
+            GUI.backgroundColor = previous;
         }
 
         // -----------------------------------------------------------------
         // Left pane
         // -----------------------------------------------------------------
 
+        private GUIStyle _entryNameStyle;
+
+        /// <summary>Bold and a size step up from the default label, so a domain's title is the
+        /// first thing the eye lands on in each row.</summary>
+        private GUIStyle EntryNameStyle => this._entryNameStyle ??= new GUIStyle(EditorStyles.boldLabel)
+        {
+            fontSize = 13,
+        };
+
         private void DrawDomainList()
         {
             using (new EditorGUILayout.VerticalScope(GUILayout.Width(this._listWidth)))
             {
+                IReadOnlyList<LocalDataEntry> pageEntries = this.GetCurrentPageEntries();
+
                 this._listScroll = EditorGUILayout.BeginScrollView(this._listScroll);
 
                 if (this._visibleEntries.Count == 0)
@@ -221,38 +298,109 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                             : "No domains match the current search.",
                         MessageType.Info);
                 }
-
-                foreach (LocalDataEntry entry in this._visibleEntries)
-                    this.DrawDomainRow(entry);
+                else
+                {
+                    for (int i = 0; i < pageEntries.Count; i++)
+                    {
+                        this.DrawDomainRow(pageEntries[i], isAlternate: i % 2 == 1);
+                        GUILayout.Space(3f);
+                    }
+                }
 
                 EditorGUILayout.EndScrollView();
 
-                GUILayout.FlexibleSpace();
+                this.DrawPager();
+
+                GUILayout.Space(2f);
                 GUILayout.Label(
                     $"{this._entries.Count} domain(s), {this.GetLoadedCount()} loaded",
                     EditorStyles.miniLabel);
             }
         }
 
-        private void DrawDomainRow(LocalDataEntry entry)
+        /// <summary>Total pages for the current filtered list, at least 1 so page arithmetic never
+        /// divides against zero.</summary>
+        private int PageCount => Mathf.Max(1, Mathf.CeilToInt(this._visibleEntries.Count / (float)EntriesPerPage));
+
+        private IReadOnlyList<LocalDataEntry> GetCurrentPageEntries()
+        {
+            this._currentPage = Mathf.Clamp(this._currentPage, 0, this.PageCount - 1);
+
+            int start = this._currentPage * EntriesPerPage;
+            int count = Mathf.Min(EntriesPerPage, this._visibleEntries.Count - start);
+
+            return count > 0 ? this._visibleEntries.GetRange(start, count) : Array.Empty<LocalDataEntry>();
+        }
+
+        /// <summary>Prev/Next controls. Hidden entirely when everything fits on one page, so a
+        /// small project never sees dead navigation chrome.</summary>
+        private void DrawPager()
+        {
+            if (this.PageCount <= 1)
+                return;
+
+            GUILayout.Space(4f);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(this._currentPage <= 0))
+                {
+                    if (GUILayout.Button("◀ Prev", EditorStyles.miniButtonLeft, GUILayout.Height(22f)))
+                    {
+                        this._currentPage--;
+                        this._needsRepaint = true;
+                    }
+                }
+
+                GUILayout.Label($"Page {this._currentPage + 1} / {this.PageCount}",
+                    EditorStyles.centeredGreyMiniLabel, GUILayout.Width(84f));
+
+                using (new EditorGUI.DisabledScope(this._currentPage >= this.PageCount - 1))
+                {
+                    if (GUILayout.Button("Next ▶", EditorStyles.miniButtonRight, GUILayout.Height(22f)))
+                    {
+                        this._currentPage++;
+                        this._needsRepaint = true;
+                    }
+                }
+            }
+        }
+
+        private void DrawDomainRow(LocalDataEntry entry, bool isAlternate)
         {
             bool isSelected = ReferenceEquals(entry, this._selected);
 
-            Rect rect = EditorGUILayout.GetControlRect(false, 34f);
-            if (Event.current.type == EventType.Repaint && isSelected)
-                EditorGUI.DrawRect(rect, new Color(0.24f, 0.48f, 0.90f, 0.25f));
+            Rect rect = EditorGUILayout.GetControlRect(false, EntryRowHeight);
+            if (Event.current.type == EventType.Repaint)
+            {
+                if (isSelected)
+                    EditorGUI.DrawRect(rect, SelectedRowColor);
+                else if (isAlternate)
+                    EditorGUI.DrawRect(rect, AlternateRowColor);
+            }
 
-            Rect markerRect = new(rect.x + 4f, rect.y + 11f, 10f, 10f);
-            GUI.Label(markerRect, this.GetStateGlyph(entry), EditorStyles.boldLabel);
+            (string glyph, Color glyphColor, string tooltip) = this.GetStateGlyph(entry);
 
-            Rect nameRect = new(rect.x + 18f, rect.y + 2f, rect.width - 22f, 16f);
-            GUI.Label(nameRect, entry.DisplayName, EditorStyles.label);
+            Rect markerRect = new(rect.x + 8f, rect.y + rect.height * 0.5f - 10f, 20f, 20f);
+            Color previousColor = GUI.color;
+            GUI.color = glyphColor;
+            GUI.Label(markerRect, new GUIContent(glyph, tooltip), EditorStyles.boldLabel);
+            GUI.color = previousColor;
 
-            Rect subRect = new(rect.x + 18f, rect.y + 17f, rect.width - 22f, 14f);
+            Rect nameRect = new(rect.x + 32f, rect.y + 5f, rect.width - 38f, 20f);
+            GUI.Label(nameRect, entry.DisplayName, this.EntryNameStyle);
+
+            Rect subRect = new(rect.x + 32f, rect.y + 24f, rect.width - 38f, 16f);
             string subtitle = entry.HasFiles
-                ? $"{entry.DomainId}  ·  v{entry.LatestVersion}"
-                : $"{entry.DomainId}  ·  no data";
+                ? $"{entry.DomainId}   ·   v{entry.LatestVersion}"
+                : $"{entry.DomainId}   ·   no data";
             GUI.Label(subRect, subtitle, EditorStyles.miniLabel);
+
+            if (Event.current.type == EventType.Repaint)
+            {
+                Rect underline = new(rect.x, rect.yMax - 1f, rect.width, 1f);
+                EditorGUI.DrawRect(underline, new Color(0f, 0f, 0f, 0.12f));
+            }
 
             if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
             {
@@ -261,15 +409,15 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             }
         }
 
-        private GUIContent GetStateGlyph(LocalDataEntry entry)
+        private (string glyph, Color color, string tooltip) GetStateGlyph(LocalDataEntry entry)
         {
             if (!string.IsNullOrEmpty(entry.LastError))
-                return new GUIContent("✕") { tooltip = entry.LastError };
+                return ("🔴", DeleteAllColor, entry.LastError);
 
             if (entry.HasData)
-                return new GUIContent("●") { tooltip = "Loaded" };
+                return ("🟢", SaveAllColor, "Loaded");
 
-            return new GUIContent("○") { tooltip = entry.HasFiles ? "Not loaded" : "No save data" };
+            return ("⚪", NeutralButtonColor, entry.HasFiles ? "Not loaded" : "No save data");
         }
 
         private void DrawSplitter()
@@ -278,6 +426,28 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 GUILayout.Width(SplitterWidth), GUILayout.ExpandHeight(true));
 
             EditorGUIUtility.AddCursorRect(splitter, MouseCursor.ResizeHorizontal);
+
+            bool isHovering = splitter.Contains(Event.current.mousePosition);
+            if (isHovering != this._isHoveringSplitter)
+            {
+                this._isHoveringSplitter = isHovering;
+                this._needsRepaint = true;
+            }
+
+            if (Event.current.type == EventType.Repaint)
+            {
+                // Wide and clearly colored, with a brighter accent while hovered or dragged, so the
+                // boundary between the two panels reads as a deliberate divider rather than a
+                // one-pixel seam that is easy to miss and hard to grab.
+                EditorGUI.DrawRect(splitter, SplitterColor);
+
+                bool highlight = this._isHoveringSplitter || this._isDraggingSplitter;
+                if (highlight)
+                {
+                    Rect accent = new(splitter.x + splitter.width * 0.5f - 1f, splitter.y, 2f, splitter.height);
+                    EditorGUI.DrawRect(accent, SplitterHoverColor);
+                }
+            }
 
             if (Event.current.type == EventType.MouseDown && splitter.Contains(Event.current.mousePosition))
                 this._isDraggingSplitter = true;
@@ -747,6 +917,9 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 }
             }
 
+            // A narrower result set can leave the current page past the end, and a fresh search is
+            // read starting from the top regardless.
+            this._currentPage = 0;
             this._needsRepaint = true;
         }
 
