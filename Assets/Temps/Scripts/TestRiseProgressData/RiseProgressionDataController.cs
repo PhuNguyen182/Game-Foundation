@@ -1,33 +1,31 @@
-﻿using DracoRuan.Foundation.DataFlow.DataMigration.Core.Orchestrator;
-using DracoRuan.Foundation.DataFlow.DataMigration.Migrator;
-using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.LocalData;
-using DracoRuan.Foundation.DataFlow.LocalData.DynamicDataControllers;
-using DracoRuan.PrebuildServices.MessageBrokers.CustomEvents.DeleteDynamicData;
-using DracoRuan.PrebuildServices.MessageBrokers.CustomEvents.SaveDynamicData;
+using DracoRuan.Foundation.DataFlow.Runtime;
 
 namespace Temps.Scripts.TestRiseProgressData
 {
-    [DynamicGameDataController(nameof(RiseProgressionDataController))]
-    public class RiseProgressionDataController : DynamicGameDataController<RiseProgressData>
+    /// <summary>
+    /// Repository for rise progression data.
+    /// </summary>
+    /// <remarks>
+    /// The whole repository: a domain id, a schema version, and a constructor that forwards one
+    /// context. Migration, versioning, atomic writes and autosave are all handled by the base class
+    /// and the boot pipeline, so a controller only describes what makes it different.
+    /// </remarks>
+    [DynamicGameDataController(Id)]
+    public sealed class RiseProgressionDataController : DynamicGameDataController<RiseProgressDataV1>
     {
-        public RiseProgressionDataController(IDataProviderService dataProviderService, SaveDataEvent saveDataEvent,
-            DeleteDataEvent deleteDataEvent, DataMigrationOrchestrator dataMigrationOrchestrator) : base(
-            dataProviderService, saveDataEvent, deleteDataEvent, dataMigrationOrchestrator)
+        /// <summary>
+        /// Permanent save identifier. A constant rather than a type name: renaming or moving the
+        /// data class must never orphan a player's save file.
+        /// </summary>
+        public const string Id = "rise_progression";
+
+        public RiseProgressionDataController(DataControllerContext context) : base(context)
         {
         }
 
-        protected override RiseProgressData SourceData { get; set; }
-        public override int CurrentDataVersion => 1;
-        
-        protected override void LoadDataFromLatestVersion(MigrationContext migrationContext)
-        {
-            
-        }
+        public override string DomainId => Id;
 
-        protected override void SyncFromConfigDataIfNeeded()
-        {
-            
-        }
+        public override int SchemaVersion => 1;
     }
 }
