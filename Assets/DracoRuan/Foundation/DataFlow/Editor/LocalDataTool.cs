@@ -336,6 +336,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // -----------------------------------------------------------------
 
         private GUIStyle _entryNameStyle;
+        private GUIStyle _detailTitleStyle;
 
         /// <summary>Bold and a size step up from the default label, so a domain's title is the
         /// first thing the eye lands on in each row.</summary>
@@ -343,6 +344,39 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         {
             fontSize = 13,
         };
+
+        /// <summary>
+        /// Bigger again than <see cref="EntryNameStyle"/> - this is the page heading for the selected
+        /// domain, not a row in a list, so it reads as the most prominent text in the detail pane.
+        /// </summary>
+        /// <remarks>
+        /// Built from <c>GUIStyle.none</c> rather than copy-constructed from
+        /// <see cref="EditorStyles.boldLabel"/>. Copying a built-in style and overriding
+        /// <c>normal.textColor</c> - and separately, wrapping the draw call in
+        /// <see cref="GUI.contentColor"/> - both failed to change the rendered color here, which
+        /// means the built-in style's <c>GUIStyleState</c> is not plain data this code can safely
+        /// override; something about the editor skin keeps re-asserting its own color on it. Starting
+        /// from an empty style with its own freshly-created <see cref="GUIStyleState"/> sidesteps
+        /// that entirely - there is no shared state left for anything else to reassert control over.
+        /// </remarks>
+        private GUIStyle DetailTitleStyle
+        {
+            get
+            {
+                if (this._detailTitleStyle != null)
+                    return this._detailTitleStyle;
+
+                this._detailTitleStyle = new GUIStyle(GUIStyle.none)
+                {
+                    fontSize = 15,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleLeft,
+                    normal = new GUIStyleState { textColor = Color.white },
+                };
+
+                return this._detailTitleStyle;
+            }
+        }
 
         private void DrawDomainList()
         {
@@ -582,7 +616,17 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         {
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                GUILayout.Label(entry.DisplayName, EditorStyles.boldLabel);
+                // GUIStyle.normal.textColor set on a style copy-constructed from a built-in style
+                // (EditorStyles.boldLabel here) does not reliably stick - the built-in style's
+                // GUIStyleState objects are shared, editor-skin-driven state, not plain data the
+                // copy constructor duplicates. GUI.contentColor bypasses that entirely: it tints
+                // whatever the style would have drawn, which is the reliable way to force a color
+                // regardless of what state the source style holds.
+                Color previousContentColor = GUI.contentColor;
+                GUI.contentColor = Color.white;
+                GUILayout.Label(entry.DisplayName, this.DetailTitleStyle);
+                GUI.contentColor = previousContentColor;
+
                 GUILayout.Label(entry.DomainId, EditorStyles.miniLabel);
 
                 using (new EditorGUILayout.HorizontalScope())
@@ -641,7 +685,8 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 {
                     Color previous = GUI.backgroundColor;
                     GUI.backgroundColor = LoadAllColor;
-                    if (GUILayout.Button("📥 Load", StaticCommandButtonStyle, GUILayout.Width(96), GUILayout.Height(26)))
+                    if (GUILayout.Button("📥 Load", StaticCommandButtonStyle, GUILayout.Width(96),
+                            GUILayout.Height(26)))
                         this.LoadVersion(entry, entry.LoadedVersion > 0 ? entry.LoadedVersion : 0);
                     GUI.backgroundColor = previous;
                 }
@@ -652,7 +697,8 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 {
                     Color previous = GUI.backgroundColor;
                     GUI.backgroundColor = SaveAllColor;
-                    if (GUILayout.Button("💾 Save", StaticCommandButtonStyle, GUILayout.Width(96), GUILayout.Height(26)))
+                    if (GUILayout.Button("💾 Save", StaticCommandButtonStyle, GUILayout.Width(96),
+                            GUILayout.Height(26)))
                         this.SaveOne(entry);
                     GUI.backgroundColor = previous;
                 }
@@ -663,7 +709,8 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 {
                     Color previous = GUI.backgroundColor;
                     GUI.backgroundColor = DeleteAllColor;
-                    if (GUILayout.Button("🗑 Delete", StaticCommandButtonStyle, GUILayout.Width(96), GUILayout.Height(26)))
+                    if (GUILayout.Button("🗑 Delete", StaticCommandButtonStyle, GUILayout.Width(96),
+                            GUILayout.Height(26)))
                         this.DeleteOne(entry);
                     GUI.backgroundColor = previous;
                 }
