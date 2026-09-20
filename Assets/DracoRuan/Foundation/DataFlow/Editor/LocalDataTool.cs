@@ -87,7 +87,9 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         {
             LocalDataTool window = GetWindow<LocalDataTool>();
             window.titleContent = new GUIContent("Local Data");
-            window.minSize = new Vector2(720, 420);
+            // Wide enough that the toolbar's buttons are never resized, relabeled, or dropped to
+            // fit - see DrawToolbar's remarks for exactly what this width covers.
+            window.minSize = new Vector2(Mathf.Max(720f, MinWindowWidth), 420);
             window.Show();
         }
 
@@ -179,64 +181,136 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // Toolbar
         // -----------------------------------------------------------------
 
-        private GUIStyle _commandButtonStyle;
-        private GUIStyle _searchFieldStyle;
+        private const float ToolbarHeight = 34f;
+        private const float ToolbarControlHeight = 24f;
 
-        /// <summary>
-        /// A taller, bolder button than <see cref="EditorStyles.toolbarButton"/>, built lazily since
-        /// <see cref="GUIStyle"/> construction touches <see cref="GUI.skin"/> and must happen inside
-        /// an IMGUI call, not a constructor or <c>OnEnable</c>.
-        /// </summary>
-        private GUIStyle CommandButtonStyle => this._commandButtonStyle ??= new GUIStyle(GUI.skin.button)
-        {
-            fontSize = 12,
-            fontStyle = FontStyle.Bold,
-            fixedHeight = 26f,
-            alignment = TextAnchor.MiddleCenter,
-        };
+        private static readonly Color ToolbarBackgroundColor = new(0.19f, 0.19f, 0.19f, 1f);
+
+        private GUIStyle _searchFieldStyle;
 
         private GUIStyle SearchFieldStyle => this._searchFieldStyle ??= new GUIStyle(EditorStyles.textField)
         {
             fontSize = 12,
-            fixedHeight = 24f,
-            padding = new RectOffset(20, 6, 3, 3),
+            alignment = TextAnchor.MiddleLeft,
+            padding = new RectOffset(20, 6, 0, 0),
+            margin = new RectOffset(0, 0, 0, 0),
         };
 
+        /// <summary>Sum of every fixed-width button plus the spacing between them and around the
+        /// search field, not counting the field's own width. Whatever room is left over past this
+        /// goes entirely to the search field, down to <see cref="MinSearchWidth"/>.</summary>
+        private const float ToolbarButtonsWidth =
+            6f + 96f + 6f + 96f + 12f + 90f + 6f + 112f + 12f + 12f + 104f + 6f;
+
+        /// <summary>Search field never shrinks below this - narrow enough to still show a few
+        /// characters of a domain id, which is all it needs to do at the window's minimum width.</summary>
+        private const float MinSearchWidth = 120f;
+
+        /// <summary>Search field never grows past this even when the window is very wide - a filter
+        /// box has no reason to become a paragraph-length text field.</summary>
+        private const float MaxSearchWidth = 420f;
+
+        /// <summary>Bar width below which the buttons alone, plus <see cref="MinSearchWidth"/>, no
+        /// longer fit comfortably; the window cannot usefully go narrower than this, so it is
+        /// enforced as <c>minSize</c>.</summary>
+        private const float MinWindowWidth = ToolbarButtonsWidth + MinSearchWidth;
+
+        /// <summary>
+        /// Drawn on a plain background rect rather than <see cref="EditorStyles.toolbar"/>, which is
+        /// a fixed-height style built for the thin default toolbar row and clips anything taller than
+        /// it - which is exactly what made the previous 26-32px buttons render cut off at the top and
+        /// bottom instead of centered. Every control here shares <see cref="ToolbarControlHeight"/>
+        /// and sits directly in the normal IMGUI layout flow (no <c>BeginArea</c>) inside one
+        /// <see cref="EditorGUILayout.HorizontalScope"/>, so Unity recomputes each control's real
+        /// position from the window's actual current width every layout pass rather than from a
+        /// <see cref="Rect"/> this code would otherwise have to keep in sync by hand.
+        ///
+        /// <para><b>Staying usable at any window width.</b> The search field is the one element
+        /// treated as elastic: it fills whatever space is left between the two button groups,
+        /// clamped between <see cref="MinSearchWidth"/> and <see cref="MaxSearchWidth"/>, so it grows
+        /// on a wide window and shrinks - never disappears - on a narrow one. Every button keeps the
+        /// exact size and position this design calls for regardless of window width.
+        /// <see cref="ShowWindow"/> also sets <c>minSize</c> to <see cref="MinWindowWidth"/>, the
+        /// point below which even the field's minimum would start crowding the buttons.</para>
+        /// </summary>
         private void DrawToolbar()
         {
-            using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar, GUILayout.Height(32f)))
+            // One HorizontalScope is the entire toolbar's layout space - background, buttons, and
+            // the search field are all measured and positioned from this single Rect. The previous
+            // version reserved a separate ToolbarHeight-tall Rect purely to paint the background,
+            // then laid the actual controls out afterward in their own GUILayout.Space + Horizontal-
+            // Scope block; those were two independent regions stacked one after the other in the
+            // layout flow rather than one overlapping the other, which is what left a tall band of
+            // empty background above a short, cramped control row.
+            using (new EditorGUILayout.HorizontalScope(GUILayout.Height(ToolbarHeight)))
             {
-                GUILayout.Space(4);
+                Rect barRect = GUILayoutUtility.GetRect(0f, ToolbarHeight, GUILayout.ExpandWidth(true));
+                if (Event.current.type == EventType.Repaint)
+                    EditorGUI.DrawRect(barRect, ToolbarBackgroundColor);
 
-                this.DrawCommandButton("📥 Load All", LoadAllColor, GUILayout.Width(96), clicked: this.LoadAll);
-                this.DrawCommandButton("💾 Save All", SaveAllColor, GUILayout.Width(96), clicked: this.SaveAll);
+                // The search field is the one elastic element: it takes whatever width is left over
+                // between the button groups on either side of it, clamped to a sane range, so it
+                // grows on a wide window and only gives up typing room - never legibility or being
+                // clickable - once the window gets narrow. Every button keeps the exact size and
+                // position this design calls for at any window width.
+                float searchWidth = Mathf.Clamp(barRect.width - ToolbarButtonsWidth, MinSearchWidth, MaxSearchWidth);
 
-                GUILayout.Space(10);
+                // Every control below is placed with an absolute Rect derived from barRect, on the
+                // same vertical center, rather than nested in GUILayout's own flow - GUILayout has no
+                // way to overlap new controls onto a Rect it already consumed for the background.
+                float centerY = barRect.y + barRect.height * 0.5f;
+                float cursorX = barRect.x + 6f;
 
-                this.DrawCommandButton("🔄 Refresh", NeutralButtonColor, GUILayout.Width(90), clicked: this.Rescan);
-                this.DrawCommandButton("📁 Open Folder", NeutralButtonColor, GUILayout.Width(112),
-                    clicked: this.OpenSaveFolder);
+                cursorX = DrawCommandButtonAt(cursorX, centerY, "📥 Load All", LoadAllColor, 96f, this.LoadAll);
+                cursorX += 6f;
+                cursorX = DrawCommandButtonAt(cursorX, centerY, "💾 Save All", SaveAllColor, 96f, this.SaveAll);
+                cursorX += 12f;
+                cursorX = DrawCommandButtonAt(cursorX, centerY, "🔄 Refresh", NeutralButtonColor, 90f, this.Rescan);
+                cursorX += 6f;
+                cursorX = DrawCommandButtonAt(cursorX, centerY, "📁 Open Folder", NeutralButtonColor, 112f,
+                    this.OpenSaveFolder);
 
-                GUILayout.FlexibleSpace();
+                float deleteWidth = 104f;
+                float rightEdge = barRect.xMax - 6f;
+                float deleteX = rightEdge - deleteWidth;
+                DrawCommandButtonAt(deleteX, centerY, "🗑 Delete All", DeleteAllColor, deleteWidth, this.DeleteAll);
 
-                this.DrawSearchField();
-
-                GUILayout.Space(10);
-
-                // Destructive action kept apart from the rest, at the far end, so it is never
-                // clicked by reflex while reaching for something else.
-                this.DrawCommandButton("🗑 Delete All", DeleteAllColor, GUILayout.Width(104),
-                    clicked: this.DeleteAll);
-
-                GUILayout.Space(4);
+                float searchX = deleteX - 12f - searchWidth;
+                this.DrawSearchFieldAt(searchX, centerY, searchWidth);
             }
         }
 
-        private void DrawSearchField()
+        private static float DrawCommandButtonAt(
+            float x, float centerY, string label, Color tint, float width, Action clicked)
         {
-            const float fieldWidth = 240f;
+            Rect rect = new(x, centerY - ToolbarControlHeight * 0.5f, width, ToolbarControlHeight);
 
-            Rect fieldRect = GUILayoutUtility.GetRect(fieldWidth, 24f, GUILayout.Width(fieldWidth));
+            Color previous = GUI.backgroundColor;
+            GUI.backgroundColor = tint;
+
+            if (GUI.Button(rect, label, StaticCommandButtonStyle))
+                clicked();
+
+            GUI.backgroundColor = previous;
+            return x + width;
+        }
+
+        private static GUIStyle _staticCommandButtonStyle;
+
+        private static GUIStyle StaticCommandButtonStyle => _staticCommandButtonStyle ??= new GUIStyle(GUI.skin.button)
+        {
+            fontSize = 12,
+            fontStyle = FontStyle.Bold,
+            alignment = TextAnchor.MiddleCenter,
+        };
+
+        /// <summary>
+        /// Placed at an absolute Rect, like <see cref="DrawCommandButtonAt"/>, since it shares the
+        /// same background Rect as the buttons rather than GUILayout's own flow.
+        /// </summary>
+        private void DrawSearchFieldAt(float x, float centerY, float width)
+        {
+            Rect fieldRect = new(x, centerY - ToolbarControlHeight * 0.5f, width, ToolbarControlHeight);
 
             EditorGUI.BeginChangeCheck();
             string newFilter = EditorGUI.TextField(fieldRect, this._searchFilter, this.SearchFieldStyle);
@@ -246,7 +320,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 this.ApplyFilter();
             }
 
-            Rect iconRect = new(fieldRect.x + 4f, fieldRect.y + 3f, 16f, 16f);
+            Rect iconRect = new(fieldRect.x + 4f, fieldRect.y + (fieldRect.height - 16f) * 0.5f, 16f, 16f);
             GUI.Label(iconRect, "🔍");
 
             if (string.IsNullOrEmpty(this._searchFilter))
@@ -255,17 +329,6 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 using (new EditorGUI.DisabledScope(true))
                     GUI.Label(placeholderRect, "Search domains…", EditorStyles.label);
             }
-        }
-
-        private void DrawCommandButton(string label, Color tint, GUILayoutOption widthOption, Action clicked)
-        {
-            Color previous = GUI.backgroundColor;
-            GUI.backgroundColor = tint;
-
-            if (GUILayout.Button(label, this.CommandButtonStyle, widthOption, GUILayout.Height(26f)))
-                clicked();
-
-            GUI.backgroundColor = previous;
         }
 
         // -----------------------------------------------------------------
@@ -576,14 +639,22 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             {
                 using (new EditorGUI.DisabledScope(!entry.HasFiles))
                 {
-                    if (GUILayout.Button("Load", GUILayout.Width(80), GUILayout.Height(22)))
+                    Color previous = GUI.backgroundColor;
+                    GUI.backgroundColor = LoadAllColor;
+                    if (GUILayout.Button("📥 Load", StaticCommandButtonStyle, GUILayout.Width(96), GUILayout.Height(26)))
                         this.LoadVersion(entry, entry.LoadedVersion > 0 ? entry.LoadedVersion : 0);
+                    GUI.backgroundColor = previous;
                 }
+
+                GUILayout.Space(6);
 
                 using (new EditorGUI.DisabledScope(!entry.HasData))
                 {
-                    if (GUILayout.Button("Save", GUILayout.Width(80), GUILayout.Height(22)))
+                    Color previous = GUI.backgroundColor;
+                    GUI.backgroundColor = SaveAllColor;
+                    if (GUILayout.Button("💾 Save", StaticCommandButtonStyle, GUILayout.Width(96), GUILayout.Height(26)))
                         this.SaveOne(entry);
+                    GUI.backgroundColor = previous;
                 }
 
                 GUILayout.FlexibleSpace();
@@ -591,8 +662,8 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 using (new EditorGUI.DisabledScope(!entry.HasFiles))
                 {
                     Color previous = GUI.backgroundColor;
-                    GUI.backgroundColor = new Color(1f, 0.45f, 0.45f);
-                    if (GUILayout.Button("Delete", GUILayout.Width(80), GUILayout.Height(22)))
+                    GUI.backgroundColor = DeleteAllColor;
+                    if (GUILayout.Button("🗑 Delete", StaticCommandButtonStyle, GUILayout.Width(96), GUILayout.Height(26)))
                         this.DeleteOne(entry);
                     GUI.backgroundColor = previous;
                 }
