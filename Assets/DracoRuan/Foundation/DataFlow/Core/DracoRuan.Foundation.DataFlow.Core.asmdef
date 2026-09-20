@@ -1,0 +1,16 @@
+{
+    "name": "DracoRuan.Foundation.DataFlow.Core",
+    "rootNamespace": "DracoRuan.Foundation.DataFlow.Core",
+    "references": [
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
