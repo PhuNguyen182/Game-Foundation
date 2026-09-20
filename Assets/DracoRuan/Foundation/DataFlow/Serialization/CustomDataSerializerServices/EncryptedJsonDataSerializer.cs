@@ -1,59 +1,54 @@
 using System;
-using System.IO;
+using System.Text;
 using DracoRuan.Foundation.DataFlow.Encryption;
 using Newtonsoft.Json;
 
 namespace DracoRuan.Foundation.DataFlow.Serialization.CustomDataSerializerServices
 {
     /// <summary>
-    /// This type of data saver using JSON to serialize and deserialize data.
-    /// Using with AES encryption to make data harder to be stolen
+    /// JSON serializer that obfuscates the result with AES.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class EncryptedJsonDataSerializer<T> : IDataSerializer<T>
+    /// <remarks>
+    /// <para><b>Previously this silently destroyed data.</b> It encrypted the JSON, then kept only
+    /// the first eight bytes of the ciphertext - <c>BitConverter.ToDouble(cipheredJson)</c> - and
+    /// stored that number as text. Everything past those eight bytes was discarded, so any payload
+    /// longer than a few characters could never be recovered. It round-tripped through the type
+    /// system perfectly and lost the data in practice.</para>
+    ///
+    /// <para>It now encrypts the whole payload and returns Base64, which survives being stored as
+    /// text. See <see cref="AesEncryptor"/> for why this is obfuscation rather than security.</para>
+    /// </remarks>
+    public sealed class EncryptedJsonDataSerializer<T> : IDataSerializer<T>
     {
-        private const int SafeJsonLength = 1000;
-        
-        private static readonly JsonSerializer JsonSerializer;
-        private static readonly JsonSerializerSettings JsonSerializerSettings;
-
-        static EncryptedJsonDataSerializer()
+        private static readonly JsonSerializerSettings JsonSettings = new()
         {
-            JsonSerializer = new JsonSerializer();
-            JsonSerializerSettings = new JsonSerializerSettings()
-            {
-                Formatting = Formatting.Indented,
-            };
+            Formatting = Formatting.None
+        };
+
+        private readonly AesEncryptor _encryptor;
+
+        public EncryptedJsonDataSerializer(AesEncryptor encryptor = null)
+        {
+            this._encryptor = encryptor ?? new AesEncryptor();
         }
 
         public object Serialize(T data)
         {
-            string json = JsonConvert.SerializeObject(data, JsonSerializerSettings);
-            byte[] cipheredJson = AesEncryptor.Encrypt(json);
-            string encryptedJson = $"{BitConverter.ToDouble(cipheredJson)}";
-            return encryptedJson;
+            string json = JsonConvert.SerializeObject(data, JsonSettings);
+            byte[] encrypted = this._encryptor.Encrypt(Encoding.UTF8.GetBytes(json));
+            return Convert.ToBase64String(encrypted);
         }
 
-        public T Deserialize(object name)
+        public T Deserialize(object serializedData)
         {
-            string nameString = name as string ?? string.Empty;
-            double cipheredValue = double.Parse(nameString);
-            byte[] cipheredArray = BitConverter.GetBytes(cipheredValue);
-            string decryptedJson = AesEncryptor.Decrypt(cipheredArray);
+            if (serializedData is not string base64 || base64.Length == 0)
+                return default;
 
-            T data;
-            if (decryptedJson.Length >= SafeJsonLength)
-            {
-                using StringReader stringReader = new(decryptedJson);
-                using JsonTextReader jsonReader = new(stringReader);
-                data = JsonSerializer.Deserialize<T>(jsonReader);
-            }
-            else
-            {
-                data = JsonConvert.DeserializeObject<T>(decryptedJson);
-            }
+            byte[] encrypted = Convert.FromBase64String(base64);
+            byte[] plain = this._encryptor.Decrypt(encrypted);
+            string json = Encoding.UTF8.GetString(plain);
 
-            return data;
+            return JsonConvert.DeserializeObject<T>(json);
         }
     }
 }
