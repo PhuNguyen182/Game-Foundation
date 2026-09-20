@@ -6,22 +6,21 @@ using DracoRuan.Foundation.DataFlow.DataProviders;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 {
-    public abstract class StaticGameDataController<TData> : IStaticGameDataController 
+    public abstract class StaticGameDataController<TData> : IStaticGameDataController
         where TData : class, IGameData
     {
         private readonly IDataProviderService _dataProviderService;
         private readonly IDataSequenceProcessor _dataSequenceProcessor;
         private IDataProvider _dataProvider;
-        
+
         private bool _isDisposed;
         private bool _isDataInitialized;
-        
+
         protected abstract TData SourceData { get; set; }
         protected abstract List<DataProcessSequence> DataProcessSequences { get; }
 
         public Type SourceDataType => typeof(TData);
         public TData ExposedSourceData => this.SourceData;
-        public int DataVersion => this.SourceData?.DataVersion ?? 0;
         public event Action OnDataLoaded;
 
         protected StaticGameDataController(IDataProviderService dataProviderService)
@@ -33,7 +32,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         }
 
         public bool IsDataControllerInitialized() => this._isDataInitialized;
-        
+
         public async UniTask InitializeData(IDataSequenceProcessor dataSequenceProcessor)
         {
             dataSequenceProcessor.Clear();
@@ -52,7 +51,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
                 this.SourceData = processSequenceData.GameData as TData;
                 this._isDataInitialized = true;
             }
-            
+
             this.OnDataInitialized();
         }
 
@@ -82,10 +81,9 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
             IProcessSequence processSequence = new DataProcessor<TData>(dataKey, this._dataProvider);
             return processSequence;
         }
-        
+
         protected virtual void ReleaseManagedResources()
         {
-            
         }
 
         protected virtual void ReleaseUnmanagedResources()
@@ -98,11 +96,11 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         {
             if (this._isDisposed)
                 return;
-            
+
             this.ReleaseUnmanagedResources();
             if (disposing)
                 this.ReleaseManagedResources();
-            
+
             this._isDisposed = true;
         }
 

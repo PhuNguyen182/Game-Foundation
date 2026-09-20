@@ -1,0 +1,17 @@
+<!--
+  Managed code stripping protection for DataFlow.
+
+  Save data is deserialized by reflection-driven formatters that the static analyser cannot see
+  being used. Without these entries a release IL2CPP build strips the formatters and every load
+  throws at runtime — on the boot path, before anything can be rendered.
+
+  MessagePack.Unity is the Unity-type formatter set (Vector3, Color, ...). Assembly-CSharp is
+  preserved because every DataFlow type and every game data model currently compiles into it;
+  narrow this once DataFlow is split into its own assembly definition.
+-->
+<linker>
+  <assembly fullname="MessagePack" preserve="all" />
+  <assembly fullname="MessagePack.Annotations" preserve="all" />
+  <assembly fullname="MessagePack.Unity" preserve="all" />
+  <assembly fullname="Assembly-CSharp" preserve="all" />
+</linker>

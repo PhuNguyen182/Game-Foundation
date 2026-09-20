@@ -9,26 +9,25 @@ using DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers.CSVs;
 
 namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 {
-    public abstract class StaticGameDataControllerWithRecord<TData, TRecord, TRecordMap> : IStaticGameDataController 
+    public abstract class StaticGameDataControllerWithRecord<TData, TRecord, TRecordMap> : IStaticGameDataController
         where TData : CustomRecordData<TRecord>, IGameData, new()
         where TRecord : class
         where TRecordMap : ClassMap<TRecord>
     {
         private bool _isDisposed;
         private bool _isDataInitialized;
-        
+
         private readonly IDataProviderService _dataProviderService;
         private readonly IDataSequenceProcessor _dataSequenceProcessor;
         private IDataProvider _dataProvider;
-        
+
         protected abstract TData SourceData { get; set; }
         protected abstract List<DataProcessSequence> DataProcessSequences { get; }
-        
+
         public TData ExposedSourceData => this.SourceData;
-        public int DataVersion => this.SourceData?.DataVersion ?? 0;
         public Type SourceDataType => typeof(TData);
         public event Action OnDataLoaded;
-        
+
         protected StaticGameDataControllerWithRecord(IDataProviderService dataProviderService)
         {
             this._isDataInitialized = false;
@@ -54,7 +53,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
             await dataSequenceProcessor.Execute();
             if (dataSequenceProcessor.LatestProcessSequence is IProcessSequenceData processSequenceData)
                 this.SourceData = processSequenceData.GameData as TData;
-            
+
             this.OnDataInitialized();
         }
 
@@ -66,12 +65,12 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
         }
 
         protected abstract void RefineDataFromSourceData();
-        
+
         protected void CleanupUnusedData()
         {
             this._dataProvider?.UnloadData(this.SourceData);
         }
-        
+
         protected string GetDataKey()
         {
             GameDataAttribute attribute = GetAttribute<TData>();
@@ -93,9 +92,8 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 
         protected virtual void ReleaseManagedResources()
         {
-            
         }
-        
+
         protected virtual void ReleaseUnmanagedResources()
         {
             if (this._dataSequenceProcessor is IDisposable disposable)
@@ -104,13 +102,13 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers
 
         protected virtual void Dispose(bool disposing)
         {
-            if (this._isDisposed) 
+            if (this._isDisposed)
                 return;
-            
+
             this.ReleaseUnmanagedResources();
             if (disposing)
                 this.ReleaseManagedResources();
-            
+
             this._isDisposed = true;
         }
 
