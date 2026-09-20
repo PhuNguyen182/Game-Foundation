@@ -1,475 +1,350 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
-using MessagePack;
-using Newtonsoft.Json;
-using DracoRuan.Foundation.DataFlow.LocalData;
+using DracoRuan.Foundation.DataFlow.Core.Envelope;
+using DracoRuan.Foundation.DataFlow.Core.Serialization;
+using DracoRuan.Foundation.DataFlow.Core.Storage;
 using Sirenix.OdinInspector.Editor;
-using UnityEditor;
-using UnityEngine;
 
 namespace DracoRuan.Foundation.DataFlow.Editor
 {
     /// <summary>
-    /// Represents a single file-based data entry for a DynamicGameDataController.
-    /// Reads/writes binary MessagePack .data files, automatically loading the highest available version.
-    ///
-    /// The data object is rendered using Odin Inspector's <see cref="PropertyTree"/>,
-    /// which supports all common types including Dictionary, List, nested objects,
-    /// and SerializedDictionary from the AYellowpaper.SerializedCollections plugin.
+    /// One save domain in the Local Data Manager: which versions exist, which one is loaded, and the
+    /// Odin tree used to edit it.
     /// </summary>
-    public class LocalDataEntry
+    /// <remarks>
+    /// <para><b>Goes through the same <see cref="SaveEnvelopeStore"/> as the game.</b> The previous
+    /// version reimplemented the path convention and serialization itself, so the tool and the
+    /// runtime were two independent implementations of one format — and its Save button would
+    /// happily write a file the game could no longer read.</para>
+    ///
+    /// <para><b>Version discovery is one directory listing.</b> It used to call
+    /// <c>File.Exists</c> a hundred times per load and another hundred per delete, for every entry.</para>
+    ///
+    /// <para><b>The Odin tree is built only while this entry is selected</b> and disposed as soon as
+    /// it is not, so exactly one exists at a time.</para>
+    /// </remarks>
+    public sealed class LocalDataEntry
     {
-        // ---------------------------------------------------------------------------
-        // Constants
-        // ---------------------------------------------------------------------------
-        private const int MaxVersionScan = 100;
-        private const string LocalDataFolder = "GameData";
-        private const string FileExtension = ".data";
+        /// <summary>Latest plus three previous, per the retention policy.</summary>
+        public const int MaxVisibleVersions = 4;
 
-        // ---------------------------------------------------------------------------
-        // Fields
-        // ---------------------------------------------------------------------------
-        private readonly Type _dataType;
-        private readonly string _controllerKey;
-        private readonly string _baseSaveFolder;
+        private static readonly Regex PrettyNamePattern =
+            new("(\\B[A-Z])", RegexOptions.Compiled);
 
-        private object _currentData;
-        private int _loadedVersion = 1;
-        private string _statusText = "—";
-        private bool _isExpanded;
+        /// <summary>
+        /// Display names are cached because they were being recomputed with an uncompiled regex on
+        /// every OnGUI event, for every visible row.
+        /// </summary>
+        private static readonly Dictionary<Type, string> PrettyNameCache = new();
+
+        private readonly SaveEnvelopeStore _store;
+        private readonly IPayloadCodec _codec;
+        private readonly Dictionary<int, FileStat> _fileStatCache = new();
+
         private PropertyTree _propertyTree;
+        private object _data;
 
-        // ---------------------------------------------------------------------------
-        // Shared styles (static, lazy-initialised during OnGUI)
-        // ---------------------------------------------------------------------------
-        private static GUIStyle _entryBoxStyle;
-        private static GUIStyle _entryTitleStyle;
-        private static GUIStyle _keyLabelStyle;
-        private static GUIStyle _contentBoxStyle;
-        private static GUIStyle _statusLabelStyle;
-        private static readonly Color DeleteBtnColor = new Color(1f, 0.38f, 0.38f, 1f);
-
-        // ---------------------------------------------------------------------------
-        // Properties
-        // ---------------------------------------------------------------------------
-        public Type DataType => this._dataType;
-        public string TypeName => this._dataType.Name;
-        public string ControllerKey => this._controllerKey;
-        public bool HasData => this._currentData != null;
-
-        public event Action<LocalDataEntry> OnDataChanged;
-        public event Action<LocalDataEntry> OnEntryDeleted;
-
-        // ---------------------------------------------------------------------------
-        // Constructor
-        // ---------------------------------------------------------------------------
-        public LocalDataEntry(Type dataType, string controllerKey)
+        /// <summary>Cached <see cref="File.GetLastWriteTimeUtc"/>/length pair for one version.</summary>
+        private readonly struct FileStat
         {
-            this._dataType = dataType ?? throw new ArgumentNullException(nameof(dataType));
-            this._controllerKey = controllerKey ?? dataType.Name;
-            this._baseSaveFolder = Path.Combine(Application.persistentDataPath, LocalDataFolder);
-        }
-
-        // ---------------------------------------------------------------------------
-        // Version helpers
-        // ---------------------------------------------------------------------------
-        private string GetFilePath(int version) =>
-            Path.Combine(this._baseSaveFolder, $"{this._dataType.Name}_v{version}{FileExtension}");
-
-        /// <summary>
-        /// Scans from MaxVersionScan down to 1 and returns the highest version that has a saved file.
-        /// Returns 1 if no file is found (mirrors DynamicGameDataController.GetMostRecentDataVersion).
-        /// </summary>
-        private int GetMostRecentVersion()
-        {
-            for (int v = MaxVersionScan; v >= 1; v--)
-                if (File.Exists(this.GetFilePath(v)))
-                    return v;
-            return 1;
-        }
-
-        // ---------------------------------------------------------------------------
-        // Load / Save / Delete
-        // ---------------------------------------------------------------------------
-
-        /// <summary>Loads data from the most recent version file using MessagePack.</summary>
-        public void LoadData()
-        {
-            try
+            public FileStat(long sizeBytes, string modifiedUtc)
             {
-                int version = this.GetMostRecentVersion();
-                string path = this.GetFilePath(version);
-
-                if (!File.Exists(path))
-                {
-                    this._currentData = Activator.CreateInstance(this._dataType);
-                    this._loadedVersion = 1;
-                    this._statusText = "⚠️ No saved data (defaults)";
-                }
-                else
-                {
-                    byte[] bytes = File.ReadAllBytes(path);
-                    this._currentData = MessagePackSerializer.Deserialize(this._dataType, bytes);
-                    this._loadedVersion = version;
-                    this._statusText = $"✅ Loaded v{version}";
-                }
-
-                this.RebuildPropertyTree();
-                this._isExpanded = true;
-                this.OnDataChanged?.Invoke(this);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[LocalDataEntry] Error loading {this._dataType.Name}: {ex.Message}");
-                this._statusText = "❌ Load failed";
-            }
-        }
-
-        /// <summary>
-        /// Applies any pending Odin property changes to the data object, then serializes
-        /// and writes to disk using MessagePack.
-        /// Version is taken from IGameData.DataVersion when available, otherwise uses loadedVersion.
-        /// </summary>
-        public void SaveData()
-        {
-            try
-            {
-                if (this._currentData == null)
-                {
-                    this._statusText = "⚠️ No data to save";
-                    return;
-                }
-
-                // Flush any in-progress Odin edits to the underlying object
-                this._propertyTree?.ApplyChanges();
-
-                // Prefer IGameData.DataVersion so the save key matches the runtime controller
-                int version = this._loadedVersion;
-                if (this._currentData is IGameData gameData && gameData.DataVersion > 0)
-                    version = gameData.DataVersion;
-
-                if (!Directory.Exists(this._baseSaveFolder))
-                    Directory.CreateDirectory(this._baseSaveFolder);
-
-                string path = this.GetFilePath(version);
-                byte[] bytes = MessagePackSerializer.Serialize(this._dataType, this._currentData);
-                File.WriteAllBytes(path, bytes);
-
-                this._loadedVersion = version;
-                this._statusText = $"✅ Saved v{version}";
-                Debug.Log($"[LocalDataEntry] Saved {this._dataType.Name} v{version} → {path}");
-                this.OnDataChanged?.Invoke(this);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[LocalDataEntry] Error saving {this._dataType.Name}: {ex.Message}");
-                this._statusText = "❌ Save failed";
-            }
-        }
-
-        /// <summary>Deletes all versioned .data files for this data type and notifies the parent tool.</summary>
-        public void DeleteAllVersions()
-        {
-            try
-            {
-                bool any = false;
-                for (int v = 1; v <= MaxVersionScan; v++)
-                {
-                    string path = this.GetFilePath(v);
-                    if (!File.Exists(path)) continue;
-                    File.Delete(path);
-                    any = true;
-                }
-
-                this._currentData = null;
-                this._loadedVersion = 1;
-                this._statusText = any ? "🗑️ Deleted" : "⚠️ No files found";
-
-                this._propertyTree?.Dispose();
-                this._propertyTree = null;
-
-                this.OnEntryDeleted?.Invoke(this);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[LocalDataEntry] Error deleting {this._dataType.Name}: {ex.Message}");
-                this._statusText = "❌ Delete failed";
-            }
-        }
-
-        // ---------------------------------------------------------------------------
-        // Odin PropertyTree
-        // ---------------------------------------------------------------------------
-
-        /// <summary>
-        /// Recreates the Odin <see cref="PropertyTree"/> from the current data object.
-        /// Called after every Load so the tree reflects the freshly deserialised state.
-        /// </summary>
-        private void RebuildPropertyTree()
-        {
-            this._propertyTree?.Dispose();
-            this._propertyTree = null;
-
-            if (this._currentData != null)
-                this._propertyTree = PropertyTree.Create(this._currentData);
-        }
-
-        // ---------------------------------------------------------------------------
-        // Draw  (called from LocalDataTool.OnGUI per-frame)
-        // ---------------------------------------------------------------------------
-
-        /// <summary>
-        /// Draws this entry as a collapsible card.
-        /// The header shows the type name, controller key, version, status and action buttons.
-        /// When expanded, the data object is rendered by Odin's PropertyTree — which automatically
-        /// applies the correct drawer for every field type including Dictionary, List,
-        /// SerializedDictionary, nested objects, enums, vectors, colors, etc.
-        /// </summary>
-        public void Draw(EditorWindow window)
-        {
-            EnsureStyles();
-
-            using (new EditorGUILayout.VerticalScope(_entryBoxStyle))
-            {
-                this.DrawHeader(window);
-
-                if (this._isExpanded)
-                {
-                    EditorGUILayout.Space(2);
-                    using (new EditorGUILayout.VerticalScope(_contentBoxStyle))
-                    {
-                        this.DrawDataContent(window);
-                    }
-                }
-            }
-        }
-
-        // ---------------------------------------------------------------------------
-        // Header row
-        // ---------------------------------------------------------------------------
-        private void DrawHeader(EditorWindow window)
-        {
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                // ---- Expand / collapse toggle ----
-                string arrow = this._isExpanded ? "▼" : "▶";
-                if (GUILayout.Button(arrow, EditorStyles.miniButtonLeft,
-                        GUILayout.Width(24), GUILayout.Height(20)))
-                {
-                    this._isExpanded = !this._isExpanded;
-                    window.Repaint();
-                }
-
-                // ---- Type name ----
-                GUILayout.Label($"📄 {this.PrettyName(this._dataType.Name)}", _entryTitleStyle);
-
-                GUILayout.FlexibleSpace();
-
-                // ---- Controller key ----
-                GUILayout.Label($"🔑 {this._controllerKey}", _keyLabelStyle, GUILayout.Width(180));
-
-                // ---- Version badge ----
-                if (this.HasData)
-                    GUILayout.Label($"v{this._loadedVersion}",
-                        EditorStyles.centeredGreyMiniLabel, GUILayout.Width(36));
-
-                // ---- Status ----
-                GUILayout.Label(this._statusText, _statusLabelStyle, GUILayout.Width(170));
-
-                // ---- Action buttons ----
-                if (GUILayout.Button("📥 Load", EditorStyles.miniButton, GUILayout.Width(65)))
-                {
-                    this.LoadData();
-                    window.Repaint();
-                }
-
-                if (GUILayout.Button("💾 Save", EditorStyles.miniButton, GUILayout.Width(65)))
-                {
-                    this.SaveData();
-                    window.Repaint();
-                }
-
-                var prevBg = GUI.backgroundColor;
-                GUI.backgroundColor = DeleteBtnColor;
-                if (GUILayout.Button("🗑️", EditorStyles.miniButton, GUILayout.Width(28)))
-                    this.ShowDeleteConfirmation();
-                GUI.backgroundColor = prevBg;
-            }
-        }
-
-        // ---------------------------------------------------------------------------
-        // Data content (Odin PropertyTree)
-        // ---------------------------------------------------------------------------
-        private void DrawDataContent(EditorWindow window)
-        {
-            if (this._currentData == null)
-            {
-                EditorGUILayout.HelpBox(
-                    "No data loaded. Click '📥 Load' to load data from disk.",
-                    MessageType.Info);
-                return;
+                this.SizeBytes = sizeBytes;
+                this.ModifiedUtc = modifiedUtc;
             }
 
-            // Lazily build the tree in case the entry was loaded before the first Draw call
-            if (this._propertyTree == null)
-                this.RebuildPropertyTree();
-
-            if (this._propertyTree != null)
-            {
-                // Draw all properties with Odin's full inspector.
-                // Odin automatically applies the correct drawer per type:
-                //   • Primitives           → standard fields
-                //   • enum                 → dropdown
-                //   • List<T>              → reorderable list with add/remove
-                //   • Dictionary<K,V>      → key-value table with add/remove
-                //   • SerializedDictionary → AYellowpaper custom drawer
-                //   • Nested types         → foldout groups
-                //   • Vector / Color       → Unity widget
-                EditorGUI.BeginChangeCheck();
-                this._propertyTree.Draw(false);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    this.OnDataChanged?.Invoke(this);
-                    window.Repaint();
-                }
-            }
-            else
-            {
-                // Fallback — only reached if PropertyTree.Create() fails for unusual types
-                EditorGUILayout.HelpBox(
-                    "Unable to build Odin PropertyTree for this type. Showing raw JSON.",
-                    MessageType.Warning);
-                try
-                {
-                    string json = JsonConvert.SerializeObject(this._currentData, Formatting.Indented);
-                    EditorGUILayout.TextArea(json, GUILayout.ExpandHeight(true), GUILayout.MinHeight(60));
-                }
-                catch (Exception ex)
-                {
-                    EditorGUILayout.HelpBox($"Serialization error: {ex.Message}", MessageType.Error);
-                }
-            }
+            public long SizeBytes { get; }
+            public string ModifiedUtc { get; }
         }
 
-        // ---------------------------------------------------------------------------
-        // Delete confirmation
-        // ---------------------------------------------------------------------------
-        private void ShowDeleteConfirmation()
+        public LocalDataEntry(SaveEnvelopeStore store, IPayloadCodec codec, string domainId, Type dataType)
         {
-            bool ok = EditorUtility.DisplayDialog(
-                $"Delete {this._dataType.Name}",
-                $"Delete all saved data files for '{this._dataType.Name}'?\n\nThis cannot be undone.",
-                "Delete", "Cancel");
-            if (ok) this.DeleteAllVersions();
+            this._store = store;
+            this._codec = codec;
+            this.DomainId = domainId;
+            this.DataType = dataType;
+            this.DisplayName = GetPrettyName(dataType);
+
+            this.RefreshVersions();
         }
 
-        // ---------------------------------------------------------------------------
-        // Helpers
-        // ---------------------------------------------------------------------------
+        public string DomainId { get; }
 
-        /// <summary>Inserts a space before each capital letter sequence (e.g. MyFieldName → My Field Name).</summary>
-        private string PrettyName(string name) =>
-            Regex.Replace(name, "(\\B[A-Z])", " $1");
+        public Type DataType { get; }
 
-        // ---------------------------------------------------------------------------
-        // Static style initialisation  (must be called inside OnGUI / Draw)
-        // ---------------------------------------------------------------------------
-        private static void EnsureStyles()
+        /// <summary>Human-readable name, e.g. "Rise Progress Data V1".</summary>
+        public string DisplayName { get; }
+
+        /// <summary>Versions on disk, newest first, capped at <see cref="MaxVisibleVersions"/>.</summary>
+        public IReadOnlyList<int> VisibleVersions { get; private set; } = Array.Empty<int>();
+
+        /// <summary>Highest version on disk, or 0 when there is no save.</summary>
+        public int LatestVersion { get; private set; }
+
+        /// <summary>Version currently loaded, or 0 when nothing is loaded.</summary>
+        public int LoadedVersion { get; private set; }
+
+        /// <summary>True when data is loaded and editable.</summary>
+        public bool HasData => this._data != null;
+
+        /// <summary>True when there is at least one save file.</summary>
+        public bool HasFiles => this.LatestVersion > 0;
+
+        /// <summary>Header of the loaded file, for the detail pane.</summary>
+        public SaveEnvelopeHeader LoadedHeader { get; private set; }
+
+        /// <summary>Size of the loaded file in bytes, or -1 when unknown.</summary>
+        public long LoadedSizeBytes { get; private set; } = -1;
+
+        /// <summary>Last error, or null.</summary>
+        public string LastError { get; private set; }
+
+        /// <summary>True when the loaded version is not the newest on disk.</summary>
+        public bool IsViewingOldVersion => this.HasData && this.LoadedVersion != this.LatestVersion;
+
+        /// <summary>Re-reads which versions exist. One directory listing.</summary>
+        public void RefreshVersions()
         {
-            if (_entryBoxStyle != null) return;
+            IReadOnlyList<int> all = this._store.ListVersions(this.DomainId);
 
-            _entryBoxStyle = new GUIStyle(GUI.skin.box)
-            {
-                padding = new RectOffset(6, 6, 5, 5),
-                margin = new RectOffset(4, 4, 2, 2),
-            };
+            this.LatestVersion = all.Count > 0 ? all[0] : 0;
 
-            _entryTitleStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                fontSize = 12,
-                alignment = TextAnchor.MiddleLeft,
-            };
+            List<int> visible = new();
+            for (int i = 0; i < all.Count && i < MaxVisibleVersions; i++)
+                visible.Add(all[i]);
 
-            _keyLabelStyle = new GUIStyle(EditorStyles.miniLabel)
-            {
-                alignment = TextAnchor.MiddleLeft,
-                fontStyle = FontStyle.Italic,
-            };
+            this.VisibleVersions = visible;
 
-            _contentBoxStyle = new GUIStyle(GUI.skin.box)
-            {
-                padding = new RectOffset(8, 8, 6, 6),
-                margin = new RectOffset(0, 0, 2, 0),
-            };
-
-            _statusLabelStyle = new GUIStyle(EditorStyles.miniLabel)
-            {
-                alignment = TextAnchor.MiddleRight,
-            };
+            // Called exactly when the files on disk may have changed (after Load, Save, Delete),
+            // so this is the one place that needs to invalidate the per-version stat cache.
+            this._fileStatCache.Clear();
         }
 
-        public class GameDataOdinAttributeProcessor : OdinAttributeProcessor
+        /// <summary>Loads a version, or the newest when <paramref name="version"/> is 0.</summary>
+        public bool Load(int version = 0)
         {
-            public override bool CanProcessChildMemberAttributes(InspectorProperty parentProperty,
-                System.Reflection.MemberInfo member)
+            this.RefreshVersions();
+
+            int target = version > 0 ? version : this.LatestVersion;
+            if (target <= 0)
             {
-                if (parentProperty.Tree.WeakTargets != null && parentProperty.Tree.WeakTargets.Count > 0)
-                {
-                    if (parentProperty.Tree.WeakTargets[0] is IGameData)
-                    {
-                        // ONLY apply to user data classes. 
-                        // Do NOT apply to System collections (List, Dictionary) or Unity/Odin types, 
-                        // otherwise we break their optimized custom drawers and cause massive lag!
-                        var declaringType = member.DeclaringType;
-                        if (declaringType != null)
-                        {
-                            // NEVER mess with the internal properties of any collection type.
-                            // Odin has highly optimized drawers for arrays, lists, and dictionaries.
-                            if (typeof(System.Collections.IEnumerable).IsAssignableFrom(declaringType))
-                            {
-                                return false;
-                            }
-
-                            if (declaringType.Namespace != null)
-                            {
-                                if (declaringType.Namespace.StartsWith("System") ||
-                                    declaringType.Namespace.StartsWith("UnityEngine") ||
-                                    declaringType.Namespace.StartsWith("Sirenix") ||
-                                    declaringType.Namespace.StartsWith("AYellowpaper"))
-                                {
-                                    return false;
-                                }
-                            }
-                        }
-                        
-                        return true;
-                    }
-                }
-
+                this.LastError = "No save file exists for this domain.";
                 return false;
             }
 
-            public override void ProcessChildMemberAttributes(InspectorProperty parentProperty,
-                System.Reflection.MemberInfo member, System.Collections.Generic.List<Attribute> attributes)
+            EnvelopeReadStatus status =
+                this._store.Read(this.DomainId, target, out SaveEnvelopeHeader header, out byte[] payload);
+
+            if (status != EnvelopeReadStatus.Success)
             {
-                bool isPublic = false;
-
-                if (member is System.Reflection.PropertyInfo pi && pi.GetMethod != null && pi.GetMethod.IsPublic)
-                    isPublic = true;
-                else if (member is System.Reflection.FieldInfo fi && fi.IsPublic)
-                    isPublic = true;
-
-                if (isPublic)
-                {
-                    // Add [ShowInInspector] if not ignored and not already shown
-                    if (!attributes.Exists(x => x is Sirenix.OdinInspector.ShowInInspectorAttribute ||
-                                                x.GetType().Name.Contains("IgnoreMember")))
-                    {
-                        attributes.Add(new Sirenix.OdinInspector.ShowInInspectorAttribute());
-                    }
-                }
+                this.LastError = DescribeReadStatus(status);
+                this.Unload();
+                return false;
             }
+
+            try
+            {
+                this._data = this._codec.Deserialize(this.DataType, payload);
+            }
+            catch (Exception exception)
+            {
+                // The checksum passed, so the bytes are intact - the payload simply does not match
+                // this version's class. Leave the file alone.
+                this.LastError =
+                    $"File is intact but does not match {this.DataType.Name}: {exception.Message}";
+                this.Unload();
+                return false;
+            }
+
+            this.LoadedVersion = target;
+            this.LoadedHeader = header;
+            this.LoadedSizeBytes = this.GetFileSize(target);
+            this.LastError = null;
+
+            this.RebuildPropertyTree();
+            return true;
+        }
+
+        /// <summary>
+        /// Writes back to the version that was loaded.
+        /// </summary>
+        /// <remarks>
+        /// Saving to the newest version instead would turn "open an old save to look at it" into a
+        /// silent migration: v1 contents written under a v3 label, which nothing downstream could
+        /// detect. The caller warns when the loaded version is not the newest.
+        /// </remarks>
+        public bool Save()
+        {
+            if (this._data == null)
+            {
+                this.LastError = "No data loaded.";
+                return false;
+            }
+
+            try
+            {
+                // Flush pending Odin edits before reading the object, or the last field the user
+                // touched is not included.
+                this._propertyTree?.ApplyChanges();
+
+                byte[] payload = this._codec.Serialize(this.DataType, this._data);
+                long revision = this.LoadedHeader.Revision + 1;
+
+                this._store.Write(
+                    this.DomainId,
+                    this.LoadedVersion,
+                    payload,
+                    revision,
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    this.LoadedHeader.DeviceEpochId,
+                    SaveEnvelopeFlags.EditorAuthored);
+
+                this.RefreshVersions();
+                this.LoadedSizeBytes = this.GetFileSize(this.LoadedVersion);
+                this.LastError = null;
+                return true;
+            }
+            catch (Exception exception)
+            {
+                this.LastError = exception.Message;
+                return false;
+            }
+        }
+
+        /// <summary>Deletes every version of this domain.</summary>
+        public bool Delete(out int deletedFiles)
+        {
+            deletedFiles = 0;
+
+            try
+            {
+                deletedFiles = this._store.DeleteAll(this.DomainId);
+                this.Unload();
+                this.RefreshVersions();
+                this.LastError = null;
+                return true;
+            }
+            catch (Exception exception)
+            {
+                this.LastError = exception.Message;
+                return false;
+            }
+        }
+
+        /// <summary>File names that <see cref="Delete"/> would remove.</summary>
+        public IReadOnlyList<string> GetFileNames()
+        {
+            List<string> names = new();
+            foreach (int version in this._store.ListVersions(this.DomainId))
+                names.Add(SaveEnvelopeStore.BuildFileName(this.DomainId, version));
+
+            return names;
+        }
+
+        public string GetFileName(int version) => SaveEnvelopeStore.BuildFileName(this.DomainId, version);
+
+        public long GetFileSize(int version) => this.GetFileStat(version).SizeBytes;
+
+        public string GetModifiedUtc(int version) => this.GetFileStat(version).ModifiedUtc;
+
+        /// <summary>
+        /// Cached <c>File.Exists</c> + <c>GetLastWriteTimeUtc</c> pair for one version.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="LocalDataTool"/>'s detail header calls both of these once per OnGUI event —
+        /// at least twice per frame (Layout, then Repaint) — and IMGUI regenerates several frames in
+        /// a row while Odin animates a foldout or list resize. Hitting the filesystem synchronously
+        /// on every one of those frames is exactly the kind of cost that is invisible on a fast local
+        /// SSD but turns into visible stutter on a network share, a cloud-synced folder, or under
+        /// antivirus on-access scanning. The cache is invalidated only where the file on disk
+        /// actually changes: after <see cref="Load"/>, <see cref="Save"/>, and <see cref="Delete"/>.
+        /// </remarks>
+        private FileStat GetFileStat(int version)
+        {
+            if (this._fileStatCache.TryGetValue(version, out FileStat cached))
+                return cached;
+
+            FileStat stat = ReadFileStat(this._store.GetPath(this.DomainId, version));
+            this._fileStatCache[version] = stat;
+            return stat;
+        }
+
+        private static FileStat ReadFileStat(string path)
+        {
+            try
+            {
+                FileInfo info = new(path);
+                if (!info.Exists)
+                    return new FileStat(-1, "never");
+
+                string modifiedUtc = info.LastWriteTimeUtc.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+                return new FileStat(info.Length, modifiedUtc);
+            }
+            catch (Exception)
+            {
+                return new FileStat(-1, "unknown");
+            }
+        }
+
+        /// <summary>Draws the data. Only called for the selected entry.</summary>
+        public void DrawData()
+        {
+            if (this._propertyTree == null && this._data != null)
+                this.RebuildPropertyTree();
+
+            this._propertyTree?.Draw(false);
+        }
+
+        /// <summary>Releases the Odin tree. Called as soon as this entry stops being selected.</summary>
+        public void ReleaseTree()
+        {
+            this._propertyTree?.Dispose();
+            this._propertyTree = null;
+        }
+
+        public void Unload()
+        {
+            this.ReleaseTree();
+            this._data = null;
+            this.LoadedVersion = 0;
+            this.LoadedHeader = default;
+            this.LoadedSizeBytes = -1;
+        }
+
+        private void RebuildPropertyTree()
+        {
+            this.ReleaseTree();
+
+            if (this._data != null)
+                this._propertyTree = PropertyTree.Create(this._data);
+        }
+
+        private static string DescribeReadStatus(EnvelopeReadStatus status) => status switch
+        {
+            EnvelopeReadStatus.NotFound => "No save file exists for this version.",
+            EnvelopeReadStatus.TooShort => "The file is empty or truncated.",
+            EnvelopeReadStatus.BadMagic => "The file is not a DataFlow save.",
+            EnvelopeReadStatus.UnsupportedFormatVersion =>
+                "The file was written by a newer build using a format this one cannot read.",
+            EnvelopeReadStatus.HeaderLengthInvalid => "The file header is malformed.",
+            EnvelopeReadStatus.PayloadLengthInvalid => "The file is truncated or its length field is wrong.",
+            EnvelopeReadStatus.ChecksumMismatch =>
+                "The checksum does not match, so the file is corrupt. It has been left untouched.",
+            EnvelopeReadStatus.SchemaDowngrade => "The payload is newer than this build supports.",
+            _ => status.ToString()
+        };
+
+        private static string GetPrettyName(Type type)
+        {
+            if (PrettyNameCache.TryGetValue(type, out string cached))
+                return cached;
+
+            string pretty = PrettyNamePattern.Replace(type.Name, " $1");
+            PrettyNameCache[type] = pretty;
+            return pretty;
         }
     }
 }
