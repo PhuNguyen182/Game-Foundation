@@ -56,9 +56,6 @@ namespace DracoRuan.Foundation.DataFlow.StaticData.Controllers
 
         public override Type DataType => typeof(TData);
 
-        /// <summary>The loaded config. Valid once <see cref="StaticDataControllerBase{T}.IsInitialized"/> is true.</summary>
-        public TData Data => this.Value;
-
         protected override IStaticDataDecoder<TData> GetDecoder(StaticDataPayloadKind payloadKind)
         {
             switch (payloadKind)
