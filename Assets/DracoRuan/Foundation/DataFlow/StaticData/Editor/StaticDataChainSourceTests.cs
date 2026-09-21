@@ -189,6 +189,55 @@ namespace DracoRuan.Foundation.DataFlow.StaticData.Editor.Tests
         }
 
         [Test]
+        public void Render_PutsTheClosingParenthesisOnItsOwnLineAfterADisabledStep()
+        {
+            // A disabled step last in the chain ends the argument list on a commented line. If
+            // the closing parenthesis were appended to it, it would be commented out too and the
+            // file would stop compiling - which the rewriter must never be able to cause.
+            StaticDataChainSource source = Parse(
+                "        protected override IReadOnlyList<StaticDataSourceBinding> Sources { get; } =\n" +
+                "            StaticDataSourceBinding.Chain(\n" +
+                "                StaticDataSourceBinding.Resources(\"local\"),\n" +
+                "                // StaticDataSourceBinding.Url(\"https://cdn/x.csv\"));\n");
+
+            List<StaticDataChainStep> steps = new(source.Steps);
+            StaticDataChainStep disabled = steps[1];
+            steps.RemoveAt(1);
+            steps.Add(disabled);
+
+            string rendered = source.Render(steps);
+
+            StringAssert.Contains("// StaticDataSourceBinding.Url", rendered);
+
+            // The last non-blank line is the parenthesis alone, not a commented one.
+            string[] renderedLines = rendered.TrimEnd().Split('\n');
+            string lastLine = renderedLines[renderedLines.Length - 1].Trim();
+
+            StringAssert.StartsWith(")", lastLine);
+            StringAssert.DoesNotContain("//", lastLine);
+        }
+
+        [Test]
+        public void Render_OmitsTheCommaOnATrailingDisabledStep()
+        {
+            // Nothing follows it, so a comma there would be separating an argument from nothing.
+            StaticDataChainSource source = Parse(
+                "        protected override IReadOnlyList<StaticDataSourceBinding> Sources { get; } =\n" +
+                "            StaticDataSourceBinding.Chain(\n" +
+                "                StaticDataSourceBinding.Resources(\"local\"),\n" +
+                "                // StaticDataSourceBinding.Url(\"https://cdn/x.csv\"));\n");
+
+            List<StaticDataChainStep> steps = new(source.Steps);
+            StaticDataChainStep disabled = steps[1];
+            steps.RemoveAt(1);
+            steps.Add(disabled);
+
+            string rendered = source.Render(steps);
+
+            StringAssert.DoesNotContain("x.csv" + '\"' + "),", rendered);
+        }
+
+        [Test]
         public void Render_RoundTripsAChainThatHasADisabledStep()
         {
             string text =

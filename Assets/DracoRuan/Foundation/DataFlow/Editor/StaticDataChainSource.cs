@@ -225,12 +225,19 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 builder.Append(BindingPrefix).Append(step.SourceType).Append('(')
                     .Append(step.IsKeyEditable ? Quote(step.Key) : step.RawArgument).Append(')');
 
-                // A disabled step keeps its trailing comma inside the comment so that enabling it
-                // again is a matter of deleting "// ", and so the last enabled step still ends the
-                // argument list cleanly.
-                if (!step.IsEnabled || HasEnabledStepAfter(steps, index))
+                // A disabled step in the middle keeps its comma inside the comment, so enabling it
+                // again is just a matter of deleting the "// ". A disabled step with nothing enabled
+                // after it gets none, because there is no following argument for it to separate.
+                if (HasEnabledStepAfter(steps, index) || (!step.IsEnabled && index < steps.Count - 1))
                     builder.Append(',');
             }
+
+            // A trailing disabled step ends the argument list on a commented line, and appending the
+            // closing parenthesis to it would comment that out too - leaving a file that no longer
+            // compiles. Putting it on its own line is the only placement that survives every
+            // arrangement of enabled and disabled steps.
+            if (steps.Count > 0 && !steps[steps.Count - 1].IsEnabled)
+                builder.Append(this.NewLine).Append(stepIndent);
 
             builder.Append(')');
             builder.Append(this.Text, this.ChainEnd, this.Text.Length - this.ChainEnd);

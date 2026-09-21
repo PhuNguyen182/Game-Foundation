@@ -111,6 +111,12 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 this.DrawStatusBar();
             }
 
+            // Both halves of the drag are handled here rather than inside the handle, because the
+            // handle only receives events while the pointer is still inside its own 16x18 slot -
+            // move the cursor faster than the list can follow and it would simply stop hearing
+            // about the drag, stalling the row until the pointer wandered back.
+            this.UpdateDragFromWindowEvents();
+
             if (!this._needsRepaint)
                 return;
 
@@ -540,11 +546,12 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             GUILayout.Label("Fallback chain — tried top to bottom, drag the grip to reorder",
                 EditorStyles.boldLabel);
 
+
             for (int index = 0; index < entry.Steps.Count; index++)
                 this.DrawChainStep(entry, index);
 
-            // After every row, so the line is painted over the rows rather than under the next one.
-            this.DrawDropMarker(entry);
+            // After every row, so the tint is not painted over by the row that follows it.
+            this.DrawDraggedRowHighlight();
 
             GUILayout.Space(4f);
 
@@ -598,9 +605,17 @@ namespace DracoRuan.Foundation.DataFlow.Editor
 
                     if (GUILayout.Button("✕", EditorStyles.miniButton, GUILayout.Width(24f)))
                     {
-                        entry.RemoveStep(index);
-                        this._dirtyCountDirty = true;
-                        this._needsRepaint = true;
+                        // A disabled step is usually a deliberate note - a link kept in the file but
+                        // switched off - and once it is gone the reason it was there goes with it.
+                        // An enabled step is just a line that can be added back, so it goes quietly.
+                        if (step.IsEnabled ||
+                            StaticDataDialogs.ConfirmRemoveDisabledStep(step.SourceType.ToString(), step.Key))
+                        {
+                            entry.RemoveStep(index);
+                            this._dirtyCountDirty = true;
+                            this._needsRepaint = true;
+                        }
+
                         return;
                     }
                 }
@@ -618,29 +633,73 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         // Reordering by drag
         // -----------------------------------------------------------------
 
-        /// <summary>Row rectangles from the last repaint, used to decide where a drag lands.</summary>
+        /// <summary>Row rectangles from the last repaint, used to decide what the pointer is over.</summary>
         private readonly Dictionary<int, Rect> _stepRects = new();
 
-        /// <summary>Index of the row being dragged, or -1.</summary>
+        /// <summary>
+        /// Index of the row being dragged, or -1. It follows the row as the list reorders under it,
+        /// so it is where the row is now, not where the drag began.
+        /// </summary>
         private int _draggingStep = -1;
 
-        /// <summary>Where the dragged row would land, or -1 while nothing is being dragged.</summary>
-        private int _dropTarget = -1;
+        /// <summary>
+        /// Pointer offset inside the handle when the drag began, so the grip stays under the cursor
+        /// instead of snapping its top-left corner to it.
+        /// </summary>
+        private float _dragGrabOffset;
+
+        /// <summary>Pointer position while dragging, used to draw the row at the cursor.</summary>
+        private float _dragPointerY;
 
         private static readonly Color DragHandleColor = new(0.55f, 0.55f, 0.55f, 1f);
-        private static readonly Color DropMarkerColor = new(0.24f, 0.48f, 0.90f, 1f);
+        private static readonly Color DraggedRowColor = new(0.24f, 0.48f, 0.90f, 0.20f);
+        private static readonly Color DraggedRowEdgeColor = new(0.24f, 0.48f, 0.90f, 0.9f);
 
         /// <summary>
-        /// A grip that reorders the chain by dragging rather than by repeatedly clicking an arrow.
+        /// Advances or ends the drag from events seen anywhere in the window.
         /// </summary>
         /// <remarks>
+        /// Reads <see cref="Event.current"/> without consuming it: by this point the panes have
+        /// already had their turn, and a drag of a chain row is not something any of them also
+        /// wants.
+        /// </remarks>
+        private void UpdateDragFromWindowEvents()
+        {
+            if (this._draggingStep < 0 || this._selected == null)
+                return;
+
+            if (Event.current.type == EventType.MouseDrag)
+            {
+                this._dragPointerY = Event.current.mousePosition.y;
+                this.ReorderWhilstDragging(this._selected);
+                this._needsRepaint = true;
+                return;
+            }
+
+            // MouseLeaveWindow covers the pointer leaving with the button still down, after which
+            // the release is delivered somewhere this window will never see.
+            if (Event.current.type != EventType.MouseUp &&
+                Event.current.type != EventType.MouseLeaveWindow &&
+                Event.current.rawType != EventType.MouseUp)
+                return;
+
+            this._draggingStep = -1;
+            this._needsRepaint = true;
+        }
+
+        /// <summary>
+        /// A grip that reorders the chain by dragging.
+        /// </summary>
+        /// <remarks>
+        /// <para><b>The list reorders under the pointer, rather than on release.</b> As soon as the
+        /// cursor passes the midpoint of a neighbouring row, the two swap, so the chain always reads
+        /// as it will end up and there is no separate marker to interpret. <c>_draggingStep</c> is
+        /// updated to the row's new index in the same step, which is what keeps the row that is
+        /// being dragged following the cursor instead of being left behind by its own move.</para>
+        ///
         /// <para>Only the handle starts a drag, not the whole row: the row also carries a popup, a
         /// toggle, an object field and a text field, and a row-wide drag would steal the press that
         /// was meant for one of those.</para>
-        ///
-        /// <para>The order changes once, on mouse up, rather than continuously while the pointer
-        /// moves. Swapping mid-drag would renumber the rows under the cursor and make the row being
-        /// dragged jump around as its own index changed.</para>
         /// </remarks>
         private void DrawDragHandle(StaticDataEntry entry, int index)
         {
@@ -652,10 +711,12 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             {
                 // Three short bars - the conventional grip, and legible at this size where a glyph
                 // would render as an unreadable smudge.
+                Color barColor = this._draggingStep == index ? DraggedRowEdgeColor : DragHandleColor;
+
                 for (int line = 0; line < 3; line++)
                 {
                     Rect bar = new(handleRect.x + 3f, handleRect.y + 4f + line * 4f, 10f, 1.5f);
-                    EditorGUI.DrawRect(bar, DragHandleColor);
+                    EditorGUI.DrawRect(bar, barColor);
                 }
             }
 
@@ -663,69 +724,107 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             {
                 case EventType.MouseDown when handleRect.Contains(Event.current.mousePosition):
                     this._draggingStep = index;
-                    this._dropTarget = index;
+                    this._dragPointerY = Event.current.mousePosition.y;
+                    this._dragGrabOffset = Event.current.mousePosition.y -
+                                           this.GetStepRect(index, handleRect).y;
                     Event.current.Use();
                     break;
 
-                case EventType.MouseDrag when this._draggingStep >= 0:
-                    this._dropTarget = this.FindDropTarget(Event.current.mousePosition, entry.Steps.Count);
-                    this._needsRepaint = true;
-                    Event.current.Use();
-                    break;
 
-                case EventType.MouseUp when this._draggingStep >= 0:
-                    this.FinishDrag(entry);
-                    Event.current.Use();
-                    break;
             }
-        }
-
-        /// <summary>The row the pointer is currently over, by the rects captured on the last repaint.</summary>
-        private int FindDropTarget(Vector2 mousePosition, int stepCount)
-        {
-            for (int index = 0; index < stepCount; index++)
-            {
-                if (this._stepRects.TryGetValue(index, out Rect rect) &&
-                    mousePosition.y >= rect.y && mousePosition.y <= rect.yMax)
-                    return index;
-            }
-
-            return this._dropTarget;
-        }
-
-        private void FinishDrag(StaticDataEntry entry)
-        {
-            int from = this._draggingStep;
-            int to = this._dropTarget;
-
-            this._draggingStep = -1;
-            this._dropTarget = -1;
-            this._needsRepaint = true;
-
-            if (from < 0 || to < 0 || from == to)
-                return;
-
-            entry.MoveStepTo(from, to);
-            this._dirtyCountDirty = true;
         }
 
         /// <summary>
-        /// A line where the dragged row would land. Drawn after every row so it sits on top of them
-        /// rather than being painted over by the next one.
+        /// Swaps the dragged row with its neighbour as soon as the pointer passes that neighbour's
+        /// midpoint, and keeps <see cref="_draggingStep"/> pointing at the row afterwards.
         /// </summary>
-        private void DrawDropMarker(StaticDataEntry entry)
+        /// <remarks>
+        /// One step per event on purpose. The rects come from the last repaint, so after a swap the
+        /// geometry this is reading is stale by one row; moving further than that in a single event
+        /// would be moving against measurements that no longer describe the list.
+        /// </remarks>
+        private void ReorderWhilstDragging(StaticDataEntry entry)
         {
-            if (this._draggingStep < 0 || this._dropTarget < 0 ||
-                !this._stepRects.TryGetValue(this._dropTarget, out Rect rect))
+            int current = this._draggingStep;
+            if (current < 0 || current >= entry.Steps.Count)
                 return;
 
-            // Above the target when moving up, below it when moving down - so the line always shows
-            // the edge the row will end up against.
-            float y = this._dropTarget <= this._draggingStep ? rect.y : rect.yMax;
-            EditorGUI.DrawRect(new Rect(rect.x, y - 1f, rect.width, 2f), DropMarkerColor);
+            // Where the top of the dragged row now sits, following the cursor.
+            float draggedTop = this._dragPointerY - this._dragGrabOffset;
 
-            if (this._dropTarget < entry.Steps.Count)
-                this._needsRepaint = true;
+            if (current > 0 && this._stepRects.TryGetValue(current - 1, out Rect above) &&
+                draggedTop < above.y + above.height * 0.5f)
+            {
+                entry.MoveStepTo(current, current - 1);
+                this.SwapStepRects(current, current - 1);
+                this._draggingStep = current - 1;
+                this._dirtyCountDirty = true;
+                return;
+            }
+
+            if (current >= entry.Steps.Count - 1 ||
+                !this._stepRects.TryGetValue(current, out Rect self) ||
+                !this._stepRects.TryGetValue(current + 1, out Rect below))
+                return;
+
+            if (draggedTop + self.height > below.y + below.height * 0.5f)
+            {
+                entry.MoveStepTo(current, current + 1);
+                this.SwapStepRects(current, current + 1);
+                this._draggingStep = current + 1;
+                this._dirtyCountDirty = true;
+            }
+        }
+
+        /// <summary>
+        /// Rebuilds two cached rects so the next drag event reads geometry that matches the order
+        /// the list is now in, without waiting for a repaint to re-measure it.
+        /// </summary>
+        /// <remarks>
+        /// The heights travel with the rows while the block they occupy stays put, because rows are
+        /// not all the same height - a Resources step carries an object field that a remote config
+        /// step does not. Reusing the old positions would leave the next event comparing the pointer
+        /// against a row boundary that has moved, which reads as the drag stuttering.
+        /// </remarks>
+        private void SwapStepRects(int from, int to)
+        {
+            if (!this._stepRects.TryGetValue(from, out Rect dragged) ||
+                !this._stepRects.TryGetValue(to, out Rect displaced))
+                return;
+
+            // The row that ends up on top is whichever index is smaller after the move.
+            bool draggedEndsOnTop = to < from;
+
+            Rect upper = draggedEndsOnTop ? dragged : displaced;
+            Rect lower = draggedEndsOnTop ? displaced : dragged;
+
+            int upperIndex = Mathf.Min(from, to);
+            int lowerIndex = Mathf.Max(from, to);
+
+            float top = Mathf.Min(dragged.y, displaced.y);
+
+            this._stepRects[upperIndex] = new Rect(upper.x, top, upper.width, upper.height);
+            this._stepRects[lowerIndex] = new Rect(lower.x, top + upper.height, lower.width, lower.height);
+        }
+
+        /// <summary>The cached rect for a row, falling back to the handle when none was measured yet.</summary>
+        private Rect GetStepRect(int index, Rect fallback) =>
+            this._stepRects.TryGetValue(index, out Rect rect) ? rect : fallback;
+
+        /// <summary>
+        /// Tints the row being dragged so it reads as lifted out of the list while the rows around
+        /// it move. Drawn after every row, so it is not painted over by the next one.
+        /// </summary>
+        private void DrawDraggedRowHighlight()
+        {
+            if (this._draggingStep < 0 || Event.current.type != EventType.Repaint ||
+                !this._stepRects.TryGetValue(this._draggingStep, out Rect rect))
+                return;
+
+            EditorGUI.DrawRect(rect, DraggedRowColor);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 2f, rect.height), DraggedRowEdgeColor);
+
+            this._needsRepaint = true;
         }
 
         /// <summary>

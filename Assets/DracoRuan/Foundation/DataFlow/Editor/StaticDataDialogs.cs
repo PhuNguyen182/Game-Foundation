@@ -46,6 +46,23 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 "\nEach file will be saved and Unity will recompile once at the end.",
                 "Apply All", "Cancel");
 
+        /// <summary>
+        /// Asks before deleting a step that is switched off in the source.
+        /// </summary>
+        /// <remarks>
+        /// A commented-out binding is a note somebody left on purpose - a CDN link kept ready but
+        /// not yet live, say - and the explanation for it usually lives in the file, not in the
+        /// tool. Deleting it looks like tidying up an inactive row and silently takes that with it.
+        /// </remarks>
+        public static bool ConfirmRemoveDisabledStep(string sourceType, string key) =>
+            EditorUtility.DisplayDialog(
+                "Remove Disabled Source",
+                $"Remove the disabled {sourceType} source?\n\n" +
+                $"   {key}\n\n" +
+                "It is commented out in the source file rather than active, so it was most likely " +
+                "kept there on purpose. Removing it deletes that line.",
+                "Remove", "Keep");
+
         /// <summary>Asks before throwing away edits that were never applied.</summary>
         public static bool ConfirmRevertAll(int count) =>
             EditorUtility.DisplayDialog(
