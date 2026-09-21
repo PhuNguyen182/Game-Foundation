@@ -65,6 +65,18 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         /// <summary>The chain being edited. Mutated in place by the window.</summary>
         public IReadOnlyList<StaticDataChainStep> Steps => this._steps;
 
+        /// <summary>
+        /// The same steps, as the mutable list the chain editor reorders directly.
+        /// </summary>
+        /// <remarks>
+        /// Exposed deliberately rather than casting <see cref="Steps"/> back to a mutable list at the
+        /// call site. A reorderable list has to write to the collection it is given, and a cast
+        /// would make that dependency invisible - if <see cref="Steps"/> ever returned a copy or a
+        /// wrapper, dragging would break at runtime instead of failing to compile. Anything that
+        /// reorders through this must still call <see cref="MarkDirty"/>.
+        /// </remarks>
+        public List<StaticDataChainStep> StepsForReordering => this._steps;
+
         /// <summary>Why the chain could not be read, or null when it parsed.</summary>
         public string ParseError { get; private set; }
 

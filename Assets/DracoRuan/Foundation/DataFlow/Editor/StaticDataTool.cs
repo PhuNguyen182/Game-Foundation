@@ -4,6 +4,7 @@ using DracoRuan.Foundation.DataFlow.StaticData;
 using DracoRuan.Foundation.DataFlow.StaticData.Sources;
 using Sirenix.Utilities.Editor;
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 
 namespace DracoRuan.Foundation.DataFlow.Editor
@@ -110,12 +111,6 @@ namespace DracoRuan.Foundation.DataFlow.Editor
 
                 this.DrawStatusBar();
             }
-
-            // Both halves of the drag are handled here rather than inside the handle, because the
-            // handle only receives events while the pointer is still inside its own 16x18 slot -
-            // move the cursor faster than the list can follow and it would simply stop hearing
-            // about the drag, stalling the row until the pointer wandered back.
-            this.UpdateDragFromWindowEvents();
 
             if (!this._needsRepaint)
                 return;
@@ -537,295 +532,174 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         }
 
         /// <summary>
-        /// One row per link in the chain. The order of the rows is the order the game tries them,
-        /// which is why reordering is the primary control rather than a numeric field.
+        /// One row per link in the chain, in the order the game tries them.
         /// </summary>
+        /// <remarks>
+        /// <para><b>Built on <see cref="ReorderableList"/> rather than a hand-rolled drag.</b> Three
+        /// attempts at doing the dragging here were all subtly wrong, each in a way that only showed
+        /// up under the hand: rows that lagged the cursor, and swaps that cost more travel upwards
+        /// than downwards because the row rectangles excluded the margin between them. Unity's list
+        /// already solves this, consistently with every other reorderable list in the editor.</para>
+        ///
+        /// <para>The list is rebuilt whenever the selected table changes, because it binds to that
+        /// table's step collection.</para>
+        /// </remarks>
         private void DrawChainEditor(StaticDataEntry entry)
         {
             GUILayout.Space(4f);
-            GUILayout.Label("Fallback chain — tried top to bottom, drag the grip to reorder",
-                EditorStyles.boldLabel);
 
-
-            for (int index = 0; index < entry.Steps.Count; index++)
-                this.DrawChainStep(entry, index);
-
-            // After every row, so the tint is not painted over by the row that follows it.
-            this.DrawDraggedRowHighlight();
-
-            GUILayout.Space(4f);
-
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                if (GUILayout.Button("+ Add Source", GUILayout.Width(110f), GUILayout.Height(22f)))
-                {
-                    entry.AddStep();
-                    this._dirtyCountDirty = true;
-                    this._needsRepaint = true;
-                }
-
-                GUILayout.FlexibleSpace();
-            }
+            ReorderableList list = this.GetChainList(entry);
+            list.DoLayoutList();
 
             string invalid = entry.Validate();
             if (invalid != null)
                 EditorGUILayout.HelpBox(invalid, MessageType.Warning);
         }
 
-        private void DrawChainStep(StaticDataEntry entry, int index)
+        // -----------------------------------------------------------------
+        // Chain list
+        // -----------------------------------------------------------------
+
+        private ReorderableList _chainList;
+        private StaticDataEntry _chainListEntry;
+
+        /// <summary>Row height for a step that only needs its header line.</summary>
+        private const float StepHeaderHeight = 22f;
+
+        /// <summary>Height of one stacked field under the header.</summary>
+        private const float StepFieldHeight = 20f;
+
+        private const float StepPadding = 4f;
+
+        /// <summary>
+        /// The list for this table, rebuilt when the selection moves to a different one.
+        /// </summary>
+        private ReorderableList GetChainList(StaticDataEntry entry)
         {
+            if (this._chainList != null && ReferenceEquals(this._chainListEntry, entry))
+                return this._chainList;
+
+            this._chainListEntry = entry;
+            this._chainList = new ReorderableList(
+                entry.StepsForReordering, typeof(StaticDataChainStep),
+                draggable: true, displayHeader: true, displayAddButton: true, displayRemoveButton: true)
+            {
+                drawHeaderCallback = rect =>
+                    EditorGUI.LabelField(rect, "Fallback chain — tried top to bottom"),
+
+                elementHeightCallback = index => this.GetStepHeight(entry, index),
+
+                drawElementCallback = (rect, index, isActive, isFocused) =>
+                    this.DrawStepElement(entry, rect, index),
+
+                onAddCallback = _ =>
+                {
+                    entry.AddStep();
+                    this._dirtyCountDirty = true;
+                    this._needsRepaint = true;
+                },
+
+                onRemoveCallback = list =>
+                {
+                    int index = list.index;
+                    if (index < 0 || index >= entry.Steps.Count)
+                        return;
+
+                    StaticDataChainStep step = entry.Steps[index];
+
+                    // A disabled step is usually a deliberate note - a link kept in the file but
+                    // switched off - and once it is gone the reason it was there goes with it. An
+                    // enabled step is just a line that can be added back, so it goes quietly.
+                    if (!step.IsEnabled &&
+                        !StaticDataDialogs.ConfirmRemoveDisabledStep(step.SourceType.ToString(), step.Key))
+                        return;
+
+                    entry.RemoveStep(index);
+                    this._dirtyCountDirty = true;
+                    this._needsRepaint = true;
+                },
+
+                // The list reorders its own backing collection; this only records that the file no
+                // longer matches what is on screen.
+                onReorderCallback = _ =>
+                {
+                    entry.MarkDirty();
+                    this._dirtyCountDirty = true;
+                    this._needsRepaint = true;
+                },
+            };
+
+            return this._chainList;
+        }
+
+        /// <summary>Drops the cached list, so the next draw rebuilds it against the new table.</summary>
+        private void InvalidateChainList()
+        {
+            this._chainList = null;
+            this._chainListEntry = null;
+        }
+
+        private float GetStepHeight(StaticDataEntry entry, int index)
+        {
+            if (index < 0 || index >= entry.Steps.Count)
+                return StepHeaderHeight;
+
+            StaticDataChainStep step = entry.Steps[index];
+            float height = StepHeaderHeight + StepPadding;
+
+            if (!step.IsKeyEditable)
+                return height + StepFieldHeight + StepPadding + 36f;
+
+            if (IsAssetSource(step.SourceType))
+                height += StepFieldHeight + StepPadding;
+
+            height += StepFieldHeight + StepPadding;
+
+            if (this._assetWarnings.TryGetValue(index, out string warning) && !string.IsNullOrEmpty(warning))
+                height += 36f;
+
+            return height;
+        }
+
+        private void DrawStepElement(StaticDataEntry entry, Rect rect, int index)
+        {
+            if (index < 0 || index >= entry.Steps.Count)
+                return;
+
             StaticDataChainStep step = entry.Steps[index];
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            Rect line = new(rect.x, rect.y + 2f, rect.width, StepHeaderHeight - 2f);
+
+            Rect toggleRect = new(line.x, line.y, 16f, line.height);
+            EditorGUI.BeginChangeCheck();
+            bool enabled = EditorGUI.Toggle(toggleRect, step.IsEnabled);
+            if (EditorGUI.EndChangeCheck())
             {
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    this.DrawDragHandle(entry, index);
-
-                    GUILayout.Label($"{index + 1}.", GUILayout.Width(18f));
-
-                    EditorGUI.BeginChangeCheck();
-                    bool enabled = EditorGUILayout.Toggle(step.IsEnabled, GUILayout.Width(16f));
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        step.IsEnabled = enabled;
-                        entry.MarkDirty();
-                        this._dirtyCountDirty = true;
-                    }
-
-                    EditorGUI.BeginChangeCheck();
-                    StaticDataSourceType sourceType = DrawSourceTypePopup(step.SourceType);
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        step.SourceType = sourceType;
-                        entry.MarkDirty();
-                    }
-
-                    GUILayout.FlexibleSpace();
-
-                    if (GUILayout.Button("✕", EditorStyles.miniButton, GUILayout.Width(24f)))
-                    {
-                        // A disabled step is usually a deliberate note - a link kept in the file but
-                        // switched off - and once it is gone the reason it was there goes with it.
-                        // An enabled step is just a line that can be added back, so it goes quietly.
-                        if (step.IsEnabled ||
-                            StaticDataDialogs.ConfirmRemoveDisabledStep(step.SourceType.ToString(), step.Key))
-                        {
-                            entry.RemoveStep(index);
-                            this._dirtyCountDirty = true;
-                            this._needsRepaint = true;
-                        }
-
-                        return;
-                    }
-                }
-
-                this.DrawStepKey(entry, step, index);
-            }
-
-        }
-
-        // -----------------------------------------------------------------
-        // Reordering by drag
-        // -----------------------------------------------------------------
-
-        /// <summary>
-        /// Each row's drag handle, as laid out this frame.
-        /// </summary>
-        /// <remarks>
-        /// The handles are what the pointer is compared against, rather than the rows themselves.
-        /// A row's rect came from <c>GetLastRect</c> after its <c>VerticalScope</c> closed, which
-        /// excludes the help-box margin that separates one row from the next, so those rects did not
-        /// tile the space the rows actually occupy - the gaps between them belonged to no row at all,
-        /// and how much of a gap sat above versus below a row depended on its contents. The handles
-        /// are a fixed size and sit at a fixed place in every row, so the distance between
-        /// consecutive handles is exactly the row pitch, in both directions.
-        /// </remarks>
-        private readonly Dictionary<int, Rect> _stepRects = new();
-
-        /// <summary>
-        /// Index of the row being dragged, or -1. It follows the row as the list reorders under it,
-        /// so it is where the row is now, not where the drag began.
-        /// </summary>
-        private int _draggingStep = -1;
-
-        /// <summary>Pointer position while dragging, compared directly against the row boundaries.</summary>
-        private float _dragPointerY;
-
-        private static readonly Color DragHandleColor = new(0.55f, 0.55f, 0.55f, 1f);
-        private static readonly Color DraggedRowColor = new(0.24f, 0.48f, 0.90f, 0.20f);
-        private static readonly Color DraggedRowEdgeColor = new(0.24f, 0.48f, 0.90f, 0.9f);
-
-        /// <summary>
-        /// Advances or ends the drag from events seen anywhere in the window.
-        /// </summary>
-        /// <remarks>
-        /// Reads <see cref="Event.current"/> without consuming it: by this point the panes have
-        /// already had their turn, and a drag of a chain row is not something any of them also
-        /// wants.
-        /// </remarks>
-        private void UpdateDragFromWindowEvents()
-        {
-            if (this._draggingStep < 0 || this._selected == null)
-                return;
-
-            if (Event.current.type == EventType.MouseDrag)
-            {
-                this._dragPointerY = Event.current.mousePosition.y;
-                this.ReorderWhilstDragging(this._selected);
-                this._needsRepaint = true;
-                return;
-            }
-
-            // MouseLeaveWindow covers the pointer leaving with the button still down, after which
-            // the release is delivered somewhere this window will never see.
-            if (Event.current.type != EventType.MouseUp &&
-                Event.current.type != EventType.MouseLeaveWindow &&
-                Event.current.rawType != EventType.MouseUp)
-                return;
-
-            this._draggingStep = -1;
-            this._needsRepaint = true;
-        }
-
-        /// <summary>
-        /// A grip that reorders the chain by dragging.
-        /// </summary>
-        /// <remarks>
-        /// <para><b>The list reorders under the pointer, rather than on release.</b> As soon as the
-        /// cursor passes the midpoint of a neighbouring row, the two swap, so the chain always reads
-        /// as it will end up and there is no separate marker to interpret. <c>_draggingStep</c> is
-        /// updated to the row's new index in the same step, which is what keeps the row that is
-        /// being dragged following the cursor instead of being left behind by its own move.</para>
-        ///
-        /// <para>Only the handle starts a drag, not the whole row: the row also carries a popup, a
-        /// toggle, an object field and a text field, and a row-wide drag would steal the press that
-        /// was meant for one of those.</para>
-        /// </remarks>
-        private void DrawDragHandle(StaticDataEntry entry, int index)
-        {
-            Rect handleRect = GUILayoutUtility.GetRect(16f, 18f, GUILayout.Width(16f), GUILayout.Height(18f));
-
-            // Captured on every event, not just Repaint: a drag that read positions from the last
-            // repaint would be working against a layout one frame out of date.
-            this._stepRects[index] = handleRect;
-
-            EditorGUIUtility.AddCursorRect(handleRect, MouseCursor.MoveArrow);
-
-            if (Event.current.type == EventType.Repaint)
-            {
-                // Three short bars - the conventional grip, and legible at this size where a glyph
-                // would render as an unreadable smudge.
-                Color barColor = this._draggingStep == index ? DraggedRowEdgeColor : DragHandleColor;
-
-                for (int line = 0; line < 3; line++)
-                {
-                    Rect bar = new(handleRect.x + 3f, handleRect.y + 4f + line * 4f, 10f, 1.5f);
-                    EditorGUI.DrawRect(bar, barColor);
-                }
-            }
-
-            switch (Event.current.type)
-            {
-                case EventType.MouseDown when handleRect.Contains(Event.current.mousePosition):
-                    this._draggingStep = index;
-                    this._dragPointerY = Event.current.mousePosition.y;
-                    Event.current.Use();
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Swaps the dragged row with its neighbour as soon as the pointer passes that neighbour's
-        /// midpoint, and keeps <see cref="_draggingStep"/> pointing at the row afterwards.
-        /// </summary>
-        /// <remarks>
-        /// <para><b>The comparison is handle against handle.</b> Two earlier attempts were both
-        /// asymmetric. The first tracked where the dragged row's top would be, by subtracting where
-        /// within the row it had been grabbed - but the grip sits partway down a row, so that
-        /// notional top trailed the cursor by twenty-odd pixels and every swap came late. The second
-        /// compared the pointer against the neighbouring <i>rows</i>, whose rects came from
-        /// <c>GetLastRect</c> and so excluded the margin between them: the gaps belonged to no row,
-        /// and how much gap lay above a row differed from how much lay below it, which made dragging
-        /// one way cost more than the other. Handles are identical in size and sit at the same place
-        /// in every row, so the distance between consecutive handles is the row pitch exactly, and
-        /// crossing a neighbour's handle costs the same travel in both directions.</para>
-        ///
-        /// <para>One step per event on purpose. The positions are from this frame's layout, which
-        /// was built before the swap; moving more than one place would be moving against
-        /// measurements that no longer describe the list.</para>
-        /// </remarks>
-        private void ReorderWhilstDragging(StaticDataEntry entry)
-        {
-            int current = this._draggingStep;
-            if (current < 0 || current >= entry.Steps.Count)
-                return;
-
-            if (!this._stepRects.TryGetValue(current, out Rect self))
-                return;
-
-            // How far the pointer has moved from the handle it grabbed. Measuring against the
-            // dragged row's own handle rather than a neighbour's edge is what makes the two
-            // directions symmetric: the same travel triggers a swap either way.
-            float travel = this._dragPointerY - self.center.y;
-
-            if (travel < 0f && current > 0 &&
-                this._stepRects.TryGetValue(current - 1, out Rect above) &&
-                this._dragPointerY < above.center.y)
-            {
-                entry.MoveStepTo(current, current - 1);
-                this.SwapStepRects(current, current - 1);
-                this._draggingStep = current - 1;
-                this._dirtyCountDirty = true;
-                return;
-            }
-
-            if (travel <= 0f || current >= entry.Steps.Count - 1 ||
-                !this._stepRects.TryGetValue(current + 1, out Rect below))
-                return;
-
-            if (this._dragPointerY > below.center.y)
-            {
-                entry.MoveStepTo(current, current + 1);
-                this.SwapStepRects(current, current + 1);
-                this._draggingStep = current + 1;
+                step.IsEnabled = enabled;
+                entry.MarkDirty();
                 this._dirtyCountDirty = true;
             }
-        }
 
-        /// <summary>
-        /// Rebuilds two cached rects so the next drag event reads geometry that matches the order
-        /// the list is now in, without waiting for a repaint to re-measure it.
-        /// </summary>
-        /// <remarks>
-        /// Handles are all the same size, so this is a straight exchange of positions. It matters
-        /// only because the next drag event arrives before the layout has been rebuilt, and would
-        /// otherwise compare the pointer against where the handles used to be.
-        /// </remarks>
-        private void SwapStepRects(int from, int to)
-        {
-            if (!this._stepRects.TryGetValue(from, out Rect dragged) ||
-                !this._stepRects.TryGetValue(to, out Rect displaced))
-                return;
+            Rect popupRect = new(line.x + 20f, line.y, 130f, line.height);
+            EditorGUI.BeginChangeCheck();
+            StaticDataSourceType sourceType = DrawSourceTypePopupAt(popupRect, step.SourceType);
+            if (EditorGUI.EndChangeCheck())
+            {
+                step.SourceType = sourceType;
+                entry.MarkDirty();
+                this._dirtyCountDirty = true;
+            }
 
-            this._stepRects[from] = displaced;
-            this._stepRects[to] = dragged;
-        }
+            // A disabled step is shown struck through in words rather than only by its checkbox, so
+            // a commented-out link does not read as an active one at a glance.
+            if (!step.IsEnabled)
+            {
+                Rect noteRect = new(popupRect.xMax + 8f, line.y, line.width - popupRect.width - 28f, line.height);
+                EditorGUI.LabelField(noteRect, "disabled — kept as a comment", EditorStyles.miniLabel);
+            }
 
-        /// <summary>
-        /// Tints the row being dragged so it reads as lifted out of the list while the rows around
-        /// it move. Drawn after every row, so it is not painted over by the next one.
-        /// </summary>
-        private void DrawDraggedRowHighlight()
-        {
-            if (this._draggingStep < 0 || Event.current.type != EventType.Repaint ||
-                !this._stepRects.TryGetValue(this._draggingStep, out Rect rect))
-                return;
-
-            EditorGUI.DrawRect(rect, DraggedRowColor);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 2f, rect.height), DraggedRowEdgeColor);
-
-            this._needsRepaint = true;
+            float y = rect.y + StepHeaderHeight + StepPadding;
+            this.DrawStepKeyAt(entry, step, index, new Rect(rect.x, y, rect.width, StepFieldHeight));
         }
 
         /// <summary>
@@ -833,39 +707,41 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         /// the way a hand-typed path can. The resolved key is shown underneath so what will be
         /// written is never hidden.
         /// </summary>
-        private void DrawStepKey(StaticDataEntry entry, StaticDataChainStep step, int index)
+        private void DrawStepKeyAt(StaticDataEntry entry, StaticDataChainStep step, int index, Rect rect)
         {
             if (!step.IsKeyEditable)
             {
                 using (new EditorGUI.DisabledScope(true))
-                    EditorGUILayout.TextField("Key", step.RawArgument);
+                    EditorGUI.TextField(rect, "Key", step.RawArgument);
 
-                EditorGUILayout.HelpBox(
+                Rect helpRect = new(rect.x, rect.yMax + StepPadding, rect.width, 32f);
+                EditorGUI.HelpBox(helpRect,
                     "This key is a constant in the source file, not a literal. It is shown here but " +
                     "left exactly as written — edit it in the file to change it.",
                     MessageType.Info);
                 return;
             }
 
-            bool isAssetSource = step.SourceType == StaticDataSourceType.Resources ||
-                                 step.SourceType == StaticDataSourceType.Addressable;
+            bool isAssetSource = IsAssetSource(step.SourceType);
+            Rect row = rect;
 
             if (isAssetSource)
             {
                 EditorGUI.BeginChangeCheck();
-                UnityEngine.Object asset = EditorGUILayout.ObjectField(
-                    "Asset", entry.GetAsset(index), typeof(UnityEngine.Object), false);
+                UnityEngine.Object asset = EditorGUI.ObjectField(
+                    row, "Asset", entry.GetAsset(index), typeof(UnityEngine.Object), false);
 
                 if (EditorGUI.EndChangeCheck())
                 {
-                    string warning = entry.SetAssetForStep(index, asset);
-                    this._assetWarnings[index] = warning;
+                    this._assetWarnings[index] = entry.SetAssetForStep(index, asset);
                     this._dirtyCountDirty = true;
                 }
+
+                row = new Rect(row.x, row.yMax + StepPadding, row.width, row.height);
             }
 
             EditorGUI.BeginChangeCheck();
-            string key = EditorGUILayout.TextField(isAssetSource ? "Key (resolved)" : "Key", step.Key);
+            string key = EditorGUI.TextField(row, isAssetSource ? "Key (resolved)" : "Key", step.Key);
             if (EditorGUI.EndChangeCheck())
             {
                 step.Key = key;
@@ -873,14 +749,21 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 this._dirtyCountDirty = true;
             }
 
-            if (this._assetWarnings.TryGetValue(index, out string message) && !string.IsNullOrEmpty(message))
-                EditorGUILayout.HelpBox(message, MessageType.Warning);
+            if (!this._assetWarnings.TryGetValue(index, out string message) || string.IsNullOrEmpty(message))
+                return;
+
+            Rect warningRect = new(row.x, row.yMax + StepPadding, row.width, 32f);
+            EditorGUI.HelpBox(warningRect, message, MessageType.Warning);
         }
+
+        private static bool IsAssetSource(StaticDataSourceType sourceType) =>
+            sourceType == StaticDataSourceType.Resources ||
+            sourceType == StaticDataSourceType.Addressable;
 
         /// <summary>Per-step warnings from asset resolution, cleared whenever the selection changes.</summary>
         private readonly Dictionary<int, string> _assetWarnings = new();
 
-        private static StaticDataSourceType DrawSourceTypePopup(StaticDataSourceType current)
+        private static StaticDataSourceType DrawSourceTypePopupAt(Rect rect, StaticDataSourceType current)
         {
             // None is deliberately absent: it is the enum's "no source" value, never a chain link.
             StaticDataSourceType[] options =
@@ -900,7 +783,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                     currentIndex = i;
             }
 
-            int picked = EditorGUILayout.Popup(currentIndex, labels, GUILayout.Width(130f));
+            int picked = EditorGUI.Popup(rect, currentIndex, labels);
             return options[picked];
         }
 
@@ -999,6 +882,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             }
 
             this._assetWarnings.Clear();
+            this.InvalidateChainList();
             this._dirtyCountDirty = true;
             this.SetStatus($"Applied {entry.DataId} - recompiling");
 
@@ -1047,6 +931,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             StaticDataDialogs.ReportBatch(applied, dirty.Count, failures);
 
             this._assetWarnings.Clear();
+            this.InvalidateChainList();
             this._dirtyCountDirty = true;
             this.SetStatus($"Applied {applied} of {dirty.Count} table(s)");
 
@@ -1061,6 +946,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             entry.Reload();
 
             this._assetWarnings.Clear();
+            this.InvalidateChainList();
             this._dirtyCountDirty = true;
             this.SetStatus($"Reverted {entry.DataId}");
         }
@@ -1084,6 +970,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 entry.Reload();
 
             this._assetWarnings.Clear();
+            this.InvalidateChainList();
             this._dirtyCountDirty = true;
             this.SetStatus($"Reverted {dirty} table(s)");
         }
@@ -1101,6 +988,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             this._selected = null;
             this._entries.Clear();
             this._assetWarnings.Clear();
+            this.InvalidateChainList();
 
             foreach (Type controllerType in TypeCache.GetTypesWithAttribute<StaticDataIdAttribute>())
             {
@@ -1164,6 +1052,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
 
             this._selected = entry;
             this._assetWarnings.Clear();
+            this.InvalidateChainList();
 
             EditorPrefs.SetString(SelectedDataIdPrefsKey, entry?.DataId ?? string.Empty);
             this._needsRepaint = true;
