@@ -7,8 +7,16 @@ using DracoRuan.Foundation.DataFlow.Core.Envelope;
 namespace DracoRuan.Foundation.DataFlow.Core.Storage
 {
     /// <summary>
-    /// Reads and writes versioned save files: <c>{domainId}_v{schemaVersion}.sav</c>, each an
-    /// envelope written through <see cref="AtomicFileStore"/>.
+    /// Reads and writes versioned save files: <c>{domainId}/{domainId}_v{schemaVersion}.sav</c>,
+    /// each an envelope written through <see cref="AtomicFileStore"/>.
+    ///
+    /// <para>
+    /// Every domain owns a directory. One domain's files - every schema version, plus the
+    /// <c>.tmp</c> and <c>.bak</c> sidecars each of them can spawn - stay together instead of
+    /// being interleaved with every other domain's in one flat listing. With three versions kept
+    /// per domain and two sidecars apiece, a dozen domains put over a hundred files in a single
+    /// directory, and telling at a glance which belong to what stops being possible.
+    /// </para>
     ///
     /// <para>
     /// Versions coexist on disk rather than being collapsed into one file. That is what makes
@@ -54,10 +62,31 @@ namespace DracoRuan.Foundation.DataFlow.Core.Storage
             this._fileStore = new AtomicFileStore(IsEnvelopeReadable);
         }
 
-        /// <summary>Directory holding every save file.</summary>
+        /// <summary>Directory holding every domain's directory.</summary>
         public string RootDirectory => this._rootDirectory;
 
+        /// <summary>
+        /// Directory holding one domain's save files. The directory name is the domain id, which
+        /// <see cref="DomainId"/> already restricts to characters legal in a path segment.
+        /// </summary>
+        /// <remarks>
+        /// Returns a path whether or not the directory exists. Creating it is
+        /// <see cref="AtomicFileStore.Write"/>'s job, so a domain that has never been saved leaves
+        /// no empty folder behind.
+        /// </remarks>
+        public string GetDomainDirectory(string domainId)
+        {
+            DomainId.Validate(domainId);
+            return Path.Combine(this._rootDirectory, domainId);
+        }
+
         /// <summary>Absolute path of one domain's file at one schema version.</summary>
+        /// <remarks>
+        /// Adopts any of the domain's files still lying flat in the root before answering — see
+        /// <see cref="AdoptFlatLayout"/>. Every read, write and delete resolves its path here, so
+        /// hanging the move off this one method is what makes it impossible for a call site to
+        /// look for a file in the new location while the file is still in the old one.
+        /// </remarks>
         public string GetPath(string domainId, int schemaVersion)
         {
             DomainId.Validate(domainId);
@@ -66,7 +95,9 @@ namespace DracoRuan.Foundation.DataFlow.Core.Storage
                 throw new ArgumentOutOfRangeException(nameof(schemaVersion), schemaVersion,
                     "Schema versions start at 1.");
 
-            return Path.Combine(this._rootDirectory, BuildFileName(domainId, schemaVersion));
+            this.AdoptFlatLayout(domainId);
+
+            return Path.Combine(this._rootDirectory, domainId, BuildFileName(domainId, schemaVersion));
         }
 
         public static string BuildFileName(string domainId, int schemaVersion) =>
@@ -86,15 +117,18 @@ namespace DracoRuan.Foundation.DataFlow.Core.Storage
         {
             DomainId.Validate(domainId);
 
+            this.AdoptFlatLayout(domainId);
+
             List<int> versions = new();
-            if (!Directory.Exists(this._rootDirectory))
+            string domainDirectory = this.GetDomainDirectory(domainId);
+            if (!Directory.Exists(domainDirectory))
                 return versions;
 
             string prefix = domainId + VersionSeparator;
             string[] candidates;
             try
             {
-                candidates = Directory.GetFiles(this._rootDirectory, prefix + "*" + FileExtension);
+                candidates = Directory.GetFiles(domainDirectory, prefix + "*" + FileExtension);
             }
             catch (DirectoryNotFoundException)
             {
@@ -230,11 +264,31 @@ namespace DracoRuan.Foundation.DataFlow.Core.Storage
             this._fileStore.Delete(this.GetPath(domainId, schemaVersion));
 
         /// <summary>Deletes every version of a domain. Returns the number of files removed.</summary>
+        /// <remarks>
+        /// Removes the domain's directory too, but only when nothing is left in it. "Delete my save
+        /// data" that leaves a tree of empty folders behind looks like it failed. Anything
+        /// unexpected in there - a file this store did not write - keeps the directory, since
+        /// deleting a stranger's file was never asked for.
+        /// </remarks>
         public int DeleteAll(string domainId)
         {
             int deleted = 0;
             foreach (int version in this.ListVersions(domainId))
                 deleted += this.Delete(domainId, version);
+
+            string domainDirectory = this.GetDomainDirectory(domainId);
+            try
+            {
+                if (Directory.Exists(domainDirectory) &&
+                    Directory.GetFileSystemEntries(domainDirectory).Length == 0)
+                {
+                    Directory.Delete(domainDirectory);
+                }
+            }
+            catch (Exception)
+            {
+                // Housekeeping only. The files are gone, which is what was asked for.
+            }
 
             return deleted;
         }
@@ -258,6 +312,12 @@ namespace DracoRuan.Foundation.DataFlow.Core.Storage
         }
 
         /// <summary>Every domain id with at least one save file on disk.</summary>
+        /// <remarks>
+        /// Scans both layouts. A directory only counts when it actually holds a parseable save, so
+        /// an empty folder - left by a delete, or created by hand - is not reported as a domain
+        /// with data. Files still lying flat in the root are reported too, so a build that has not
+        /// yet opened them does not present a player's saves as missing.
+        /// </remarks>
         public IReadOnlyList<string> ListDomains()
         {
             List<string> domains = new();
@@ -265,6 +325,27 @@ namespace DracoRuan.Foundation.DataFlow.Core.Storage
                 return domains;
 
             HashSet<string> seen = new(StringComparer.Ordinal);
+
+            foreach (string directory in Directory.GetDirectories(this._rootDirectory))
+            {
+                string domainId = Path.GetFileName(directory);
+                if (!DomainId.IsValid(domainId, out _) || seen.Contains(domainId))
+                    continue;
+
+                foreach (string path in Directory.GetFiles(directory, "*" + FileExtension))
+                {
+                    if (TryParseFileName(Path.GetFileName(path), out string parsed, out _) &&
+                        string.Equals(parsed, domainId, StringComparison.Ordinal))
+                    {
+                        seen.Add(domainId);
+                        domains.Add(domainId);
+                        break;
+                    }
+                }
+            }
+
+            // Pre-move saves. Reading one adopts it, but listing must not require that to have
+            // happened yet - the Editor tool lists before it loads anything.
             foreach (string path in Directory.GetFiles(this._rootDirectory, "*" + FileExtension))
             {
                 if (TryParseFileName(Path.GetFileName(path), out string domainId, out _) && seen.Add(domainId))
@@ -273,6 +354,91 @@ namespace DracoRuan.Foundation.DataFlow.Core.Storage
 
             domains.Sort(StringComparer.Ordinal);
             return domains;
+        }
+
+        /// <summary>
+        /// Moves any of one domain's files still sitting flat in the root into its own directory.
+        /// </summary>
+        /// <remarks>
+        /// <para>Saves written before this layout existed are in the root. Rather than a boot-time
+        /// migration pass - which would need its own ordering, its own failure mode, and a way to
+        /// know it had run - each domain adopts its own files the first time anything touches it.
+        /// The two entry points that resolve a location, <see cref="GetPath"/> and
+        /// <see cref="ListVersions"/>, both call this first, so the move happens before the first
+        /// byte is read. It is idempotent: once the root holds no matching file, it costs one
+        /// directory enumeration.</para>
+        ///
+        /// <para><b>Sidecars move with the target.</b> A <c>.tmp</c> or <c>.bak</c> left behind
+        /// would strand the only good copy of an interrupted write in a directory nothing looks at
+        /// any more, so <see cref="AtomicFileStore.Recover"/> could never find it.</para>
+        ///
+        /// <para>A failure here is not fatal and is not reported. The file stays in the root, where
+        /// the next call tries again and where the flat-layout branch of
+        /// <see cref="ListDomains"/> still finds it.</para>
+        /// </remarks>
+        private void AdoptFlatLayout(string domainId)
+        {
+            if (!Directory.Exists(this._rootDirectory))
+                return;
+
+            string[] candidates;
+            try
+            {
+                candidates = Directory.GetFiles(this._rootDirectory, domainId + VersionSeparator + "*");
+            }
+            catch (Exception)
+            {
+                return;
+            }
+
+            if (candidates.Length == 0)
+                return;
+
+            string domainDirectory = this.GetDomainDirectory(domainId);
+
+            foreach (string path in candidates)
+            {
+                string fileName = Path.GetFileName(path);
+                if (!BelongsToDomain(fileName, domainId))
+                    continue;
+
+                try
+                {
+                    if (!Directory.Exists(domainDirectory))
+                        Directory.CreateDirectory(domainDirectory);
+
+                    string destination = Path.Combine(domainDirectory, fileName);
+
+                    // The destination wins. It was written by a build that already used this
+                    // layout, so it is the newer of the two; overwriting it with the flat file
+                    // would roll the player back to their pre-move save.
+                    if (File.Exists(destination))
+                        File.Delete(path);
+                    else
+                        File.Move(path, destination);
+                }
+                catch (Exception)
+                {
+                    // Housekeeping. Leave the file where it is and try again next time.
+                }
+            }
+        }
+
+        /// <summary>
+        /// Whether <paramref name="fileName"/> is one of <paramref name="domainId"/>'s files -
+        /// a save at some version, or one of that save's <c>.tmp</c> / <c>.bak</c> sidecars.
+        /// </summary>
+        private static bool BelongsToDomain(string fileName, string domainId)
+        {
+            string stem = fileName;
+
+            if (stem.EndsWith(AtomicFileStore.TempSuffix, StringComparison.OrdinalIgnoreCase))
+                stem = stem.Substring(0, stem.Length - AtomicFileStore.TempSuffix.Length);
+            else if (stem.EndsWith(AtomicFileStore.BackupSuffix, StringComparison.OrdinalIgnoreCase))
+                stem = stem.Substring(0, stem.Length - AtomicFileStore.BackupSuffix.Length);
+
+            return TryParseFileName(stem, out string parsed, out _) &&
+                   string.Equals(parsed, domainId, StringComparison.Ordinal);
         }
 
         /// <summary>

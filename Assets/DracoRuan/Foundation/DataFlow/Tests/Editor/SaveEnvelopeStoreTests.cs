@@ -44,6 +44,9 @@ namespace DracoRuan.Foundation.DataFlow.Tests
             this._store.Write(domain, version, Encoding.UTF8.GetBytes(body), revision,
                 DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), Epoch);
 
+        /// <summary>Directory a domain's files live in, resolved the way the store resolves it.</summary>
+        private string DomainDirectory(string domain) => this._store.GetDomainDirectory(domain);
+
         // ---------------------------------------------------------------------
         // Round trip
         // ---------------------------------------------------------------------
@@ -84,7 +87,9 @@ namespace DracoRuan.Foundation.DataFlow.Tests
         {
             this.Write(Domain, 3, "x");
 
-            Assert.That(File.Exists(Path.Combine(this._directory, "rise_progression_v3.sav")), Is.True);
+            Assert.That(
+                File.Exists(Path.Combine(this.DomainDirectory(Domain), "rise_progression_v3.sav")),
+                Is.True);
         }
 
         // ---------------------------------------------------------------------
@@ -126,7 +131,9 @@ namespace DracoRuan.Foundation.DataFlow.Tests
             this.Write(Domain, 1, "a");
             this.Write(Domain, 1, "b"); // produces a .bak
 
-            Assert.That(File.Exists(Path.Combine(this._directory, "rise_progression_v1.sav.bak")), Is.True);
+            Assert.That(
+                File.Exists(Path.Combine(this.DomainDirectory(Domain), "rise_progression_v1.sav.bak")),
+                Is.True);
             Assert.That(this._store.ListVersions(Domain), Is.EqualTo(new[] { 1 }),
                 "a .bak must not be mistaken for a version");
         }
@@ -217,7 +224,7 @@ namespace DracoRuan.Foundation.DataFlow.Tests
             this.Write(Domain, 1, "good-old");
             this.Write(Domain, 1, "good-new"); // demotes "good-old" to .bak
 
-            string path = Path.Combine(this._directory, "rise_progression_v1.sav");
+            string path = Path.Combine(this.DomainDirectory(Domain), "rise_progression_v1.sav");
             byte[] raw = File.ReadAllBytes(path);
             raw[^1] ^= 0xFF;
             File.WriteAllBytes(path, raw);
@@ -234,7 +241,7 @@ namespace DracoRuan.Foundation.DataFlow.Tests
         {
             this.Write(Domain, 1, "only-copy");
 
-            string path = Path.Combine(this._directory, "rise_progression_v1.sav");
+            string path = Path.Combine(this.DomainDirectory(Domain), "rise_progression_v1.sav");
             byte[] raw = File.ReadAllBytes(path);
             raw[^1] ^= 0xFF;
             File.WriteAllBytes(path, raw);
@@ -250,10 +257,10 @@ namespace DracoRuan.Foundation.DataFlow.Tests
             this.Write(Domain, 1, "committed");
 
             // Simulate a kill after the target was moved aside but before the temp was promoted.
-            string target = Path.Combine(this._directory, "rise_progression_v1.sav");
+            string target = Path.Combine(this.DomainDirectory(Domain), "rise_progression_v1.sav");
             File.Move(target, target + AtomicFileStore.BackupSuffix);
             this.Write(Domain, 2, "unrelated");
-            File.Copy(Path.Combine(this._directory, "rise_progression_v2.sav"),
+            File.Copy(Path.Combine(this.DomainDirectory(Domain), "rise_progression_v2.sav"),
                 target + AtomicFileStore.TempSuffix);
 
             EnvelopeReadStatus status = this._store.Read(Domain, 1, out _, out byte[] payload);
@@ -290,7 +297,8 @@ namespace DracoRuan.Foundation.DataFlow.Tests
             this._store.DeleteAll(Domain);
 
             Assert.That(this._store.ListVersions(Domain), Is.Empty);
-            Assert.That(Directory.GetFiles(this._directory, "rise_progression*"), Is.Empty,
+            Assert.That(Directory.GetFiles(this._directory, "rise_progression*",
+                    SearchOption.AllDirectories), Is.Empty,
                 "stray sidecars would resurrect data the player asked to delete");
         }
 
@@ -338,6 +346,193 @@ namespace DracoRuan.Foundation.DataFlow.Tests
 
             Assert.That(missing.ListDomains(), Is.Empty);
             Assert.That(missing.ListVersions("anything"), Is.Empty);
+        }
+
+        // ---------------------------------------------------------------------
+        // Per-domain directories
+        // ---------------------------------------------------------------------
+
+        [Test]
+        public void EachDomainGetsItsOwnDirectory()
+        {
+            this.Write("alpha", 1, "x");
+            this.Write("beta", 1, "x");
+
+            Assert.That(Directory.Exists(this.DomainDirectory("alpha")), Is.True);
+            Assert.That(Directory.Exists(this.DomainDirectory("beta")), Is.True);
+            Assert.That(Directory.GetFiles(this._directory), Is.Empty,
+                "the root holds directories, not save files");
+        }
+
+        [Test]
+        public void SidecarsStayInTheDomainDirectory()
+        {
+            this.Write(Domain, 1, "a");
+            this.Write(Domain, 1, "b"); // produces a .bak
+
+            Assert.That(Directory.GetFiles(this._directory, "*", SearchOption.TopDirectoryOnly),
+                Is.Empty, "a sidecar in the root is a sidecar Recover() would never find");
+            Assert.That(Directory.GetFiles(this.DomainDirectory(Domain), "*.bak"), Is.Not.Empty);
+        }
+
+        [Test]
+        public void WritingIsNotEnoughToCreateOtherDomainsDirectories()
+        {
+            this.Write("alpha", 1, "x");
+
+            Assert.That(Directory.Exists(this.DomainDirectory("beta")), Is.False,
+                "a domain that has never been saved must not leave an empty folder");
+        }
+
+        [Test]
+        public void DeleteAll_RemovesTheDomainDirectory()
+        {
+            this.Write(Domain, 1, "x");
+            this.Write(Domain, 2, "x");
+
+            this._store.DeleteAll(Domain);
+
+            Assert.That(Directory.Exists(this.DomainDirectory(Domain)), Is.False,
+                "deleting save data but leaving a folder behind looks like it failed");
+        }
+
+        [Test]
+        public void DeleteAll_KeepsADirectoryHoldingSomethingItDoesNotOwn()
+        {
+            this.Write(Domain, 1, "x");
+            File.WriteAllText(Path.Combine(this.DomainDirectory(Domain), "notes.txt"), "mine");
+
+            this._store.DeleteAll(Domain);
+
+            Assert.That(Directory.Exists(this.DomainDirectory(Domain)), Is.True,
+                "deleting a file this store never wrote was not what was asked for");
+        }
+
+        [Test]
+        public void ListDomains_IgnoresAnEmptyDirectory()
+        {
+            Directory.CreateDirectory(Path.Combine(this._directory, "abandoned"));
+
+            Assert.That(this._store.ListDomains(), Is.Empty,
+                "a folder with no save in it is not a domain with data");
+        }
+
+        [Test]
+        public void ListDomains_IgnoresADirectoryWhoseNameIsNotAValidDomainId()
+        {
+            string stray = Path.Combine(this._directory, "not a domain");
+            Directory.CreateDirectory(stray);
+            File.WriteAllText(Path.Combine(stray, "rise_progression_v1.sav"), "x");
+
+            Assert.That(this._store.ListDomains(), Is.Empty);
+        }
+
+        // ---------------------------------------------------------------------
+        // Adopting saves written before the per-domain layout
+        // ---------------------------------------------------------------------
+
+        /// <summary>Writes a file where the pre-move layout put it: flat in the save root.</summary>
+        private void WriteFlat(string domain, int version, string body)
+        {
+            this.Write(domain, version, body);
+
+            string fileName = SaveEnvelopeStore.BuildFileName(domain, version);
+            string from = Path.Combine(this.DomainDirectory(domain), fileName);
+            string to = Path.Combine(this._directory, fileName);
+
+            File.Move(from, to);
+            Directory.Delete(this.DomainDirectory(domain), recursive: true);
+        }
+
+        [Test]
+        public void AFlatSaveIsStillFound()
+        {
+            this.WriteFlat(Domain, 1, "pre-move");
+
+            Assert.That(this._store.Read(Domain, 1, out _, out byte[] payload),
+                Is.EqualTo(EnvelopeReadStatus.Success));
+            Assert.That(Encoding.UTF8.GetString(payload), Is.EqualTo("pre-move"),
+                "changing where files live must not orphan the saves already on disk");
+        }
+
+        [Test]
+        public void AFlatSaveIsMovedIntoTheDomainDirectory()
+        {
+            this.WriteFlat(Domain, 1, "pre-move");
+
+            this._store.ListVersions(Domain);
+
+            Assert.That(File.Exists(Path.Combine(this.DomainDirectory(Domain),
+                SaveEnvelopeStore.BuildFileName(Domain, 1))), Is.True);
+            Assert.That(Directory.GetFiles(this._directory), Is.Empty);
+        }
+
+        [Test]
+        public void FlatSidecarsAreMovedTogetherWithTheirTarget()
+        {
+            this.WriteFlat(Domain, 1, "pre-move");
+
+            string flat = Path.Combine(this._directory, SaveEnvelopeStore.BuildFileName(Domain, 1));
+            File.Copy(flat, flat + AtomicFileStore.BackupSuffix);
+
+            this._store.ListVersions(Domain);
+
+            Assert.That(Directory.GetFiles(this._directory), Is.Empty,
+                "a stranded .bak is the only copy of an interrupted write nothing would ever find");
+            Assert.That(Directory.GetFiles(this.DomainDirectory(Domain), "*.bak"), Is.Not.Empty);
+        }
+
+        [Test]
+        public void AdoptingDoesNotTouchAnotherDomainsFlatFiles()
+        {
+            this.WriteFlat("alpha", 1, "a");
+            this.WriteFlat("beta", 1, "b");
+
+            this._store.ListVersions("alpha");
+
+            Assert.That(File.Exists(Path.Combine(this._directory,
+                SaveEnvelopeStore.BuildFileName("beta", 1))), Is.True);
+        }
+
+        [Test]
+        public void AnAlreadyMovedSaveWinsOverAFlatOneAtTheSameVersion()
+        {
+            this.WriteFlat(Domain, 1, "pre-move");
+            this.Write(Domain, 1, "post-move");
+
+            Assert.That(this._store.Read(Domain, 1, out _, out byte[] payload),
+                Is.EqualTo(EnvelopeReadStatus.Success));
+            Assert.That(Encoding.UTF8.GetString(payload), Is.EqualTo("post-move"),
+                "adopting must never roll a player back to their pre-move save");
+            Assert.That(Directory.GetFiles(this._directory), Is.Empty);
+        }
+
+        [Test]
+        public void ListDomains_FindsADomainThatHasOnlyFlatFiles()
+        {
+            this.WriteFlat(Domain, 1, "pre-move");
+
+            Assert.That(this._store.ListDomains(), Is.EqualTo(new List<string> { Domain }),
+                "listing must not require the domain to have been read first");
+        }
+
+        [Test]
+        public void ListDomains_ReportsADomainOnceWhileItIsSplitAcrossBothLayouts()
+        {
+            this.WriteFlat(Domain, 1, "pre-move");
+            this.Write(Domain, 2, "post-move");
+
+            Assert.That(this._store.ListDomains(), Is.EqualTo(new List<string> { Domain }));
+        }
+
+        [Test]
+        public void BothLayoutsVersionsAreListedTogether()
+        {
+            this.WriteFlat(Domain, 1, "pre-move");
+            this.Write(Domain, 2, "post-move");
+
+            Assert.That(this._store.ListVersions(Domain), Is.EqualTo(new[] { 2, 1 }),
+                "a version left flat is still a version the player has");
         }
     }
 }

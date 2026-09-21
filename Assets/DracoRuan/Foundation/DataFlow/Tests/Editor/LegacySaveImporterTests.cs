@@ -45,9 +45,12 @@ namespace DracoRuan.Foundation.DataFlow.Tests
                 Path.Combine(this._directory, $"{LegacyType}_v{version}.data"),
                 Encoding.UTF8.GetBytes(body));
 
-        private string ArchivePath(int version) =>
-            Path.Combine(this._directory, LegacySaveImporter.LegacyArchiveDirectory,
-                $"{LegacyType}_v{version}.data");
+        /// <summary>Where an imported original ends up: under the domain that imported it.</summary>
+        private string ArchivePath(int version) => this.ArchivePath(Domain, version);
+
+        private string ArchivePath(string domainId, int version) =>
+            Path.Combine(this._store.GetDomainDirectory(domainId),
+                LegacySaveImporter.LegacyArchiveDirectory, $"{LegacyType}_v{version}.data");
 
         private string ReadBody(int version)
         {
@@ -190,8 +193,62 @@ namespace DracoRuan.Foundation.DataFlow.Tests
 
             this._importer.Import("a_completely_different_id", LegacyType);
 
-            Assert.That(File.Exists(Path.Combine(this._directory, "a_completely_different_id_v1.sav")),
+            // Read from the flat root, write under the domain id - not under the legacy type name.
+            Assert.That(
+                File.Exists(Path.Combine(this._directory, "a_completely_different_id",
+                    "a_completely_different_id_v1.sav")),
                 Is.True);
+        }
+
+        // ---------------------------------------------------------------------
+        // Where the archive lives
+        // ---------------------------------------------------------------------
+
+        [Test]
+        public void TheArchiveLivesUnderTheImportingDomain()
+        {
+            this.SeedLegacy(1, "payload");
+
+            this._importer.Import(Domain, LegacyType);
+
+            Assert.That(File.Exists(this.ArchivePath(1)), Is.True);
+            Assert.That(Directory.Exists(
+                    Path.Combine(this._directory, LegacySaveImporter.LegacyArchiveDirectory)),
+                Is.False,
+                "a shared archive at the root is the one place every domain stays piled together");
+        }
+
+        /// <summary>
+        /// Two domains may legitimately import the same legacy type name. Under a shared archive
+        /// the second would overwrite the first, destroying an original that exists nowhere else.
+        /// </summary>
+        [Test]
+        public void TwoDomainsImportingTheSameTypeNameKeepBothOriginals()
+        {
+            this.SeedLegacy(1, "first");
+            this._importer.Import("domain_one", LegacyType);
+
+            this.SeedLegacy(1, "second");
+            this._importer.Import("domain_two", LegacyType);
+
+            Assert.That(File.Exists(this.ArchivePath("domain_one", 1)), Is.True);
+            Assert.That(File.Exists(this.ArchivePath("domain_two", 1)), Is.True);
+
+            Assert.That(File.ReadAllText(this.ArchivePath("domain_one", 1)), Is.EqualTo("first"));
+            Assert.That(File.ReadAllText(this.ArchivePath("domain_two", 1)), Is.EqualTo("second"),
+                "one domain's original must never overwrite another's");
+        }
+
+        [Test]
+        public void ArchivingCreatesNoStrayFilesInTheRoot()
+        {
+            this.SeedLegacy(1, "payload");
+            this.SeedLegacy(2, "payload");
+
+            this._importer.Import(Domain, LegacyType);
+
+            Assert.That(Directory.GetFiles(this._directory), Is.Empty,
+                "every imported original belongs to some domain");
         }
 
         [Test]

@@ -28,9 +28,13 @@ namespace DracoRuan.Foundation.DataFlow.Core.Storage
 
     /// <summary>
     /// Converts saves written in the old layout — <c>{TypeName}_v{N}.data</c>, raw payload bytes with
-    /// no header — into the current <c>{domainId}_v{N}.sav</c> envelope format.
+    /// no header — into the current <c>{domainId}/{domainId}_v{N}.sav</c> envelope format.
     ///
     /// <para>Runs once, at boot, before migration planning.</para>
+    ///
+    /// <para><b>Reads from the save root, writes into the domain's directory.</b> Legacy files were
+    /// written flat, so that is where they are looked for; the envelope they become is placed by
+    /// <see cref="SaveEnvelopeStore"/> wherever that type now keeps a domain's files.</para>
     /// </summary>
     /// <remarks>
     /// <para><b>Deliberately not an <see cref="Migration.IDataMigrator"/>.</b> This changes the file
@@ -42,10 +46,16 @@ namespace DracoRuan.Foundation.DataFlow.Core.Storage
     /// boolean in PlayerPrefs would disagree with reality after a cloud restore, a prefs wipe, or a
     /// sideloaded data directory — and disagreeing means either importing twice or never.</para>
     ///
-    /// <para><b>Nothing is deleted.</b> Legacy files are moved into a <c>.legacy</c> subdirectory
-    /// only after the new file has been written <i>and</i> read back with its checksum verified.
-    /// Keep that directory for at least one shipped release: deleting in the same release that
-    /// introduces the import makes an import bug unrecoverable for anyone who booted once.</para>
+    /// <para><b>Nothing is deleted.</b> Legacy files are moved into the importing domain's own
+    /// <c>.legacy</c> subdirectory — <c>{domainId}/.legacy/</c> — only after the new file has been
+    /// written <i>and</i> read back with its checksum verified. Keep that directory for at least
+    /// one shipped release: deleting in the same release that introduces the import makes an
+    /// import bug unrecoverable for anyone who booted once.</para>
+    ///
+    /// <para>The archive sits under the domain because it is that domain's data. A single shared
+    /// archive would be the one place where every domain's files stay piled together, and it would
+    /// force a name collision between two domains importing the same legacy type name — where the
+    /// loser is silently overwritten, and what is overwritten is the only surviving copy.</para>
     /// </remarks>
     public sealed class LegacySaveImporter
     {
@@ -105,7 +115,7 @@ namespace DracoRuan.Foundation.DataFlow.Core.Storage
                 // Already converted. Never look at the legacy file again.
                 if (this._store.ReadHeader(domainId, version, out _) == EnvelopeReadStatus.Success)
                 {
-                    this.Archive(path);
+                    this.Archive(domainId, path);
                     continue;
                 }
 
@@ -147,7 +157,7 @@ namespace DracoRuan.Foundation.DataFlow.Core.Storage
             if (!SequenceEquals(payload, roundTripped))
                 throw new IOException("Imported payload does not match the legacy file.");
 
-            this.Archive(legacyPath);
+            this.Archive(domainId, legacyPath);
         }
 
         /// <summary>
@@ -200,13 +210,23 @@ namespace DracoRuan.Foundation.DataFlow.Core.Storage
             return true;
         }
 
-        /// <summary>Moves an imported original aside. Never deletes it.</summary>
-        private void Archive(string legacyPath)
+        /// <summary>
+        /// Moves an imported original into the domain's archive. Never deletes it.
+        /// </summary>
+        /// <remarks>
+        /// The archive is keyed by the domain that imported the file, not by the legacy type name
+        /// the file is called. Two domains may legitimately import the same type name, and under a
+        /// shared archive the second would overwrite the first — destroying an original that, by
+        /// definition, exists nowhere else.
+        /// </remarks>
+        private void Archive(string domainId, string legacyPath)
         {
             if (!File.Exists(legacyPath))
                 return;
 
-            string archiveDirectory = Path.Combine(this._legacyDirectory, LegacyArchiveDirectory);
+            string archiveDirectory = Path.Combine(
+                this._store.GetDomainDirectory(domainId), LegacyArchiveDirectory);
+
             if (!Directory.Exists(archiveDirectory))
                 Directory.CreateDirectory(archiveDirectory);
 
