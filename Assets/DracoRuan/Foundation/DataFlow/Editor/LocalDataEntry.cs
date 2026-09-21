@@ -35,6 +35,21 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             new("(\\B[A-Z])", RegexOptions.Compiled);
 
         /// <summary>
+        /// Trailing schema-version suffix on a data class name: the <c>V1</c> of
+        /// <c>RiseProgressDataV1</c>.
+        /// </summary>
+        /// <remarks>
+        /// Stripped because it is the single most confusing thing on screen. A row is one domain,
+        /// never one version, but a name ending in "V1" reads as a version label and invites the
+        /// question of where the rows for V2 and V3 went. Worse, it does not change when the
+        /// version dropdown does - so on a domain at v3 the title still says V1, contradicting the
+        /// control right beside it. The dropdown is the one place that states the version, and it
+        /// states it correctly.
+        /// </remarks>
+        private static readonly Regex VersionSuffixPattern =
+            new("V\\d+$", RegexOptions.Compiled);
+
+        /// <summary>
         /// Display names are cached because they were being recomputed with an uncompiled regex on
         /// every OnGUI event, for every visible row.
         /// </summary>
@@ -75,7 +90,10 @@ namespace DracoRuan.Foundation.DataFlow.Editor
 
         public Type DataType { get; }
 
-        /// <summary>Human-readable name, e.g. "Rise Progress Data V1".</summary>
+        /// <summary>
+        /// Human-readable name with the schema-version suffix removed: <c>RiseProgressDataV1</c>
+        /// shows as "Rise Progress Data". See <see cref="VersionSuffixPattern"/> for why.
+        /// </summary>
         public string DisplayName { get; }
 
         /// <summary>Versions on disk, newest first, capped at <see cref="MaxVisibleVersions"/>.</summary>
@@ -342,7 +360,17 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             if (PrettyNameCache.TryGetValue(type, out string cached))
                 return cached;
 
-            string pretty = PrettyNamePattern.Replace(type.Name, " $1");
+            // Strip before spacing out the capitals, so the suffix is still one token: after
+            // spacing, "RiseProgressDataV1" is "Rise Progress Data V1" and the pattern would have
+            // to cope with the space it just introduced.
+            string stem = VersionSuffixPattern.Replace(type.Name, string.Empty);
+
+            // A class named nothing but a version - "V2" - would strip to nothing. Keep the
+            // original: a blank row is worse than a confusing one.
+            if (stem.Length == 0)
+                stem = type.Name;
+
+            string pretty = PrettyNamePattern.Replace(stem, " $1");
             PrettyNameCache[type] = pretty;
             return pretty;
         }

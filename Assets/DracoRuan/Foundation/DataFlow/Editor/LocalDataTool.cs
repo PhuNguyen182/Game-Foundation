@@ -411,7 +411,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 GUILayout.Space(2f);
                 GUILayout.Label(
                     $"{this._entries.Count} domain(s), {this.GetLoadedCount()} loaded",
-                    EditorStyles.miniLabel);
+                    EditorStyles.label);
             }
         }
 
@@ -488,10 +488,16 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             GUI.Label(nameRect, entry.DisplayName, this.EntryNameStyle);
 
             Rect subRect = new(rect.x + 32f, rect.y + 24f, rect.width - 38f, 16f);
+
+            // "latest v3", not "version 3": this row is one domain, never one version, and the
+            // number here is what is newest on disk rather than what the detail pane is showing.
+            // Spelled as a bare version it reads as the row's own version, which invites the
+            // question of where the rows for the other versions went - and it contradicts the
+            // version dropdown outright whenever an older version is selected.
             string subtitle = entry.HasFiles
-                ? $"{entry.DomainId}   ·   v{entry.LatestVersion}"
+                ? $"{entry.DomainId}   ·   latest v{entry.LatestVersion}"
                 : $"{entry.DomainId}   ·   no data";
-            GUI.Label(subRect, subtitle, EditorStyles.miniLabel);
+            GUI.Label(subRect, subtitle, EditorStyles.label);
 
             if (Event.current.type == EventType.Repaint)
             {
@@ -627,7 +633,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 GUILayout.Label(entry.DisplayName, this.DetailTitleStyle);
                 GUI.contentColor = previousContentColor;
 
-                GUILayout.Label(entry.DomainId, EditorStyles.miniLabel);
+                GUILayout.Label(entry.DomainId, EditorStyles.label);
 
                 using (new EditorGUILayout.HorizontalScope())
                 {
@@ -641,6 +647,9 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                         for (int i = 0; i < entry.VisibleVersions.Count; i++)
                         {
                             int version = entry.VisibleVersions[i];
+                            // This dropdown is the only place that says which version is on screen;
+                            // the list row deliberately says "latest vN" instead, so the two never
+                            // show conflicting numbers while an older version is selected.
                             labels[i] = i == 0 ? $"v{version} (latest)" : $"v{version}";
 
                             if (version == entry.LoadedVersion)
@@ -653,7 +662,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                     }
                     else
                     {
-                        GUILayout.Label("none", EditorStyles.miniLabel, GUILayout.Width(110));
+                        GUILayout.Label("none", EditorStyles.label, GUILayout.Width(110));
                     }
 
                     GUILayout.FlexibleSpace();
@@ -661,9 +670,9 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                     if (entry.HasData)
                     {
                         GUILayout.Label(
-                            $"{FormatBytes(entry.LoadedSizeBytes)}  ·  rev {entry.LoadedHeader.Revision}  ·  " +
+                            $"{FormatBytes(entry.LoadedSizeBytes)}  ·  Revision {entry.LoadedHeader.Revision}  ·  " +
                             entry.GetModifiedUtc(entry.LoadedVersion),
-                            EditorStyles.miniLabel);
+                            EditorStyles.label);
                     }
                 }
 
