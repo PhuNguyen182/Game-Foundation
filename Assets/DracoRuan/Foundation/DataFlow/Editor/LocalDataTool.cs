@@ -86,7 +86,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         public static void ShowWindow()
         {
             LocalDataTool window = GetWindow<LocalDataTool>();
-            window.titleContent = new GUIContent("Local Data");
+            window.titleContent = new GUIContent("💽 Local Game Data");
             // Wide enough that the toolbar's buttons are never resized, relabeled, or dropped to
             // fit - see DrawToolbar's remarks for exactly what this width covers.
             window.minSize = new Vector2(Mathf.Max(720f, MinWindowWidth), 420);
