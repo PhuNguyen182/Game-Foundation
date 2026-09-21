@@ -642,13 +642,7 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         /// </summary>
         private int _draggingStep = -1;
 
-        /// <summary>
-        /// Pointer offset inside the handle when the drag began, so the grip stays under the cursor
-        /// instead of snapping its top-left corner to it.
-        /// </summary>
-        private float _dragGrabOffset;
-
-        /// <summary>Pointer position while dragging, used to draw the row at the cursor.</summary>
+        /// <summary>Pointer position while dragging, compared directly against the row boundaries.</summary>
         private float _dragPointerY;
 
         private static readonly Color DragHandleColor = new(0.55f, 0.55f, 0.55f, 1f);
@@ -725,12 +719,8 @@ namespace DracoRuan.Foundation.DataFlow.Editor
                 case EventType.MouseDown when handleRect.Contains(Event.current.mousePosition):
                     this._draggingStep = index;
                     this._dragPointerY = Event.current.mousePosition.y;
-                    this._dragGrabOffset = Event.current.mousePosition.y -
-                                           this.GetStepRect(index, handleRect).y;
                     Event.current.Use();
                     break;
-
-
             }
         }
 
@@ -739,9 +729,16 @@ namespace DracoRuan.Foundation.DataFlow.Editor
         /// midpoint, and keeps <see cref="_draggingStep"/> pointing at the row afterwards.
         /// </summary>
         /// <remarks>
-        /// One step per event on purpose. The rects come from the last repaint, so after a swap the
-        /// geometry this is reading is stale by one row; moving further than that in a single event
-        /// would be moving against measurements that no longer describe the list.
+        /// <para><b>The pointer is compared against the neighbours directly.</b> An earlier version
+        /// tracked where the top of the dragged row would be, by subtracting the offset of the grab
+        /// within the row. But the grip sits partway down the row, so that offset was 20-odd pixels,
+        /// and the row's notional top therefore trailed the cursor by that much - which meant having
+        /// to drag well past a neighbour before the swap fired. Whatever the cursor is over is what
+        /// the row should become.</para>
+        ///
+        /// <para>One step per event on purpose. The rects come from the last repaint, so after a
+        /// swap the geometry this is reading is stale by one row; moving further than that in a
+        /// single event would be moving against measurements that no longer describe the list.</para>
         /// </remarks>
         private void ReorderWhilstDragging(StaticDataEntry entry)
         {
@@ -749,11 +746,11 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             if (current < 0 || current >= entry.Steps.Count)
                 return;
 
-            // Where the top of the dragged row now sits, following the cursor.
-            float draggedTop = this._dragPointerY - this._dragGrabOffset;
+            float pointer = this._dragPointerY;
 
+            // Past the midpoint of the row above: that row belongs below this one now.
             if (current > 0 && this._stepRects.TryGetValue(current - 1, out Rect above) &&
-                draggedTop < above.y + above.height * 0.5f)
+                pointer < above.y + above.height * 0.5f)
             {
                 entry.MoveStepTo(current, current - 1);
                 this.SwapStepRects(current, current - 1);
@@ -763,11 +760,10 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             }
 
             if (current >= entry.Steps.Count - 1 ||
-                !this._stepRects.TryGetValue(current, out Rect self) ||
                 !this._stepRects.TryGetValue(current + 1, out Rect below))
                 return;
 
-            if (draggedTop + self.height > below.y + below.height * 0.5f)
+            if (pointer > below.y + below.height * 0.5f)
             {
                 entry.MoveStepTo(current, current + 1);
                 this.SwapStepRects(current, current + 1);
@@ -806,10 +802,6 @@ namespace DracoRuan.Foundation.DataFlow.Editor
             this._stepRects[upperIndex] = new Rect(upper.x, top, upper.width, upper.height);
             this._stepRects[lowerIndex] = new Rect(lower.x, top + upper.height, lower.width, lower.height);
         }
-
-        /// <summary>The cached rect for a row, falling back to the handle when none was measured yet.</summary>
-        private Rect GetStepRect(int index, Rect fallback) =>
-            this._stepRects.TryGetValue(index, out Rect rect) ? rect : fallback;
 
         /// <summary>
         /// Tints the row being dragged so it reads as lifted out of the list while the rows around
