@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Linq;
+using ZLinq;
 using DracoRuan.Foundation.DataFlow.Core.Migration;
 using NUnit.Framework;
 
@@ -23,7 +23,7 @@ namespace DracoRuan.Foundation.DataFlow.Tests
         public void SetUp() => this._planner = new MigrationPlanner();
 
         private static Dictionary<string, int> Versions(params (string Domain, int Version)[] pairs) =>
-            pairs.ToDictionary(p => p.Domain, p => p.Version);
+            pairs.AsValueEnumerable().ToDictionary(p => p.Domain, p => p.Version);
 
         private MigrationPlan Plan(
             Dictionary<string, int> targets,
@@ -32,7 +32,7 @@ namespace DracoRuan.Foundation.DataFlow.Tests
             this._planner.CreatePlan(targets, current, steps);
 
         private static List<string> UnitOrder(MigrationPlan plan) =>
-            plan.Units.Select(u => string.Join("+", u.Domains)).ToList();
+            plan.Units.AsValueEnumerable().Select(u => string.Join("+", u.Domains)).ToList();
 
         // ---------------------------------------------------------------------
         // Classification
@@ -94,7 +94,7 @@ namespace DracoRuan.Foundation.DataFlow.Tests
                 MigrationStep.Single("a2to3", "a", 2, 3));
 
             Assert.That(plan.GetDomain("a").Status, Is.EqualTo(DomainPlanStatus.Migrate));
-            Assert.That(plan.Units.Single().Steps.Select(s => s.Id),
+            Assert.That(plan.Units.AsValueEnumerable().Single().Steps.AsValueEnumerable().Select(s => s.Id).ToArray(),
                 Is.EqualTo(new[] { "a1to2", "a2to3" }));
         }
 
@@ -105,7 +105,9 @@ namespace DracoRuan.Foundation.DataFlow.Tests
                 Versions(("a", 3)), Versions(("a", 1)),
                 MigrationStep.Single("a1to3", "a", 1, 3));
 
-            Assert.That(plan.Units.Single().Steps.Select(s => s.Id), Is.EqualTo(new[] { "a1to3" }));
+            Assert.That(
+                plan.Units.AsValueEnumerable().Single().Steps.AsValueEnumerable().Select(s => s.Id).ToArray(),
+                Is.EqualTo(new[] { "a1to3" }));
         }
 
         /// <summary>
@@ -242,10 +244,10 @@ namespace DracoRuan.Foundation.DataFlow.Tests
             Assert.That(plan.GetDomain("a").Status, Is.EqualTo(DomainPlanStatus.Migrate));
             Assert.That(plan.GetDomain("b").Status, Is.EqualTo(DomainPlanStatus.Migrate));
 
-            MigrationUnit unit = plan.Units.Single();
+            MigrationUnit unit = plan.Units.AsValueEnumerable().Single();
             Assert.That(unit.IsCoupled, Is.True);
             Assert.That(unit.Domains, Is.EqualTo(new[] { "a", "b" }));
-            Assert.That(unit.Steps.Single().Id, Is.EqualTo("ab2to3"));
+            Assert.That(unit.Steps.AsValueEnumerable().Single().Id, Is.EqualTo("ab2to3"));
         }
 
         [Test]
@@ -261,7 +263,7 @@ namespace DracoRuan.Foundation.DataFlow.Tests
                 Versions(("a", 2), ("b", 1)),
                 group);
 
-            Assert.That(plan.Units.Single().Domains, Is.EqualTo(new[] { "a", "b" }));
+            Assert.That(plan.Units.AsValueEnumerable().Single().Domains, Is.EqualTo(new[] { "a", "b" }));
         }
 
         /// <summary>
@@ -301,7 +303,7 @@ namespace DracoRuan.Foundation.DataFlow.Tests
                 Versions(("a", 1), ("b", 1), ("c", 1)),
                 group);
 
-            MigrationUnit unit = plan.Units.Single();
+            MigrationUnit unit = plan.Units.AsValueEnumerable().Single();
             Assert.That(unit.Domains, Is.EqualTo(new[] { "a", "b", "c" }));
         }
 
@@ -336,9 +338,9 @@ namespace DracoRuan.Foundation.DataFlow.Tests
                 MigrationStep.Single("a1to2", "a", 1, 2),
                 group);
 
-            MigrationUnit unit = plan.Units.Single();
+            MigrationUnit unit = plan.Units.AsValueEnumerable().Single();
             Assert.That(unit.Domains, Is.EqualTo(new[] { "a", "b" }));
-            Assert.That(unit.Steps.Select(s => s.Id), Is.EqualTo(new[] { "a1to2", "ab" }),
+            Assert.That(unit.Steps.AsValueEnumerable().Select(s => s.Id).ToArray(), Is.EqualTo(new[] { "a1to2", "ab" }),
                 "the solo step must run before the coupled one");
         }
 

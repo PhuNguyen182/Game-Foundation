@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using ZLinq;
 
 namespace DracoRuan.Foundation.DataFlow.Core.Migration
 {
@@ -106,7 +106,7 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
                 throw new ArgumentNullException(nameof(toVersions));
 
             if (fromVersions.Count != toVersions.Count ||
-                fromVersions.Keys.Any(domain => !toVersions.ContainsKey(domain)))
+                fromVersions.Keys.AsValueEnumerable().Any(domain => !toVersions.ContainsKey(domain)))
             {
                 throw new ArgumentException(
                     $"Group migration step '{id}' must declare a target version for exactly the domains it " +
@@ -128,15 +128,17 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
 
             return new MigrationStep(
                 id,
-                new Dictionary<string, int>(fromVersions.ToDictionary(p => p.Key, p => p.Value)),
-                new Dictionary<string, int>(toVersions.ToDictionary(p => p.Key, p => p.Value)),
+                fromVersions.AsValueEnumerable().ToDictionary(p => p.Key, p => p.Value),
+                toVersions.AsValueEnumerable().ToDictionary(p => p.Key, p => p.Value),
                 dependsOn ?? Array.Empty<string>());
         }
 
         public override string ToString()
         {
             string moves = string.Join(", ",
-                this.FromVersions.Select(p => $"{p.Key} v{p.Value}->v{this.ToVersions[p.Key]}"));
+                this.FromVersions.AsValueEnumerable()
+                    .Select(p => $"{p.Key} v{p.Value}->v{this.ToVersions[p.Key]}")
+                    .ToArray());
 
             return this.IsGroup ? $"{this.Id} [group: {moves}]" : $"{this.Id} [{moves}]";
         }

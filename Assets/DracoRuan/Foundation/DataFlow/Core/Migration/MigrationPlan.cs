@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using ZLinq;
 
 namespace DracoRuan.Foundation.DataFlow.Core.Migration
 {
@@ -96,13 +96,13 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
 
         /// <summary>Domains the planner could not produce a safe plan for.</summary>
         public IReadOnlyList<DomainPlan> ProblemDomains =>
-            this.Domains.Where(d => !d.IsHealthy).ToList();
+            this.Domains.AsValueEnumerable().Where(d => !d.IsHealthy).ToList();
 
         /// <summary>True when every domain is healthy.</summary>
-        public bool IsFullyHealthy => this.Domains.All(d => d.IsHealthy);
+        public bool IsFullyHealthy => this.Domains.AsValueEnumerable().All(d => d.IsHealthy);
 
         public DomainPlan GetDomain(string domainId) =>
-            this.Domains.FirstOrDefault(d =>
+            this.Domains.AsValueEnumerable().FirstOrDefault(d =>
                 string.Equals(d.DomainId, domainId, StringComparison.Ordinal));
 
         /// <summary>Multi-line summary for the boot log.</summary>

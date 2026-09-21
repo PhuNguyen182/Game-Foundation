@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using ZLinq;
 
 namespace DracoRuan.Foundation.DataFlow.Core.Migration
 {
@@ -98,7 +98,7 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
             }
 
             // ---- Pass 3: condense the dependency graph ----
-            List<string> migrating = chains.Keys.ToList();
+            List<string> migrating = chains.Keys.AsValueEnumerable().ToList();
             migrating.Sort(StringComparer.Ordinal);
 
             Dictionary<string, HashSet<string>> edges = BuildDependencyGraph(migrating, chains);
@@ -107,7 +107,7 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
                 migrating,
                 node => edges.TryGetValue(node, out HashSet<string> targets)
                     ? targets
-                    : Enumerable.Empty<string>());
+                    : Array.Empty<string>());
 
             // ---- Pass 4: validate each component and emit units in dependency order ----
             List<MigrationUnit> units = new();
@@ -156,7 +156,9 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
                 }
             }
 
-            List<DomainPlan> ordered2 = plans.Values.OrderBy(p => p.DomainId, StringComparer.Ordinal).ToList();
+            List<DomainPlan> ordered2 = plans.Values.AsValueEnumerable()
+                .OrderBy(p => p.DomainId, StringComparer.Ordinal)
+                .ToList();
             return new MigrationPlan(ordered2, units);
         }
 
@@ -181,14 +183,14 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
 
             while (version < targetVersion)
             {
-                List<MigrationStep> applicable = steps
+                List<MigrationStep> applicable = steps.AsValueEnumerable()
                     .Where(s => s.FromVersions.TryGetValue(domain, out int from) && from == version)
                     .Where(s => s.ToVersions[domain] <= targetVersion)
                     .ToList();
 
                 if (applicable.Count == 0)
                 {
-                    bool overshoots = steps.Any(s =>
+                    bool overshoots = steps.AsValueEnumerable().Any(s =>
                         s.FromVersions.TryGetValue(domain, out int from) && from == version);
 
                     failure = overshoots
@@ -203,7 +205,8 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
                 if (applicable.Count > 1)
                 {
                     failure = $"'{domain}' v{version} has {applicable.Count} competing migrators " +
-                              $"({string.Join(", ", applicable.Select(s => s.Id))}). Exactly one must apply, " +
+                              $"({string.Join(", ", applicable.AsValueEnumerable().Select(s => s.Id).ToArray())}). " +
+                              "Exactly one must apply, " +
                               "otherwise which one runs depends on registration order.";
                     chain = null;
                     return false;
@@ -298,12 +301,13 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
                     // members together, so a member that is not being migrated - because its own
                     // chain could not be resolved - makes the whole step unrunnable. Checking only
                     // DependsOn would schedule it anyway and rewrite one side of a coupled pair.
-                    foreach (string dependency in step.DependsOn.Concat(step.Domains))
+                    foreach (string dependency in
+                             step.DependsOn.AsValueEnumerable().Concat(step.Domains.AsValueEnumerable()))
                     {
                         if (inComponent.Contains(dependency))
                             continue;
 
-                        if (blocked.Contains(dependency))
+                        if (blocked.AsValueEnumerable().Contains(dependency))
                             return dependency;
 
                         // A dependency this build knows nothing about is a configuration error, but
@@ -347,8 +351,8 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
             foreach (string domain in component)
                 state[domain] = currentVersions.TryGetValue(domain, out int v) ? v : 0;
 
-            List<MigrationStep> remaining = component
-                .SelectMany(d => chains[d])
+            List<MigrationStep> remaining = component.AsValueEnumerable()
+                .SelectMany(d => chains[d].AsValueEnumerable())
                 .Distinct()
                 .ToList();
 
@@ -356,8 +360,8 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
 
             while (remaining.Count > 0)
             {
-                List<MigrationStep> applicable = remaining
-                    .Where(step => step.FromVersions.All(pair =>
+                List<MigrationStep> applicable = remaining.AsValueEnumerable()
+                    .Where(step => step.FromVersions.AsValueEnumerable().All(pair =>
                         !members.Contains(pair.Key) ||
                         (state.TryGetValue(pair.Key, out int at) && at == pair.Value)))
                     .ToList();
@@ -368,12 +372,12 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
                     failure =
                         $"'{string.Join("' and '", component)}' depend on each other, but their migration steps " +
                         "never line up: no remaining step has all of its domains at the required version " +
-                        $"(currently {string.Join(", ", state.Select(p => $"{p.Key} v{p.Value}"))}). " +
+                        $"(currently {string.Join(", ", state.AsValueEnumerable().Select(p => $"{p.Key} v{p.Value}").ToArray())}). " +
                         "Group migrators across these domains must agree on each other's from-versions.";
                     return false;
                 }
 
-                MigrationStep next = applicable.FirstOrDefault(step =>
+                MigrationStep next = applicable.AsValueEnumerable().FirstOrDefault(step =>
                     !HasPendingInComponentDependency(step, applicable, members));
 
                 if (next == null)
@@ -385,9 +389,10 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
                     failure =
                         $"'{string.Join("' and '", component)}' depend on each other, so no migration order " +
                         "is correct for all of them: " +
-                        string.Join("; ", applicable.Select(s =>
+                        string.Join("; ", applicable.AsValueEnumerable().Select(s =>
                             $"'{s.Id}' migrates [{string.Join(", ", s.Domains)}] but reads " +
-                            $"[{string.Join(", ", s.DependsOn.Where(members.Contains))}]")) +
+                            $"[{string.Join(", ", s.DependsOn.AsValueEnumerable().Where(members.Contains).ToArray())}]")
+                            .ToArray()) +
                         $". Replace these with a single group migrator covering exactly " +
                         $"[{string.Join(", ", component)}].";
                     return false;
@@ -417,7 +422,9 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
             ICollection<string> members)
         {
             HashSet<string> dependencies = new(
-                step.DependsOn.Where(d => members.Contains(d) && !step.FromVersions.ContainsKey(d)),
+                step.DependsOn.AsValueEnumerable()
+                    .Where(d => members.Contains(d) && !step.FromVersions.ContainsKey(d))
+                    .ToArray(),
                 StringComparer.Ordinal);
 
             if (dependencies.Count == 0)
@@ -428,7 +435,7 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
                 if (ReferenceEquals(other, step))
                     continue;
 
-                if (other.Domains.Any(dependencies.Contains))
+                if (other.Domains.AsValueEnumerable().Any(dependencies.Contains))
                     return true;
             }
 

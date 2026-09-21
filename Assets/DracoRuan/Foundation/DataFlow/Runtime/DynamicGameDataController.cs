@@ -41,6 +41,7 @@ namespace DracoRuan.Foundation.DataFlow.Runtime
         private const string LogTag = "DataController";
 
         private readonly DataControllerContext _context;
+        private byte[] _snapshot;
         private bool _isDisposed;
 
         protected DynamicGameDataController(DataControllerContext context)
@@ -65,6 +66,9 @@ namespace DracoRuan.Foundation.DataFlow.Runtime
         public bool IsInitialized { get; private set; }
 
         public bool IsDirty { get; private set; }
+
+        /// <summary>True while an edit session is open and <see cref="Revert"/> can still undo it.</summary>
+        public bool HasSnapshot => this._snapshot != null;
 
         /// <summary>The loaded data. Valid only after <see cref="InitializeAsync"/> completes.</summary>
         public TData Data { get; private set; }
@@ -161,10 +165,115 @@ namespace DracoRuan.Foundation.DataFlow.Runtime
             }
         }
 
+        /// <summary>
+        /// Opens an edit session: remembers the current data so <see cref="Revert"/> can restore it.
+        /// </summary>
+        /// <remarks>
+        /// <para><b>The snapshot is bytes, not a second model.</b> It is produced by the same codec
+        /// that writes the save, so it is a true deep copy and it can never drift from the data
+        /// class the way a hand-written clone or a parallel "working model" would: add a field to
+        /// <typeparamref name="TData"/> and the snapshot carries it with no extra code.</para>
+        ///
+        /// <para>Nothing is written to disk here. This only affects what <see cref="Revert"/> does.</para>
+        ///
+        /// <para>Calling it again replaces the previous snapshot, so the revert point is always the
+        /// most recent <see cref="BeginEdit"/>. Sessions do not nest.</para>
+        /// </remarks>
+        public void BeginEdit()
+        {
+            if (this._isDisposed || this.Data == null)
+                return;
+
+            this._snapshot = this._context.Codec.Serialize(this.Data);
+        }
+
+        /// <summary>
+        /// Restores the data captured by the last <see cref="BeginEdit"/> and closes the session.
+        /// </summary>
+        /// <remarks>
+        /// <para>Deserializing the snapshot yields a fresh instance rather than mutating the live
+        /// one, so any reference gameplay code cached before the revert is now stale - which is why
+        /// <see cref="OnDataChanged"/> fires. Read <see cref="Data"/> again after reverting.</para>
+        ///
+        /// <para>The dirty flag is cleared only when the data had not been saved in the meantime.
+        /// If an autosave already persisted the edited state, reverting leaves changes that still
+        /// need writing, so the controller stays queued for the next flush.</para>
+        /// </remarks>
+        /// <returns>False when there was no open edit session.</returns>
+        public bool Revert()
+        {
+            if (this._isDisposed || this._snapshot == null)
+                return false;
+
+            byte[] snapshot = this._snapshot;
+            this._snapshot = null;
+
+            TData restored;
+            try
+            {
+                restored = this._context.Codec.Deserialize<TData>(snapshot);
+            }
+            catch (Exception exception)
+            {
+                // The snapshot came from this same codec moments ago, so a failure here means the
+                // codec itself is misconfigured. Keeping the edited data is the lesser harm:
+                // replacing it with defaults would turn a failed undo into data loss.
+                Debug.LogError(
+                    $"[{LogTag}] Could not revert '{this.DomainId}': {exception.Message}. " +
+                    "The edited data has been kept.");
+                return false;
+            }
+
+            if (restored == null)
+                return false;
+
+            this.Data = restored;
+
+            // Whatever was persisted mid-session still differs from what is now in memory, so the
+            // controller must stay queued; only an unsaved session ends clean.
+            if (this.IsDirty)
+            {
+                this.IsDirty = false;
+                this._context.Scheduler.Forget(this);
+            }
+
+            this.OnDataChanged?.Invoke(this.Data);
+            return true;
+        }
+
+        /// <summary>
+        /// Closes the edit session and keeps the current data, making the changes permanent.
+        /// </summary>
+        /// <remarks>
+        /// This does not write to disk; it only drops the revert point. Call <see cref="MarkDirty"/>
+        /// (or <see cref="Save"/>) to persist, exactly as without an edit session.
+        /// </remarks>
+        public void CommitEdit() => this.DiscardSnapshot();
+
+        private void DiscardSnapshot() => this._snapshot = null;
+
         public void Delete()
         {
+            if (this._isDisposed)
+                return;
+
+            // Deleting is a write, so it answers to the same latch every other write does. Erasing
+            // files while migration is still running - or after it failed - would destroy the very
+            // saves the migration was trying to rescue, and the rollback path would have nothing
+            // left to restore.
+            if (!this._context.Gate.IsOpen)
+            {
+                Debug.LogWarning(
+                    $"[{LogTag}] Refusing to delete '{this.DomainId}' before migration has completed.");
+                return;
+            }
+
             this._context.Store.DeleteAll(this.DomainId);
             this._context.Scheduler.Forget(this);
+
+            // A pending snapshot describes files that no longer exist; keeping it would let a later
+            // Revert() resurrect deleted data.
+            this.DiscardSnapshot();
 
             this.Data = this.CreateDefault();
             this.IsDirty = false;
@@ -223,6 +332,7 @@ namespace DracoRuan.Foundation.DataFlow.Runtime
                 return;
 
             this._isDisposed = true;
+            this._snapshot = null;
             this.OnDataLoaded = null;
             this.OnDataChanged = null;
             this.Data = null;

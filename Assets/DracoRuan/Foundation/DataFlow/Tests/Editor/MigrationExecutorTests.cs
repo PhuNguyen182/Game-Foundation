@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using ZLinq;
 using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -74,7 +74,7 @@ namespace DracoRuan.Foundation.DataFlow.Tests
         }
 
         private Dictionary<string, int> DiscoverVersions(params string[] domains) =>
-            domains.ToDictionary(d => d, d => this._store.GetLatestVersion(d) ?? 0);
+            domains.AsValueEnumerable().ToDictionary(d => d, d => this._store.GetLatestVersion(d) ?? 0);
 
         /// <summary>A migrator that appends a marker, so the transform is observable.</summary>
         private sealed class AppendMigrator : IDataMigrator
@@ -275,7 +275,7 @@ namespace DracoRuan.Foundation.DataFlow.Tests
                 new Dictionary<string, int> { ["a"] = 2 }, this.DiscoverVersions("a"));
 
             Assert.That(outcome.Succeeded, Is.False);
-            Assert.That(outcome.Failures.Single(), Does.Contain("DependsOn"),
+            Assert.That(outcome.Failures.AsValueEnumerable().Single(), Does.Contain("DependsOn"),
                 "the message must point at the missing declaration");
         }
 
@@ -357,7 +357,7 @@ namespace DracoRuan.Foundation.DataFlow.Tests
                 new Dictionary<string, int> { ["player"] = 3 }, this.DiscoverVersions("player"));
 
             Assert.That(outcome.Succeeded, Is.False);
-            Assert.That(outcome.Failures.Single(), Does.Contain("blew up"));
+            Assert.That(outcome.Failures.AsValueEnumerable().Single(), Does.Contain("blew up"));
 
             // Everything this run wrote is gone, including the successful intermediate step.
             Assert.That(this._store.ListVersions("player"), Is.EqualTo(new[] { 1 }));

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using ZLinq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.Core.Envelope;
@@ -232,7 +232,7 @@ namespace DracoRuan.Foundation.DataFlow.Core.Migration
         /// </summary>
         private void RollBack(IEnumerable<(string DomainId, int Version)> written)
         {
-            foreach ((string domainId, int version) in written.Reverse())
+            foreach ((string domainId, int version) in written.AsValueEnumerable().Reverse())
                 this._store.Delete(domainId, version);
         }
     }

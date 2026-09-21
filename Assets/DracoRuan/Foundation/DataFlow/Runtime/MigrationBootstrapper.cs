@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using ZLinq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.Core.Envelope;
@@ -171,6 +171,7 @@ namespace DracoRuan.Foundation.DataFlow.Runtime
         /// </summary>
         public IReadOnlyList<string> GetUnloadableDomains() =>
             this.LastPlan?.ProblemDomains
+                .AsValueEnumerable()
                 .Where(d => d.Status is DomainPlanStatus.Downgrade or DomainPlanStatus.Corrupt)
                 .Select(d => d.DomainId)
                 .ToList() ?? (IReadOnlyList<string>)Array.Empty<string>();

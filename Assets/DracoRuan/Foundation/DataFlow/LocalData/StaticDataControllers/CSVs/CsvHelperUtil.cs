@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using CsvHelper;
 using CsvHelper.Configuration;
 using ZLinq;
@@ -27,7 +26,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers.CSVs
         public static IEnumerable<TRecord> GetRecordsFromCsv(string csvText)
         {
             if (string.IsNullOrEmpty(csvText))
-                return Enumerable.Empty<TRecord>();
+                return Array.Empty<TRecord>();
             
             try
             {
@@ -42,7 +41,7 @@ namespace DracoRuan.Foundation.DataFlow.LocalData.StaticDataControllers.CSVs
                 Debug.LogException(e);
             }
 
-            return Enumerable.Empty<TRecord>();
+            return Array.Empty<TRecord>();
         }
     }
 }

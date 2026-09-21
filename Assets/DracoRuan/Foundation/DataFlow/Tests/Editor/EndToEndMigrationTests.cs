@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using ZLinq;
 using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -172,7 +172,7 @@ namespace DracoRuan.Foundation.DataFlow.Tests
 
         private MigrationOutcome RunMigration(Dictionary<string, int> targets)
         {
-            Dictionary<string, int> current = targets.Keys
+            Dictionary<string, int> current = targets.Keys.AsValueEnumerable()
                 .ToDictionary(d => d, d => this._store.GetLatestVersion(d) ?? 0);
 
             MigrationPlan plan = new MigrationPlanner().CreatePlan(targets, current, this._registry.Steps);
