@@ -191,50 +191,57 @@ namespace DracoRuan.Foundation.DataFlow.StaticData.Editor.Tests
         [Test]
         public void Render_PutsTheClosingParenthesisOnItsOwnLineAfterADisabledStep()
         {
-            // A disabled step last in the chain ends the argument list on a commented line. If
-            // the closing parenthesis were appended to it, it would be commented out too and the
-            // file would stop compiling - which the rewriter must never be able to cause.
+            // A disabled step last in the chain ends the argument list on a commented line.
+            // Appending the closing parenthesis to it would comment that out too, leaving a
+            // file that no longer compiles - the one thing a source rewriter must never do.
             StaticDataChainSource source = Parse(
                 "        protected override IReadOnlyList<StaticDataSourceBinding> Sources { get; } =\n" +
                 "            StaticDataSourceBinding.Chain(\n" +
-                "                StaticDataSourceBinding.Resources(\"local\"),\n" +
-                "                // StaticDataSourceBinding.Url(\"https://cdn/x.csv\"));\n");
+                "                // StaticDataSourceBinding.Url(\"https://cdn/x.csv\"),\n" +
+                "                StaticDataSourceBinding.Addressable(\"addr\"),\n" +
+                "                StaticDataSourceBinding.Resources(\"local\"));\n");
 
+            // Drag the disabled step to the end, the arrangement that used to comment out the
+            // closing parenthesis along with it.
             List<StaticDataChainStep> steps = new(source.Steps);
-            StaticDataChainStep disabled = steps[1];
-            steps.RemoveAt(1);
+            StaticDataChainStep disabled = steps[0];
+            steps.RemoveAt(0);
             steps.Add(disabled);
 
             string rendered = source.Render(steps);
 
             StringAssert.Contains("// StaticDataSourceBinding.Url", rendered);
 
-            // The last non-blank line is the parenthesis alone, not a commented one.
-            string[] renderedLines = rendered.TrimEnd().Split('\n');
-            string lastLine = renderedLines[renderedLines.Length - 1].Trim();
+            // The parenthesis that closes Chain( is on a line of its own, uncommented.
+            StringAssert.Contains("x.csv\")" + LineBreak + "                );", rendered);
 
-            StringAssert.StartsWith(")", lastLine);
-            StringAssert.DoesNotContain("//", lastLine);
+            // And the result is still something the parser can read back.
+            StaticDataChainSource reparsed = StaticDataChainSource.TryParse("Assets/Sample.cs", rendered);
+            Assert.IsNotNull(reparsed, StaticDataChainSource.LastParseError);
+            Assert.AreEqual(3, reparsed.Steps.Count);
         }
 
         [Test]
         public void Render_OmitsTheCommaOnATrailingDisabledStep()
         {
-            // Nothing follows it, so a comma there would be separating an argument from nothing.
+            // Nothing follows it, so a comma there would separate an argument from nothing.
             StaticDataChainSource source = Parse(
                 "        protected override IReadOnlyList<StaticDataSourceBinding> Sources { get; } =\n" +
                 "            StaticDataSourceBinding.Chain(\n" +
-                "                StaticDataSourceBinding.Resources(\"local\"),\n" +
-                "                // StaticDataSourceBinding.Url(\"https://cdn/x.csv\"));\n");
+                "                // StaticDataSourceBinding.Url(\"https://cdn/x.csv\"),\n" +
+                "                StaticDataSourceBinding.Addressable(\"addr\"),\n" +
+                "                StaticDataSourceBinding.Resources(\"local\"));\n");
 
+            // Drag the disabled step to the end, the arrangement that used to comment out the
+            // closing parenthesis along with it.
             List<StaticDataChainStep> steps = new(source.Steps);
-            StaticDataChainStep disabled = steps[1];
-            steps.RemoveAt(1);
+            StaticDataChainStep disabled = steps[0];
+            steps.RemoveAt(0);
             steps.Add(disabled);
 
             string rendered = source.Render(steps);
 
-            StringAssert.DoesNotContain("x.csv" + '\"' + "),", rendered);
+            StringAssert.DoesNotContain("x.csv\"),", rendered);
         }
 
         [Test]
@@ -378,6 +385,9 @@ namespace DracoRuan.Foundation.DataFlow.StaticData.Editor.Tests
             StringAssert.Contains("Addressable(\"Configs/GachaRateData\")", preview);
             StringAssert.Contains(preview, source.Render(steps));
         }
+
+        /// <summary>The line ending Render emits for text parsed from a string literal.</summary>
+        private const string LineBreak = "\n";
 
         private static StaticDataChainSource Parse(string text) =>
             StaticDataChainSource.TryParse("Assets/Sample.cs", text);
