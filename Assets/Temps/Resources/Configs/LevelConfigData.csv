@@ -1,0 +1,6 @@
+LevelId,DisplayName,TargetScore,TimeLimitSeconds
+1,Warm Up,500,90
+2,First Steps,900,90
+3,Getting Faster,1400,75
+4,Tight Squeeze,2000,60
+5,Boss Rush,3200,45

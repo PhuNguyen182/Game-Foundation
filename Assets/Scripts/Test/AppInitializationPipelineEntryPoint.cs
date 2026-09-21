@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.DataFlow.Core.Migration;
 using DracoRuan.Foundation.DataFlow.Runtime;
+using DracoRuan.Foundation.DataFlow.StaticData.Controllers;
 using DracoRuan.Foundation.Initializers.Interfaces;
 using DracoRuan.Utilities.SceneUtils;
 using VContainer.Unity;
@@ -39,17 +40,20 @@ namespace Test
 
         private readonly MigrationBootstrapper _migration;
         private readonly DataFlowGate _gate;
+        private readonly IReadOnlyList<IStaticDataController> _staticDataControllers;
         private readonly IReadOnlyList<IDataController> _dataControllers;
         private readonly IReadOnlyList<IAsyncInitializable> _asyncInitializables;
 
         public AppInitializationPipelineEntryPoint(
             MigrationBootstrapper migration,
             DataFlowGate gate,
+            IReadOnlyList<IStaticDataController> staticDataControllers,
             IReadOnlyList<IDataController> dataControllers,
             IReadOnlyList<IAsyncInitializable> asyncInitializables)
         {
             this._migration = migration;
             this._gate = gate;
+            this._staticDataControllers = staticDataControllers;
             this._dataControllers = dataControllers;
             this._asyncInitializables = asyncInitializables;
         }
@@ -59,6 +63,10 @@ namespace Test
             if (!await this.RunMigrationAsync(cancellation))
                 return;
 
+            // Config before saves: a save's defaults and its post-load fix-ups routinely read config
+            // (starting currency, which levels exist), and reading a table that has not loaded yet
+            // would seed a new player from an empty one.
+            await this.InitializeStaticDataAsync(cancellation);
             await this.InitializeDataControllersAsync(cancellation);
             await this.InitializeServicesAsync(cancellation);
 
@@ -107,6 +115,43 @@ namespace Test
                     "Saving is disabled for this session to avoid overwriting player data.");
 
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Loads every config table. Each one runs its own fallback chain, so a table whose remote
+        /// value is missing still ends up on the copy that shipped in the build.
+        /// </summary>
+        private async UniTask InitializeStaticDataAsync(CancellationToken cancellation)
+        {
+            if (this._staticDataControllers == null)
+                return;
+
+            foreach (IStaticDataController controller in this._staticDataControllers)
+            {
+                if (cancellation.IsCancellationRequested)
+                    return;
+
+                try
+                {
+                    await controller.InitializeAsync(cancellation);
+
+                    if (!controller.IsInitialized)
+                        Debug.LogError(
+                            $"[{LogTag}] Config table '{controller.DataId}' has no data. " +
+                            controller.LastLoadResult.Describe());
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (Exception exception)
+                {
+                    // One table failing must not stop the rest; whether the game can run without it
+                    // is that table's consumer to decide, not the boot sequence's.
+                    Debug.LogError(
+                        $"[{LogTag}] Failed to load config table '{controller.DataId}': {exception.Message}");
+                }
             }
         }
 

@@ -1,8 +1,10 @@
-using DracoRuan.Foundation.DataFlow.DataProviders;
 using DracoRuan.Foundation.DataFlow.Runtime;
+using DracoRuan.Foundation.DataFlow.StaticData;
+using DracoRuan.Foundation.DataFlow.StaticData.Sources;
 using DracoRuan.RemoteConfig;
 using DracoRuan.VContainerInstallerSupport.Generated;
 using Temps.Scripts;
+using Temps.Scripts.StaticDataSample;
 using Temps.Scripts.TestRiseProgressData;
 using UnityEngine;
 using VContainer;
@@ -35,6 +37,7 @@ namespace Test
 
             this.RegisterInstallers(builder);
             this.RegisterServices(builder);
+            this.RegisterStaticData(builder);
             this.RegisterDataFlow(builder);
 
             // Registered last so every dependency it resolves already exists.
@@ -50,14 +53,29 @@ namespace Test
         {
             builder.RegisterEntryPoint<TestService>(Lifetime.Singleton);
             builder.Register<IRemoteConfigService, FirebaseRemoteConfigService>(Lifetime.Singleton);
-            // Register<TInterface, TImpl> already declares IDataProviderService as a contract, so
-            // adding AsImplementedInterfaces() on top of it declares the same contract twice. The
-            // container then adds this one registration to the IEnumerable<IDataProviderService>
-            // collection twice, which CollectionInstanceProvider rejects as a conflict. Starting
-            // from the implementation type keeps each contract listed exactly once.
-            builder.Register<DataProviderService>(Lifetime.Singleton)
-                .AsSelf()
-                .AsImplementedInterfaces();
+        }
+
+        /// <summary>
+        /// Registers the config system, then one line per table.
+        /// </summary>
+        /// <remarks>
+        /// <para>The reader adapter is registered before <c>AddStaticData</c> so the source registry
+        /// can pick it up; a project with no remote config simply leaves it out, and any chain naming
+        /// that source skips the link instead of failing to build.</para>
+        ///
+        /// <para>Each controller declares its own fallback chain, so there is nothing to configure
+        /// here beyond which tables exist.</para>
+        /// </remarks>
+        private void RegisterStaticData(IContainerBuilder builder)
+        {
+            builder.Register<IStaticRemoteConfigReader, RemoteConfigStaticDataReader>(Lifetime.Singleton);
+
+            StaticDataScope staticData = builder.AddStaticData();
+
+            builder.RegisterStaticDataController<GachaRateController>(staticData);
+#if USE_CSV_HELPER
+            builder.RegisterStaticDataController<LevelConfigController>(staticData);
+#endif
         }
 
         /// <summary>
