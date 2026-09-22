@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b11fd4c0b17805444bfa985ebafc42f7, type: 3}
+  m_Name: AudioConfig
+  m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.PrebuildServices.AudioSystem.Data.AudioConfig
+  _mixer: {fileID: 24100000, guid: 041c645875f52b44d818b0fe51f614fb, type: 2}
+  _channels:
+  - _id: Music
+    _mixerGroup: {fileID: 3335833575914443825, guid: 041c645875f52b44d818b0fe51f614fb, type: 2}
+    _volumeParameter: MusicVolume
+    _pitchMode: 0
+    _pitchParameter: 
+    _defaultVolume: 1
+    _reservedVoices: 0
+    _maxVoices: 0
+  - _id: SFX
+    _mixerGroup: {fileID: -8268501980038509189, guid: 041c645875f52b44d818b0fe51f614fb, type: 2}
+    _volumeParameter: SFXVolume
+    _pitchMode: 0
+    _pitchParameter: 
+    _defaultVolume: 1
+    _reservedVoices: 0
+    _maxVoices: 0
+  - _id: UI
+    _mixerGroup: {fileID: -2024215519567499750, guid: 041c645875f52b44d818b0fe51f614fb, type: 2}
+    _volumeParameter: UIVolume
+    _pitchMode: 0
+    _pitchParameter: 
+    _defaultVolume: 1
+    _reservedVoices: 0
+    _maxVoices: 0
+  _masterChannelId: Master
+  _maxTotalVoices: 24
+  _useUnscaledTime: 1
+  _maxTickDeltaSeconds: 0.25
+  _clipUnloadGraceSeconds: 10
+  _preloadTimeoutSeconds: 15
+  _logThrottledPlays: 0
+  _logDroppedPlays: 0
+  _generatedIdFolder: DracoRuan/PrebuildServices/AudioSystem/Generated
+  _defaultEntryFolder: 

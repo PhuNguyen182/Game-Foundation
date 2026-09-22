@@ -1,0 +1,14 @@
+{
+    "name": "DracoRuan.PrebuildServices.AudioSystem.Logic",
+    "rootNamespace": "DracoRuan.PrebuildServices.AudioSystem.Logic",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
