@@ -51,6 +51,9 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Editor
 
         private PropertyTree _detailTree;
         private AudioEntry _selected;
+
+        private PropertyTree _channelsTree;
+        private AudioConfig _channelsTreeConfig;
         private Vector2 _listScroll;
         private Vector2 _detailScroll;
         private Vector2 _codeScroll;
@@ -115,6 +118,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Editor
             EditorPrefs.SetFloat(AudioEditorState.SplitWidthKey, this._listWidth);
             EditorPrefs.SetInt(AudioEditorState.TabKey, (int)this._tab);
             this.ReleaseDetailTree();
+            this.ReleaseChannelsTree();
         }
 
         private void OnGUI()
@@ -451,25 +455,114 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Editor
 
         private void DrawChannels()
         {
+            // Ambiguity is checked here rather than trusted to AudioIdIndex, which silently picks
+            // whichever FindAssets returns first - fine for a read-only dropdown, not fine for a
+            // pane that is about to let someone edit "the" config.
+            string[] guids = AssetDatabase.FindAssets($"t:{nameof(AudioConfig)}");
+
+            if (guids.Length > 1)
+            {
+                EditorGUILayout.HelpBox("More than one AudioConfig exists in the project. Delete or "
+                                        + "merge all but one, so it is unambiguous which channels the game loads.",
+                    MessageType.Error);
+                return;
+            }
+
             AudioConfig config = AudioIdIndex.Config;
 
             if (config == null)
             {
-                EditorGUILayout.HelpBox("No AudioConfig asset was found. Create one through "
-                                        + "Assets > Create > DracoRuan > AudioSystem > AudioConfig.", MessageType.Info);
+                this.ReleaseChannelsTree();
+                this.DrawCreateConfigPrompt();
                 return;
             }
 
-            EditorGUILayout.LabelField("Channels", EditorStyles.boldLabel);
+            if (!ReferenceEquals(this._channelsTreeConfig, config))
+            {
+                this.ReleaseChannelsTree();
+                this._channelsTree = PropertyTree.Create(config);
+                this._channelsTreeConfig = config;
+            }
 
-            IReadOnlyList<AudioIdRecord> channels = AudioIdIndex.Channels;
-            for (int i = 0; i < channels.Count; i++)
-                EditorGUILayout.LabelField("• " + channels[i].Id);
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField(AssetDatabase.GetAssetPath(config), EditorStyles.miniLabel);
+
+                if (GUILayout.Button("Ping", EditorStyles.miniButton, GUILayout.Width(50f)))
+                    EditorGUIUtility.PingObject(config);
+            }
 
             EditorGUILayout.Space(6f);
 
-            if (GUILayout.Button("Open the AudioConfig"))
-                Selection.activeObject = config;
+            // One line renders the whole config exactly as the Inspector would - mixer, the channel
+            // list, voice pool, timing, loading and diagnostics all included, so nothing here
+            // duplicates a field list AudioConfig already owns.
+            this._channelsTree.Draw(false);
+        }
+
+        private void DrawCreateConfigPrompt()
+        {
+            EditorGUILayout.HelpBox("No AudioConfig asset exists yet. Create one so channels can be "
+                                    + "authored here.", MessageType.Info);
+
+            if (GUILayout.Button("Create AudioConfig…", GUILayout.Width(160f)))
+                this.CreateConfig();
+        }
+
+        private void CreateConfig()
+        {
+            string path = EditorUtility.SaveFilePanelInProject(
+                "Save Audio Config",
+                "AudioConfig",
+                "asset",
+                "Choose where to store the AudioConfig asset.",
+                ResolveDefaultConfigDirectory());
+
+            // A cancel must leave nothing written and raise nothing - the same contract as entry
+            // creation.
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            if (!path.StartsWith("Assets/", StringComparison.Ordinal))
+            {
+                AudioDialogs.Report("Could not create the AudioConfig", $"{path} is outside the Assets folder.");
+                return;
+            }
+
+            // AssetDatabase.CreateAsset over an existing path deletes and recreates it, issuing a new
+            // GUID and breaking every reference to whatever was there before.
+            if (AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path) != null)
+            {
+                string unique = AssetDatabase.GenerateUniqueAssetPath(path);
+
+                if (!AudioDialogs.ConfirmSaveAsUnique(path, unique))
+                    return;
+
+                path = unique;
+            }
+
+            AudioConfig config = ScriptableObject.CreateInstance<AudioConfig>();
+            AssetDatabase.CreateAsset(config, path);
+            EditorUtility.SetDirty(config);
+            AssetDatabase.SaveAssets();
+
+            AudioIdIndex.Invalidate();
+            this._needsRepaint = true;
+        }
+
+        private static string ResolveDefaultConfigDirectory()
+        {
+            AudioDatabaseLocator.Result database = AudioDatabaseLocator.Find();
+            if (database.Found)
+                return DirectoryOfAsset(database.AssetPath);
+
+            return "Assets";
+        }
+
+        private static string DirectoryOfAsset(string assetPath)
+        {
+            int end = assetPath.LastIndexOf('/');
+            return end <= 0 ? "Assets" : assetPath.Substring(0, end);
         }
 
         #endregion
@@ -768,6 +861,13 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Editor
         {
             this._detailTree?.Dispose();
             this._detailTree = null;
+        }
+
+        private void ReleaseChannelsTree()
+        {
+            this._channelsTree?.Dispose();
+            this._channelsTree = null;
+            this._channelsTreeConfig = null;
         }
 
         private int UnregisteredCount()

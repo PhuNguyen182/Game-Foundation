@@ -50,7 +50,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Installer
 
             builder.RegisterInstance(config);
 
-            if (collection != null)
+            if (collection)
                 builder.RegisterInstance(collection);
 
             builder.Register<AudioService>(Lifetime.Singleton)
