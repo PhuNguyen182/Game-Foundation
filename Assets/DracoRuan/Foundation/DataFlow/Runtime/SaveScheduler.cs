@@ -44,7 +44,7 @@ namespace DracoRuan.Foundation.DataFlow.Runtime
         /// Seconds between periodic flushes. Zero or less disables the timer, leaving only the
         /// suspend and quit flushes.
         /// </param>
-        public SaveScheduler(DataFlowGate gate, float autoSaveIntervalSeconds = 30f)
+        public SaveScheduler(DataFlowGate gate, float autoSaveIntervalSeconds = 0f)
         {
             this._gate = gate ?? throw new ArgumentNullException(nameof(gate));
             this._autoSaveIntervalSeconds = autoSaveIntervalSeconds;

@@ -39,7 +39,7 @@ namespace DracoRuan.Foundation.DataFlow.Runtime
         /// <param name="autoSaveIntervalSeconds">
         /// Seconds between periodic flushes. Zero or less leaves only the suspend and quit flushes.
         /// </param>
-        public static DataFlowScope AddDataFlow(this IContainerBuilder builder, float autoSaveIntervalSeconds = 30f)
+        public static DataFlowScope AddDataFlow(this IContainerBuilder builder, float autoSaveIntervalSeconds = 0f)
         {
             if (builder == null) throw new ArgumentNullException(nameof(builder));
 
