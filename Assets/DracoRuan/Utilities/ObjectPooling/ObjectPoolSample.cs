@@ -8,18 +8,14 @@ namespace DracoRuan.Utilities.ObjectPooling
         
         private void Test()
         {
-            PoolableObject poolableObject = ObjectPooling.Spawn(_poolableObject);
+            PoolableObject poolableObject = ObjectPool.Spawn(_poolableObject);
             Debug.Log(poolableObject.PoolHashKey);
         }
     }
 
     public class PoolableObject : MonoBehaviour, IPoolableObject
     {
-#if UNITY_6000_0_OR_NEWER
         public EntityId PoolHashKey { get; set; }
-#else
-        public int PoolHashKey { get; set; }
-#endif
         
         public void SetPoolHashKey(int hashKey)
         {

@@ -35,7 +35,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Popups.PopupManager
                     if (popupEntry.shouldPreload)
                     {
                         BaseUIPopup popupPrefab = popupEntry.popupPrefab;
-                        ObjectPooling.PreloadPool(popupPrefab, 1);
+                        ObjectPool.PreloadObjectPool(popupPrefab, 1);
                     }
                 }
             }
@@ -47,7 +47,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Popups.PopupManager
             if (!popupPrefab || popupPrefab is not TPopup targetPopup)
                 return null;
 
-            TPopup result = ObjectPooling.Spawn(targetPopup, Vector3.zero, Quaternion.identity, parent);
+            TPopup result = ObjectPool.Spawn(targetPopup, Vector3.zero, Quaternion.identity, parent);
             result.transform.SetAsLastSibling();
             result.SetPopupManager(this);
             
@@ -66,7 +66,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Popups.PopupManager
             if (!popupPrefab || popupPrefab is not TPopup targetPopup) 
                 return null;
             
-            TPopup result = ObjectPooling.Spawn(targetPopup, Vector3.zero, Quaternion.identity, parent);
+            TPopup result = ObjectPool.Spawn(targetPopup, Vector3.zero, Quaternion.identity, parent);
             result.transform.SetAsLastSibling();
             result.SetPopupManager(this);
             

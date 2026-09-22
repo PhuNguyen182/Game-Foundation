@@ -5,20 +5,12 @@ namespace DracoRuan.Utilities.ObjectPooling
 {
     public static class ObjectPoolManager<TPoolableObject> where TPoolableObject : Component, IPoolableObject
     {
-#if UNITY_6000_0_OR_NEWER
         private static readonly Dictionary<EntityId, GameObjectPool<TPoolableObject>> ObjectPools = new();
-#else
-        private static readonly Dictionary<int, GameObjectPool<TPoolableObject>> ObjectPools = new();
-#endif
 
-        public static void PreloadPool(TPoolableObject prefab, int defaultCapacity = ObjectPoolConstant.PoolCapacity,
+        public static void PreloadObjectPool(TPoolableObject prefab, int defaultCapacity = ObjectPoolConstant.PoolCapacity,
             int preloadCount = ObjectPoolConstant.PoolMaxSize)
         {
-#if UNITY_6000_0_OR_NEWER
             EntityId hashId = prefab.gameObject.GetEntityId();
-#else
-            int hashId = prefab.gameObject.GetInstanceID();
-#endif
             if (ObjectPools.ContainsKey(hashId))
                 return;
 
@@ -30,18 +22,14 @@ namespace DracoRuan.Utilities.ObjectPooling
         public static TPoolableObject Spawn(TPoolableObject prefab)
         {
             TPoolableObject instance;
-#if UNITY_6000_0_OR_NEWER
             EntityId hashId = prefab.gameObject.GetEntityId();
-#else
-            int hashId = prefab.gameObject.GetInstanceID();
-#endif
             if (ObjectPools.TryGetValue(hashId, out GameObjectPool<TPoolableObject> objectPool))
             {
                 instance = objectPool.Spawn();
             }
             else
             {
-                PreloadPool(prefab);
+                PreloadObjectPool(prefab);
                 GameObjectPool<TPoolableObject> createdObjectPool = ObjectPools[hashId];
                 instance = createdObjectPool.Spawn();
             }
@@ -95,23 +83,15 @@ namespace DracoRuan.Utilities.ObjectPooling
                 objectPool.Despawn(instance);
                 return;
             }
-
-#if UNITY_6000_0_OR_NEWER
+            
             EntityId hashId = instance.gameObject.GetEntityId();
-#else
-            int hashId = instance.GetInstanceID();
-#endif
             Debug.Log($"This Object {instance.name} with instance id {hashId} has not been spawned in any object pool. Destroy it instead!");
             Object.Destroy(instance);
         }
 
         public static void ClearObjectPool(TPoolableObject originalPrefab)
         {
-#if UNITY_6000_0_OR_NEWER
             EntityId instanceId = originalPrefab.gameObject.GetEntityId();
-#else
-            int instanceId = originalPrefab.gameObject.GetInstanceID();
-#endif
             if (!ObjectPools.TryGetValue(instanceId, out GameObjectPool<TPoolableObject> objectPool))
                 return;
 

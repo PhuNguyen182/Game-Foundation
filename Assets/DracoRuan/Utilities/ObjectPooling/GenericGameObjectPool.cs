@@ -5,26 +5,18 @@ using Object = UnityEngine.Object;
 
 namespace DracoRuan.Utilities.ObjectPooling
 {
-    public class GameObjectPool<TPoolableObject> : IGameObjectPool, IDisposable
+    public class GameObjectPool<TPoolableObject> : IDisposable
         where TPoolableObject : Component, IPoolableObject
     {
         private readonly ObjectPool<TPoolableObject> _objectPool;
 
         private bool _isDisposed;
-
-#if UNITY_6000_0_OR_NEWER
+        
         public EntityId PoolHashKey { get; }
-#else
-        public int PoolHashKey { get; }
-#endif
 
         public GameObjectPool(TPoolableObject prefab, int defaultCapacity, int maxSize)
         {
-#if UNITY_6000_0_OR_NEWER
             this.PoolHashKey = prefab.gameObject.GetEntityId();
-#else
-            this.PoolHashKey = prefab.gameObject.GetInstanceID();
-#endif
             this._objectPool = this.CreateObjectPool(prefab, defaultCapacity, maxSize);
         }
 

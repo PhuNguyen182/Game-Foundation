@@ -2,13 +2,13 @@ using UnityEngine;
 
 namespace DracoRuan.Utilities.ObjectPooling
 {
-    public static class ObjectPooling
+    public static class ObjectPool
     {
-        #region Normal Game Object Pooling
+        #region Normal Game Object Pool
 
-        public static void PreloadPool(GameObject prefab, int defaultCapacity = ObjectPoolConstant.PoolCapacity,
+        public static void PreloadObjectPool(GameObject prefab, int defaultCapacity = ObjectPoolConstant.PoolCapacity,
             int preloadCount = ObjectPoolConstant.PoolMaxSize) =>
-            ObjectPoolManager.PreloadPool(prefab, defaultCapacity, preloadCount);
+            ObjectPoolManager.PreloadObjectPool(prefab, defaultCapacity, preloadCount);
 
         public static GameObject Spawn(GameObject prefab) => ObjectPoolManager.Spawn(prefab);
 
@@ -33,12 +33,12 @@ namespace DracoRuan.Utilities.ObjectPooling
 
         #endregion
 
-        #region Generic Object Pooling
+        #region Generic Object Pool
 
-        public static void PreloadPool<TPoolableObject>(TPoolableObject prefab,
+        public static void PreloadObjectPool<TPoolableObject>(TPoolableObject prefab,
             int defaultCapacity = ObjectPoolConstant.PoolCapacity,
             int preloadCount = ObjectPoolConstant.PoolMaxSize) where TPoolableObject : Component, IPoolableObject
-            => ObjectPoolManager<TPoolableObject>.PreloadPool(prefab, defaultCapacity, preloadCount);
+            => ObjectPoolManager<TPoolableObject>.PreloadObjectPool(prefab, defaultCapacity, preloadCount);
 
         public static TPoolableObject Spawn<TPoolableObject>(TPoolableObject prefab)
             where TPoolableObject : Component, IPoolableObject => ObjectPoolManager<TPoolableObject>.Spawn(prefab);
