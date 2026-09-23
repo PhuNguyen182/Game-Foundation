@@ -131,6 +131,13 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
 
                 GUI.backgroundColor = previous;
 
+                VibrationDatabaseLocator.Result database = VibrationDatabaseLocator.Find();
+                using (new EditorGUI.DisabledScope(!database.Found))
+                {
+                    if (GUILayout.Button("Ping Collection", EditorStyles.toolbarButton, GUILayout.Width(110f)))
+                        EditorGUIUtility.PingObject(database.Collection);
+                }
+
                 GUILayout.FlexibleSpace();
 
                 EditorGUI.BeginChangeCheck();
@@ -151,6 +158,33 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
             if (conflicts.Count == 0 && SessionState.GetBool(VibrationEditorState.IdsStaleKey, false))
                 EditorGUILayout.HelpBox("VibrationId.cs no longer matches the project. Press Generate Ids.",
                     MessageType.Warning);
+
+            this.DrawMissingCollectionBanner();
+        }
+
+        private void DrawMissingCollectionBanner()
+        {
+            VibrationDatabaseLocator.Result database = VibrationDatabaseLocator.Find();
+            if (database.Found)
+                return;
+
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField(database.Error, EditorStyles.wordWrappedLabel);
+
+                // Offering "Create" while more than one collection already exists would only make the
+                // ambiguity worse - the fix there is deleting or merging, not adding a third.
+                if (database.Candidates.Count == 0 && GUILayout.Button("Create Collection…", GUILayout.Width(140f)))
+                {
+                    VibrationCollection created = VibrationCollectionCreationService.CreateInteractive(
+                        out string error);
+
+                    if (error != null)
+                        VibrationDialogs.Report("Could not create the collection", error);
+                    else if (created != null)
+                        AssetDatabase.Refresh();
+                }
+            }
         }
 
         #endregion
@@ -359,17 +393,24 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
                 EditorGUILayout.HelpBox(reason, MessageType.Warning);
 
             VibrationDatabaseLocator.Result database = VibrationDatabaseLocator.Find();
-            if (database.Found && !database.Collection.Contains(this._selected))
+            if (database.Found)
             {
-                EditorGUILayout.HelpBox("This entry is not registered in the VibrationCollection, so the "
-                                        + "game will not load it. Its identifier is still generated.",
-                    MessageType.Warning);
+                bool isRegistered = database.Collection.Contains(this._selected);
 
-                if (GUILayout.Button("Add to collection"))
+                if (!isRegistered)
+                    EditorGUILayout.HelpBox("This entry is not registered in the VibrationCollection, so the "
+                                            + "game will not load it. Its identifier is still generated.",
+                        MessageType.Warning);
+
+                string buttonLabel = isRegistered ? "Remove from collection" : "Add to collection";
+                if (GUILayout.Button(buttonLabel))
                 {
-                    VibrationDatabaseLocator.Register(database.Collection, this._selected, out string error);
-                    if (error != null)
-                        VibrationDialogs.Report("Could not register the entry", error);
+                    bool ok = isRegistered
+                        ? VibrationDatabaseLocator.Unregister(database.Collection, this._selected, out string error)
+                        : VibrationDatabaseLocator.Register(database.Collection, this._selected, out error);
+
+                    if (!ok && error != null)
+                        VibrationDialogs.Report("Could not update the collection", error);
                 }
             }
 

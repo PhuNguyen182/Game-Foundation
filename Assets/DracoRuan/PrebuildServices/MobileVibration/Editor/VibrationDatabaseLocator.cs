@@ -84,7 +84,7 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
                 return true;
 
             SerializedObject serialized = new SerializedObject(collection);
-            SerializedProperty entries = serialized.FindProperty("_entries");
+            SerializedProperty entries = serialized.FindProperty("entries");
 
             if (entries == null)
             {
@@ -96,9 +96,25 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
             entries.GetArrayElementAtIndex(entries.arraySize - 1).objectReferenceValue = entry;
 
             serialized.ApplyModifiedProperties();
+            collection.InvalidateIndex();
             EditorUtility.SetDirty(collection);
             AssetDatabase.SaveAssets();
 
+            return true;
+        }
+
+        /// <summary>Removes <paramref name="entry"/> from <paramref name="collection"/>'s flat entry list.</summary>
+        public static bool Unregister(VibrationCollection collection, VibrationEntry entry, out string error)
+        {
+            error = null;
+
+            if (collection == null || entry == null)
+            {
+                error = "Nothing to remove.";
+                return false;
+            }
+
+            Unregister(collection, new[] { entry });
             return true;
         }
 
@@ -114,7 +130,7 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
                 return;
 
             SerializedObject serialized = new SerializedObject(collection);
-            SerializedProperty list = serialized.FindProperty("_entries");
+            SerializedProperty list = serialized.FindProperty("entries");
 
             if (list == null)
                 return;
@@ -128,6 +144,7 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
             }
 
             serialized.ApplyModifiedProperties();
+            collection.InvalidateIndex();
             EditorUtility.SetDirty(collection);
             AssetDatabase.SaveAssets();
         }

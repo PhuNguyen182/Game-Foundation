@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6c0c0cf82b25c041afe7fa8299a3746, type: 3}
+  m_Name: VibrationCollection
+  m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.PrebuildServices.MobileVibration.Data.VibrationCollection
+  entries:
+  - {fileID: 11400000, guid: 5c88d022c0928a4409cb6ddd3c91e89e, type: 2}
+  - {fileID: 11400000, guid: c0849c57f6e21394d9045575a15e68b0, type: 2}
