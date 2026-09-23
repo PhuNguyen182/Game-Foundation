@@ -53,7 +53,7 @@ namespace DracoRuan.Utilities.TextUtils.Editor
 
             if (!_hasValidInput)
             {
-                EditorGUILayout.HelpBox("Nhập một emoji, mã hex (U+1F60A) hoặc mã thập phân.", MessageType.Info);
+                EditorGUILayout.HelpBox("Enter an emoji, hex code (U+1F60A) or decimal code.", MessageType.Info);
                 return;
             }
 
