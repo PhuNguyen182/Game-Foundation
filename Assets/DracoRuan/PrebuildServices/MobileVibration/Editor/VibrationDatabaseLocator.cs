@@ -17,7 +17,8 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
     {
         public readonly struct Result
         {
-            public Result(VibrationCollection collection, string assetPath, string error, IReadOnlyList<string> candidates)
+            public Result(VibrationCollection collection, string assetPath, string error,
+                IReadOnlyList<string> candidates)
             {
                 this.Collection = collection;
                 this.AssetPath = assetPath;
@@ -55,7 +56,8 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
             if (paths.Count > 1)
                 return new Result(null, null,
                     "More than one VibrationCollection exists: " + string.Join(", ", paths)
-                    + ". Delete or merge all but one, so it is unambiguous which the game loads.", paths);
+                                                                 + ". Delete or merge all but one, so it is unambiguous which the game loads.",
+                    paths);
 
             VibrationCollection collection = AssetDatabase.LoadAssetAtPath<VibrationCollection>(paths[0]);
             return new Result(collection, paths[0],
@@ -98,6 +100,47 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
             AssetDatabase.SaveAssets();
 
             return true;
+        }
+
+        /// <summary>Removes every entry given from <paramref name="collection"/>'s flat entry list.</summary>
+        /// <remarks>
+        /// Removed backwards through <c>SerializedProperty.DeleteArrayElementAtIndex</c> so earlier
+        /// indices stay valid while the array shrinks, the same approach
+        /// <c>AudioEntryDeletionService.Unregister</c> uses.
+        /// </remarks>
+        public static void Unregister(VibrationCollection collection, IReadOnlyList<VibrationEntry> entries)
+        {
+            if (collection == null || entries == null || entries.Count == 0)
+                return;
+
+            SerializedObject serialized = new SerializedObject(collection);
+            SerializedProperty list = serialized.FindProperty("_entries");
+
+            if (list == null)
+                return;
+
+            for (int i = list.arraySize - 1; i >= 0; i--)
+            {
+                UnityEngine.Object referenced = list.GetArrayElementAtIndex(i).objectReferenceValue;
+
+                if (Contains(entries, referenced))
+                    list.DeleteArrayElementAtIndex(i);
+            }
+
+            serialized.ApplyModifiedProperties();
+            EditorUtility.SetDirty(collection);
+            AssetDatabase.SaveAssets();
+        }
+
+        private static bool Contains(IReadOnlyList<VibrationEntry> entries, UnityEngine.Object candidate)
+        {
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (ReferenceEquals(entries[i], candidate))
+                    return true;
+            }
+
+            return false;
         }
     }
 }

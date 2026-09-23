@@ -1,6 +1,6 @@
-using Sirenix.OdinInspector;
 using Solo.MOST_IN_ONE;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DracoRuan.PrebuildServices.MobileVibration.Data
 {
@@ -8,9 +8,10 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Data
     /// One authored haptic: what to play, and how often it may repeat.
     /// </summary>
     /// <remarks>
-    /// <para>Plain Unity serialization, not Odin serialization, so the <c>.asset</c> stays readable
-    /// YAML that merges in version control. Odin is used only for inspector attributes, the same
-    /// convention <c>AudioEntry</c> follows.</para>
+    /// <para>Plain Unity serialization, so the <c>.asset</c> stays readable YAML that merges in
+    /// version control. No attributes here drive drawing: the Vibration Manager window and
+    /// <c>VibrationEntryEditor</c> both render every field explicitly through
+    /// <c>Editor/Drawing/VibrationEntryDrawer</c>.</para>
     ///
     /// <para><b>Nothing here is mutated at runtime.</b> The cooldown timestamp and the currently
     /// playing id live in the service, because state written onto a ScriptableObject survives
@@ -20,49 +21,38 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Data
     [CreateAssetMenu(fileName = "VibrationEntry", menuName = "DracoRuan/MobileVibration/VibrationEntry")]
     public class VibrationEntry : ScriptableObject
     {
-        [Title("Identity")]
+        [FormerlySerializedAs("_id")]
         [Tooltip("Unique name. Generated into the VibrationId class, so it is also a C# member name.")]
         [SerializeField]
-        private string _id;
+        private string id;
 
-        [Title("Source")]
+        [FormerlySerializedAs("_sourceMode")]
         [Tooltip("Preset fires and returns immediately. Custom Pattern and Curve run over time and "
                  + "keep IsPlaying true while they do.")]
         [SerializeField]
-        private VibrationSourceMode _sourceMode = VibrationSourceMode.Preset;
+        private VibrationSourceMode sourceMode = VibrationSourceMode.Preset;
 
-        [ShowIf(nameof(_sourceMode), VibrationSourceMode.Preset)] [SerializeField]
-        private MOST_HapticFeedback.HapticTypes _presetType = MOST_HapticFeedback.HapticTypes.MediumImpact;
+        [FormerlySerializedAs("_presetType")] [SerializeField]
+        private MOST_HapticFeedback.HapticTypes presetType = MOST_HapticFeedback.HapticTypes.MediumImpact;
 
-        [ShowIf(nameof(_sourceMode), VibrationSourceMode.CustomPattern)] [SerializeField]
-        private MOST_HapticFeedback.CustomHapticPattern _customPattern;
+        [FormerlySerializedAs("_customPattern")] [SerializeField]
+        private MOST_HapticFeedback.CustomHapticPattern customPattern;
 
-        // Drawn by VibrationManagerWindow itself through a plain SerializedProperty, not by Odin's
-        // PropertyTree: HapticCurve nests two more structs (IOS_HapticCurve/Android_HapticCurve),
-        // and Odin's fade-group animation for a [ShowIf] field whose content is itself further
-        // struct foldouts could not be made to lay out correctly in a manually-driven PropertyTree.
-        // Unity's own IMGUI foldout for a plain [Serializable] struct has no such animation and no
-        // such bug, so this field steps outside Odin entirely (both its [ShowIf] and its drawing)
-        // rather than chase the underlying Odin defect further. HideInInspector only affects
-        // PropertyTree/Editor drawing, not serialization, so the field still saves and loads
-        // normally; VibrationManagerWindow re-implements the Source Mode == Curve visibility check
-        // itself when it draws this field.
-        [HideInInspector] [SerializeField] private MOST_HapticFeedback.HapticCurve _curve;
+        [FormerlySerializedAs("_curve")] [SerializeField] private MOST_HapticFeedback.HapticCurve curve;
 
-        [Title("Throttling")]
+        [FormerlySerializedAs("_minIntervalSeconds")]
         [Tooltip("Shortest gap between two plays of this entry. 0 disables the check.")]
-        [MinValue(0f)]
         [SerializeField]
-        private float _minIntervalSeconds;
+        private float minIntervalSeconds;
 
-        public string Id => this._id;
-        public VibrationSourceMode SourceMode => this._sourceMode;
-        public MOST_HapticFeedback.HapticTypes PresetType => this._presetType;
-        public MOST_HapticFeedback.CustomHapticPattern CustomPattern => this._customPattern;
-        public MOST_HapticFeedback.HapticCurve Curve => this._curve;
+        public string Id => this.id;
+        public VibrationSourceMode SourceMode => this.sourceMode;
+        public MOST_HapticFeedback.HapticTypes PresetType => this.presetType;
+        public MOST_HapticFeedback.CustomHapticPattern CustomPattern => this.customPattern;
+        public MOST_HapticFeedback.HapticCurve Curve => this.curve;
 
         /// <summary>Shortest gap between two plays of this entry. 0 disables the check.</summary>
-        public float MinIntervalSeconds => this._minIntervalSeconds;
+        public float MinIntervalSeconds => this.minIntervalSeconds;
 
         /// <summary>
         /// Whether this entry can produce a haptic at all, and if not, why. Used by the editor tool.
@@ -75,17 +65,15 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Data
         /// </remarks>
         public bool IsPlayable(out string reason)
         {
-            switch (this._sourceMode)
+            switch (this.sourceMode)
             {
                 case VibrationSourceMode.CustomPattern:
-                    bool hasIOSPulses = this._customPattern.IOS_HapticPattern != null
-                                        && this._customPattern.IOS_HapticPattern.Length > 0;
-                    bool hasAndroidPulses = this._customPattern.Android_HapticPattern != null
-                                            && this._customPattern.Android_HapticPattern.Length > 0;
+                    bool hasIOSPulses = this.customPattern.IOS_HapticPattern is { Length: > 0 };
+                    bool hasAndroidPulses = this.customPattern.Android_HapticPattern is { Length: > 0 };
 
                     if (!hasIOSPulses && !hasAndroidPulses)
                     {
-                        reason = $"Vibration entry '{this._id}' is set to Custom Pattern but has no iOS "
+                        reason = $"Vibration entry '{this.id}' is set to Custom Pattern but has no iOS "
                                  + "or Android pulses authored.";
                         return false;
                     }
@@ -94,12 +82,11 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Data
                     return true;
 
                 case VibrationSourceMode.Curve:
-                    bool hasIntensity = this._curve.IOS_HapticCurve.Intensity != null
-                                        && this._curve.IOS_HapticCurve.Intensity.length > 0;
+                    bool hasIntensity = this.curve.IOS_HapticCurve.Intensity is { length: > 0 };
 
                     if (!hasIntensity)
                     {
-                        reason = $"Vibration entry '{this._id}' is set to Curve but has no intensity "
+                        reason = $"Vibration entry '{this.id}' is set to Curve but has no intensity "
                                  + "curve authored.";
                         return false;
                     }

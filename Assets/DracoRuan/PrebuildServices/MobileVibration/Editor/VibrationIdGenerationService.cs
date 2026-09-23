@@ -140,7 +140,8 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
                     Directory.CreateDirectory(directory);
 
                 // UTF-8 without a BOM, matching every other first-party file in this project.
-                File.WriteAllText(absolute, plan.RenderedText, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+                File.WriteAllText(absolute, plan.RenderedText,
+                    new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
             }
             catch (Exception exception)
             {
@@ -247,5 +248,6 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
         public const string IdsStaleKey = "DracoRuan.Vibration.IdsStale";
         public const string SelectedGuidKey = "DracoRuan.Vibration.SelectedGuid";
         public const string LastSaveDirectoryKey = "DracoRuan.Vibration.LastSaveDirectory";
+        public const string SelectedPlatformKey = "DracoRuan.Vibration.SelectedPlatform";
     }
 }

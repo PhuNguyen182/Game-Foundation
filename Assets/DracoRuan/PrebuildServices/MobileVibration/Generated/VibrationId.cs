@@ -6,7 +6,7 @@
 //     To add, rename or remove an identifier, change the VibrationEntry asset and
 //     press "Generate Ids".
 //
-//     VibrationId: 1
+//     VibrationId: 2
 // </auto-generated>
 //------------------------------------------------------------------------------
 
@@ -20,9 +20,13 @@ namespace DracoRuan.PrebuildServices.MobileVibration
         /// <summary>Assets/Temps/Vibration/Test.asset</summary>
         public const string Test = "Test";
 
+        /// <summary>Assets/Temps/Vibration/Test2.asset</summary>
+        public const string Test2 = "Test2";
+
         private static readonly string[] AllIds =
         {
             Test,
+            Test2,
         };
 
         /// <summary>Every identifier above, in declaration order.</summary>

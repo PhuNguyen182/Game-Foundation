@@ -10,24 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8851b479a4c2e4242bbdb7f62d233391, type: 3}
-  m_Name: Test
+  m_Name: Test2
   m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.PrebuildServices.MobileVibration.Data.VibrationEntry
-  _id: Test
+  _id: Test2
   _sourceMode: 0
   _presetType: 5
   _customPattern:
-    IOS_HapticPattern:
-    - Delay: 0
-      PulseType: 1
-    - Delay: 0.3
-      PulseType: 6
+    IOS_HapticPattern: []
     Android_HapticPattern: []
   _curve:
     IOS_HapticCurve:
       Delay: 0
-      DurationMs: 10
+      DurationMs: 0
       Sharpness: 0
-      Samples: 2
+      Samples: 0
       Intensity:
         serializedVersion: 2
         m_Curve: []
@@ -37,9 +33,9 @@ MonoBehaviour:
       FallbackType: 0
     Android_HapticCurve:
       Delay: 0
-      DurationMs: 10
-      Samples: 2
-      MaxAmplitude: 1
+      DurationMs: 0
+      Samples: 0
+      MaxAmplitude: 0
       Intensity:
         serializedVersion: 2
         m_Curve: []

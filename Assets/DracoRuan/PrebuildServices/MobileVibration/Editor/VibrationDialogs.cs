@@ -47,6 +47,31 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
         public static void Report(string title, string message) =>
             EditorUtility.DisplayDialog(title, message, "OK");
 
+        public static bool ConfirmDelete(IReadOnlyList<string> paths, IReadOnlyList<string> ids)
+        {
+            StringBuilder message = new StringBuilder();
+            message.AppendLine(paths.Count == 1
+                ? "Delete this vibration entry?"
+                : $"Delete these {paths.Count} vibration entries?");
+            message.AppendLine();
+            message.AppendLine(string.Join(", ", Preview(ids)));
+            message.AppendLine();
+            message.AppendLine("This deletes the asset(s) and removes their generated identifier(s). "
+                               + "Any code using them will stop compiling until it is updated.");
+
+            return EditorUtility.DisplayDialog("Delete vibration entry", message.ToString(), "Delete", "Cancel");
+        }
+
+        public static bool ConfirmRename(string oldId, string newId)
+        {
+            string message = $"Rename '{oldId}' to '{newId}'?\n\n"
+                             + $"VibrationId.{oldId} stops compiling everywhere it is used until call sites "
+                             + $"are updated to VibrationId.{newId}. That is intended: it points at every "
+                             + "site that needs changing.";
+
+            return EditorUtility.DisplayDialog("Rename vibration entry", message, "Rename", "Cancel");
+        }
+
         private static IEnumerable<string> Preview(IReadOnlyList<string> values)
         {
             const int maximum = 12;

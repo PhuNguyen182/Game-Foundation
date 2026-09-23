@@ -78,7 +78,7 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor
             AssetDatabase.CreateAsset(entry, path);
 
             SerializedObject serialized = new SerializedObject(entry);
-            serialized.FindProperty("_id").stringValue = request.Id;
+            serialized.FindProperty("id").stringValue = request.Id;
 
             // Written through SerializedObject rather than a public setter, so the runtime type
             // never exposes a way for gameplay code to change an id.

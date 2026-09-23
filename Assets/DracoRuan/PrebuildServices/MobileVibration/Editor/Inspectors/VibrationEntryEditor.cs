@@ -1,44 +1,47 @@
 using DracoRuan.PrebuildServices.MobileVibration.Data;
+using DracoRuan.PrebuildServices.MobileVibration.Editor.Drawing;
 using DracoRuan.PrebuildServices.MobileVibration.Logic;
-using Sirenix.OdinInspector.Editor;
-using Solo.MOST_IN_ONE;
 using UnityEditor;
 using UnityEngine;
 
 namespace DracoRuan.PrebuildServices.MobileVibration.Editor.Inspectors
 {
     /// <summary>
-    /// Adds an identifier health banner and a Play/Stop preview above the normal
-    /// <see cref="VibrationEntry"/> inspector.
+    /// The Inspector for a <see cref="VibrationEntry"/>: an identifier health banner, then the same
+    /// <see cref="VibrationEntryDrawer"/> the Vibration Manager window uses.
     /// </summary>
     /// <remarks>
-    /// <para>The same <see cref="VibrationIdCollisionDetector"/> the window and the generator use, so
-    /// an entry cannot look fine here and be refused there — the same role
-    /// <c>AudioEntryEditor</c>'s banner plays for audio.</para>
-    ///
-    /// <para><b>The preview buttons are no-ops in the desktop Editor.</b> They call
-    /// <c>MOST_HapticFeedback</c> directly, but every native call in that plugin is compiled out
-    /// under <c>!UNITY_EDITOR</c> (see <c>MOST_HapticFeedback.cs</c>'s <c>#if UNITY_IOS &amp;&amp;
-    /// !UNITY_EDITOR</c> / <c>#if UNITY_ANDROID &amp;&amp; !UNITY_EDITOR</c> guards). Pressing Play
-    /// here produces no physical vibration; build to a device, or use Unity Remote, to feel it.</para>
+    /// Plain <see cref="UnityEditor.Editor"/>, not <c>OdinEditor</c>: nothing here goes through Odin
+    /// any more, so there is nothing left for that base class to add.
     /// </remarks>
     [CustomEditor(typeof(VibrationEntry))]
     [CanEditMultipleObjects]
-    public sealed class VibrationEntryEditor : OdinEditor
+    public sealed class VibrationEntryEditor : UnityEditor.Editor
     {
+        private VibrationEntryDrawer _drawer;
+
         public override void OnInspectorGUI()
         {
             if (this.targets.Length != 1)
             {
-                base.OnInspectorGUI();
+                this.DrawDefaultInspector();
                 return;
             }
 
             VibrationEntry entry = (VibrationEntry)this.target;
 
             this.DrawIdBanner(entry);
-            base.OnInspectorGUI();
-            this.DrawPreview(entry);
+            EditorGUILayout.Space(6f);
+
+            this._drawer ??= new VibrationEntryDrawer();
+            this._drawer.Draw(this.serializedObject);
+
+            EditorGUILayout.Space(6f);
+            if (GUILayout.Button("Open in Vibration Manager"))
+            {
+                VibrationManagerWindow.ShowWindow();
+                VibrationManagerWindow.Select(entry);
+            }
         }
 
         private void DrawIdBanner(VibrationEntry entry)
@@ -75,43 +78,6 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Editor.Inspectors
             }
 
             EditorGUILayout.HelpBox($"Generates as VibrationId.{sanitized.MemberName}", MessageType.None);
-        }
-
-        private void DrawPreview(VibrationEntry entry)
-        {
-            EditorGUILayout.Space(6f);
-            EditorGUILayout.HelpBox("Play and Stop call MOST_HapticFeedback directly, but every native "
-                                    + "call the plugin makes is compiled out under !UNITY_EDITOR. Nothing "
-                                    + "vibrates here — build to a device (or use Unity Remote) to feel it.",
-                MessageType.Info);
-
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                using (new EditorGUI.DisabledScope(!entry.IsPlayable(out _)))
-                {
-                    if (GUILayout.Button("▶ Play"))
-                        PlayPreview(entry);
-                }
-
-                if (GUILayout.Button("■ Stop"))
-                    MOST_HapticFeedback.Stop();
-            }
-        }
-
-        private static void PlayPreview(VibrationEntry entry)
-        {
-            switch (entry.SourceMode)
-            {
-                case VibrationSourceMode.Preset:
-                    MOST_HapticFeedback.Generate(entry.PresetType);
-                    break;
-                case VibrationSourceMode.CustomPattern:
-                    MOST_HapticFeedback.Generate(entry.CustomPattern);
-                    break;
-                case VibrationSourceMode.Curve:
-                    MOST_HapticFeedback.Generate(entry.Curve);
-                    break;
-            }
         }
     }
 }
