@@ -837,7 +837,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
         private AudioHandle CrossFadeInternal(
             string channelId, AudioEntry entry, int entryIndex, float duration, AudioFadeCurveType curve)
         {
-            if (!this._mixer.TryGetChannelIndex(channelId, out int channelIndex))
+            if (!this._mixer.TryGetChannelIndex(channelId, out _))
                 return AudioHandle.None;
 
             this.CollectChannelSlots(channelId);
@@ -845,11 +845,11 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
             for (int i = this._channelSlotBuffer.Count - 1; i >= 0; i--)
             {
                 int slot = this._channelSlotBuffer[i];
-                if (this._fadeEngine.CompletionOf(slot) == AudioFadeCompletion.Stop)
-                {
-                    this.ReleaseVoice(slot);
-                    this._channelSlotBuffer.RemoveAt(i);
-                }
+                if (this._fadeEngine.CompletionOf(slot) != AudioFadeCompletion.Stop) 
+                    continue;
+                
+                this.ReleaseVoice(slot);
+                this._channelSlotBuffer.RemoveAt(i);
             }
 
             // Snapshot before acquiring, so the incoming voice is not in the outgoing set.
