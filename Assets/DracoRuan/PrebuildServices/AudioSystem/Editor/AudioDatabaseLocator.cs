@@ -55,16 +55,15 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Editor
             if (paths.Count > 1)
                 return new Result(null, null,
                     "More than one AudioCollection exists: " + string.Join(", ", paths)
-                    + ". Delete or merge all but one, so it is unambiguous which the game loads.", paths);
+                                                             + ". Delete or merge all but one, so it is unambiguous which the game loads.",
+                    paths);
 
             AudioCollection collection = AssetDatabase.LoadAssetAtPath<AudioCollection>(paths[0]);
-            return new Result(collection, paths[0], collection == null ? "The AudioCollection could not be loaded." : null, paths);
+            return new Result(collection, paths[0],
+                collection == null ? "The AudioCollection could not be loaded." : null, paths);
         }
 
-        /// <summary>
-        /// Adds <paramref name="entry"/> to <paramref name="collection"/>, into the category whose
-        /// channel matches, or a new category when none does.
-        /// </summary>
+        /// <summary>Appends <paramref name="entry"/> to <paramref name="collection"/>.</summary>
         /// <remarks>
         /// Written through <c>SerializedObject</c> rather than the public list so the change is
         /// recorded like any inspector edit and survives undo.
@@ -83,18 +82,14 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Editor
                 return true;
 
             SerializedObject serialized = new SerializedObject(collection);
-            SerializedProperty categories = serialized.FindProperty("_categories");
+            SerializedProperty entries = serialized.FindProperty("entries");
 
-            if (categories == null)
+            if (entries == null)
             {
-                error = "The AudioCollection has no categories field. Was it renamed?";
+                error = "The AudioCollection has no entries field. Was it renamed?";
                 return false;
             }
 
-            SerializedProperty target = FindCategoryForChannel(categories, entry.ChannelId)
-                                        ?? AppendCategory(categories, entry.ChannelId);
-
-            SerializedProperty entries = target.FindPropertyRelative("_entries");
             entries.InsertArrayElementAtIndex(entries.arraySize);
             entries.GetArrayElementAtIndex(entries.arraySize - 1).objectReferenceValue = entry;
 
@@ -103,34 +98,6 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Editor
             AssetDatabase.SaveAssets();
 
             return true;
-        }
-
-        private static SerializedProperty FindCategoryForChannel(SerializedProperty categories, string channelId)
-        {
-            if (string.IsNullOrEmpty(channelId))
-                return categories.arraySize > 0 ? categories.GetArrayElementAtIndex(0) : null;
-
-            for (int i = 0; i < categories.arraySize; i++)
-            {
-                SerializedProperty category = categories.GetArrayElementAtIndex(i);
-                if (category.FindPropertyRelative("_channelId")?.stringValue == channelId)
-                    return category;
-            }
-
-            return null;
-        }
-
-        private static SerializedProperty AppendCategory(SerializedProperty categories, string channelId)
-        {
-            categories.InsertArrayElementAtIndex(categories.arraySize);
-            SerializedProperty created = categories.GetArrayElementAtIndex(categories.arraySize - 1);
-
-            created.FindPropertyRelative("_name").stringValue =
-                string.IsNullOrEmpty(channelId) ? "Uncategorised" : channelId;
-            created.FindPropertyRelative("_channelId").stringValue = channelId;
-            created.FindPropertyRelative("_entries").ClearArray();
-
-            return created;
         }
     }
 }

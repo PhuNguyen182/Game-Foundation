@@ -1,0 +1,14 @@
+{
+    "name": "DracoRuan.Foundation.Initializers",
+    "rootNamespace": "DracoRuan.Foundation.Initializers",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

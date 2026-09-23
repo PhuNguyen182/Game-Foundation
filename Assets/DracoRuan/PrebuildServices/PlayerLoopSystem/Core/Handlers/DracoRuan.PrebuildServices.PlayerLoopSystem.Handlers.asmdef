@@ -1,0 +1,14 @@
+{
+    "name": "DracoRuan.PrebuildServices.PlayerLoopSystem.Handlers",
+    "rootNamespace": "DracoRuan.PrebuildServices.PlayerLoopSystem.Core.Handlers",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

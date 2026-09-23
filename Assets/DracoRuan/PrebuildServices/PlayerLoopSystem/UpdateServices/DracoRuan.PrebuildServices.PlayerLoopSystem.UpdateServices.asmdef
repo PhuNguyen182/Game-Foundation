@@ -1,0 +1,16 @@
+{
+    "name": "DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices",
+    "rootNamespace": "DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices",
+    "references": [
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.Handlers"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

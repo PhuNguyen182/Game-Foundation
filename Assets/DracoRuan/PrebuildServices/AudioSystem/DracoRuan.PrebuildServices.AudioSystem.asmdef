@@ -1,0 +1,24 @@
+{
+    "name": "DracoRuan.PrebuildServices.AudioSystem",
+    "rootNamespace": "DracoRuan.PrebuildServices.AudioSystem",
+    "references": [
+        "DracoRuan.PrebuildServices.AudioSystem.Logic",
+        "DracoRuan.Foundation.Initializers",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.Handlers",
+        "UniTask",
+        "VContainer",
+        "Unity.Addressables",
+        "Unity.ResourceManager",
+        "UniTask.Addressables"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

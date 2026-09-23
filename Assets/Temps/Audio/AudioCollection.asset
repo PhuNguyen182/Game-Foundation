@@ -12,8 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe2e4964556d94742afe999740ea36fa, type: 3}
   m_Name: AudioCollection
   m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.PrebuildServices.AudioSystem.Data.AudioCollection
-  categories:
-  - _name: 
-    _channelId: SFX
-    _entries:
-    - {fileID: 11400000, guid: b94d3a531f92fce408e10a72e2539373, type: 2}
+  entries:
+  - {fileID: 11400000, guid: b94d3a531f92fce408e10a72e2539373, type: 2}

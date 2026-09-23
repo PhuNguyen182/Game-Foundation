@@ -1,0 +1,19 @@
+{
+    "name": "DracoRuan.PrebuildServices.AudioSystem.Editor",
+    "rootNamespace": "DracoRuan.PrebuildServices.AudioSystem.Editor",
+    "references": [
+        "DracoRuan.PrebuildServices.AudioSystem",
+        "DracoRuan.PrebuildServices.AudioSystem.Logic"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

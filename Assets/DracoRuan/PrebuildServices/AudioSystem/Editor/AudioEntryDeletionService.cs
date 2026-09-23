@@ -86,26 +86,17 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Editor
         private static void Unregister(AudioCollection collection, IReadOnlyList<AudioEntry> entries)
         {
             SerializedObject serialized = new SerializedObject(collection);
-            SerializedProperty categories = serialized.FindProperty("_categories");
+            SerializedProperty list = serialized.FindProperty("entries");
 
-            if (categories == null)
+            if (list == null)
                 return;
 
-            for (int categoryIndex = 0; categoryIndex < categories.arraySize; categoryIndex++)
+            for (int entryIndex = list.arraySize - 1; entryIndex >= 0; entryIndex--)
             {
-                SerializedProperty list = categories.GetArrayElementAtIndex(categoryIndex)
-                    .FindPropertyRelative("_entries");
+                UnityEngine.Object referenced = list.GetArrayElementAtIndex(entryIndex).objectReferenceValue;
 
-                if (list == null)
-                    continue;
-
-                for (int entryIndex = list.arraySize - 1; entryIndex >= 0; entryIndex--)
-                {
-                    UnityEngine.Object referenced = list.GetArrayElementAtIndex(entryIndex).objectReferenceValue;
-
-                    if (Contains(entries, referenced))
-                        list.DeleteArrayElementAtIndex(entryIndex);
-                }
+                if (Contains(entries, referenced))
+                    list.DeleteArrayElementAtIndex(entryIndex);
             }
 
             serialized.ApplyModifiedProperties();
