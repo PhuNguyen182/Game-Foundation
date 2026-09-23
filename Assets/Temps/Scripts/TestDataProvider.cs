@@ -1,5 +1,6 @@
 using DracoRuan.PrebuildServices.AudioSystem.Core;
 using DracoRuan.PrebuildServices.AudioSystem.Data;
+using DracoRuan.PrebuildServices.MobileVibration.Core;
 using Temps.Scripts.StaticDataSample;
 using Temps.Scripts.TestRiseProgressData;
 using UnityEngine;
@@ -70,6 +71,8 @@ namespace Temps.Scripts
             this._riseProgression.Data.Number++;
 
             AudioService audioService = new AudioService(null, null);
+            VibrationService vibrationService = new VibrationService(null);
+            vibrationService.ToggleHaptics(true);
             audioService.Play(new AudioEntry());
             // Queues the write; the scheduler decides when it actually hits disk.
             this._riseProgression.MarkDirty();

@@ -31,8 +31,7 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Core
     /// </remarks>
     public sealed class VibrationService : IVibrationService, ITickable, IDisposable
     {
-        private readonly VibrationCollection _collection;
-        private readonly VibrationDatabase _database = new VibrationDatabase();
+        private readonly VibrationDatabase _database = new();
         private readonly VibrationCooldownGate _cooldownGate;
 
         private int _currentlyPlayingIndex = -1;
@@ -41,8 +40,7 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Core
 
         public VibrationService(VibrationCollection collection)
         {
-            this._collection = collection;
-            this._database.Initialize(this._collection);
+            this._database.Initialize(collection);
             this._cooldownGate = new VibrationCooldownGate(Mathf.Max(1, this._database.Count));
 
             // Nothing async to wait for: the database above is a dictionary built synchronously.
@@ -126,6 +124,18 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Core
 
         /// <inheritdoc />
         public bool IsCoreHapticsSupported() => MOST_HapticFeedback.IsCoreHapticsSupported();
+
+        /// <summary>
+        /// Inspect vibration enable or not
+        /// </summary>
+        /// <returns></returns>
+        public bool IsHapticsEnable() => this.HapticsEnabled;
+        
+        /// <summary>
+        /// Turn On/Off vibration
+        /// </summary>
+        /// <param name="hapticsEnabled"></param>
+        public void ToggleHaptics(bool hapticsEnabled) => this.HapticsEnabled = hapticsEnabled; 
 
         /// <inheritdoc />
         public void Tick()
