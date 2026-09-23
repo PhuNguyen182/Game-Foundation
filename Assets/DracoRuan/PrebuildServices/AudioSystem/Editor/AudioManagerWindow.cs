@@ -127,6 +127,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Editor
             {
                 this.DrawToolbar();
                 this.DrawTabs();
+                this.DrawMissingCollectionBanner();
             }
 
             // DrawDetail is deliberately outside the scope above: it is the only place this window
@@ -199,8 +200,12 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Editor
                 cursorX = DrawButtonAt(cursorX, centerY, "➕ New Entry", GoodColor, 108f, this.BeginCreate) + 6f;
 
                 bool stale = SessionState.GetBool(AudioEditorState.IdsStaleKey, false);
-                DrawButtonAt(cursorX, centerY, stale ? "⚙️ Generate Ids *" : "⚙️ Generate Ids",
-                    stale ? WarnColor : NeutralColor, 132f, this.Generate);
+                cursorX = DrawButtonAt(cursorX, centerY, stale ? "⚙️ Generate Ids *" : "⚙️ Generate Ids",
+                    stale ? WarnColor : NeutralColor, 132f, this.Generate) + 6f;
+
+                bool hasCollection = AudioDatabaseLocator.Find().Found;
+                using (new EditorGUI.DisabledScope(!hasCollection))
+                    DrawButtonAt(cursorX, centerY, "📌 Ping Collection", NeutralColor, 140f, this.PingCollection);
 
                 float deleteWidth = 104f;
                 float deleteX = bar.xMax - 6f - deleteWidth;
@@ -231,6 +236,37 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Editor
                 this.DrawTabToggle(Tab.GeneratedCode, "Generated Code");
                 GUILayout.FlexibleSpace();
             }
+        }
+
+        private void DrawMissingCollectionBanner()
+        {
+            AudioDatabaseLocator.Result database = AudioDatabaseLocator.Find();
+            if (database.Found)
+                return;
+
+            using (new EditorGUILayout.HorizontalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField(database.Error, EditorStyles.wordWrappedLabel);
+
+                // Offering "Create" while more than one collection already exists would only make the
+                // ambiguity worse - the fix there is deleting or merging, not adding a third.
+                if (database.Candidates.Count == 0 && GUILayout.Button("Create Collection…", GUILayout.Width(140f)))
+                {
+                    AudioCollection created = AudioCollectionCreationService.CreateInteractive(out string error);
+
+                    if (error != null)
+                        AudioDialogs.Report("Could not create the collection", error);
+                    else if (created != null)
+                        AssetDatabase.Refresh();
+                }
+            }
+        }
+
+        private void PingCollection()
+        {
+            AudioDatabaseLocator.Result database = AudioDatabaseLocator.Find();
+            if (database.Found)
+                EditorGUIUtility.PingObject(database.Collection);
         }
 
         private void DrawTabToggle(Tab tab, string label)

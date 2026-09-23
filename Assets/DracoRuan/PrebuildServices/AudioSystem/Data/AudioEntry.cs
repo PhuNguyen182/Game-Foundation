@@ -34,20 +34,21 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Data
         [FormerlySerializedAs("_channelId")] [AudioChannelId] [Tooltip("Which mixer channel this plays on.")] [SerializeField]
         private string channelId;
 
-        [Title("Clip")] [SerializeField] private AudioClipSourceMode _clipMode = AudioClipSourceMode.Direct;
+        [FormerlySerializedAs("_clipMode")] [Title("Clip")] [SerializeField]
+        private AudioClipSourceMode clipMode = AudioClipSourceMode.Direct;
 
-        [FormerlySerializedAs("_clip")] [ShowIf(nameof(_clipMode), AudioClipSourceMode.Direct)] [SerializeField]
+        [FormerlySerializedAs("_clip")] [ShowIf(nameof(clipMode), AudioClipSourceMode.Direct)] [SerializeField]
         private AudioClip clip;
 
         [FormerlySerializedAs("_clipVariants")]
-        [ShowIf(nameof(_clipMode), AudioClipSourceMode.Direct)]
+        [ShowIf(nameof(clipMode), AudioClipSourceMode.Direct)]
         [Tooltip("Optional. When filled in, each play picks one of these instead of the clip above, "
                  + "never the same one twice in a row.")]
         [SerializeField]
         private List<AudioClip> clipVariants = new();
 
 #if USE_EXTENDED_ADDRESSABLE
-        [FormerlySerializedAs("_clipReference")] [ShowIf(nameof(_clipMode), AudioClipSourceMode.AssetReference)] [SerializeField]
+        [FormerlySerializedAs("_clipReference")] [ShowIf(nameof(clipMode), AudioClipSourceMode.AssetReference)] [SerializeField]
         private AssetReferenceT<AudioClip> clipReference;
 #endif
 
@@ -56,7 +57,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Data
 
         [FormerlySerializedAs("_loop")] [Title("Mix")] [SerializeField] private bool loop;
 
-        [FormerlySerializedAs("_volume")] [Range(0f, 1f)] [SerializeField] private float volume = 1f;
+        [FormerlySerializedAs("_volume")] [Range(0f, 1f)] [SerializeField] private float volume = 0.5f;
 
         [FormerlySerializedAs("_volumeRandomRange")]
         [Tooltip("Min and max. Leave both at 0 to always use the volume above.")]
@@ -101,7 +102,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Data
 
         public string Id => this.id;
         public string ChannelId => this.channelId;
-        public AudioClipSourceMode ClipMode => this._clipMode;
+        public AudioClipSourceMode ClipMode => this.clipMode;
         public AudioClip Clip => this.clip;
         public IReadOnlyList<AudioClip> ClipVariants => this.clipVariants;
         public bool Preload => this.preload;
@@ -156,7 +157,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Data
         /// </summary>
         public bool IsPlayable(out string reason)
         {
-            if (this._clipMode == AudioClipSourceMode.Direct)
+            if (this.clipMode == AudioClipSourceMode.Direct)
             {
                 if (!this.clip && !this.HasVariants)
                 {

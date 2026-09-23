@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Test
   m_EditorClassIdentifier: Assembly-CSharp::DracoRuan.PrebuildServices.MobileVibration.Data.VibrationEntry
   id: Test
-  sourceMode: 2
+  sourceMode: 0
   presetType: 5
   customPattern:
     IOS_HapticPattern:
