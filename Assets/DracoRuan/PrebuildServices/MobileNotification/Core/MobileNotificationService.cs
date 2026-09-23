@@ -595,13 +595,11 @@ namespace DracoRuan.PrebuildServices.MobileNotification.Core
                 return ScriptableObject.CreateInstance<MobileNotificationConfig>();
             }
 
-            if (!config.TryValidate(out string error))
-            {
-                Debug.LogError($"[MobileNotification] '{config.name}' is invalid ({error}); using defaults.");
-                return ScriptableObject.CreateInstance<MobileNotificationConfig>();
-            }
+            if (config.TryValidate(out string error)) 
+                return config;
 
-            return config;
+            Debug.LogError($"[MobileNotification] '{config.name}' is invalid ({error}); using defaults.");
+            return ScriptableObject.CreateInstance<MobileNotificationConfig>();
         }
 
         private static INotificationPlatform CreatePlatform(MobileNotificationConfig config, NotificationLogger logger)
@@ -640,11 +638,11 @@ namespace DracoRuan.PrebuildServices.MobileNotification.Core
             if (this._config.iosCategories is { Count: > 0 })
                 this.SetCategories(this._config.iosCategories);
 
-            if (this._config.clearDisplayedOnStart && this.IsSupported)
-            {
-                this.CancelAllDisplayed();
-                this.ApplicationBadge = 0;
-            }
+            if (!this._config.clearDisplayedOnStart || !this.IsSupported) 
+                return;
+            
+            this.CancelAllDisplayed();
+            this.ApplicationBadge = 0;
         }
 
         private void UpdatePermissionStatus(NotificationPermissionStatus status)
@@ -665,13 +663,11 @@ namespace DracoRuan.PrebuildServices.MobileNotification.Core
                 return false;
             }
 
-            if (!scenario.TryValidate(out string error))
-            {
-                this._logger.Error($"Refused scenario '{scenario.name}': {error}.");
-                return false;
-            }
+            if (scenario.TryValidate(out string error)) 
+                return true;
 
-            return true;
+            this._logger.Error($"Refused scenario '{scenario.name}': {error}.");
+            return false;
         }
 
         /// <summary>A random positive id; collisions across 2^31 values are negligible.</summary>
