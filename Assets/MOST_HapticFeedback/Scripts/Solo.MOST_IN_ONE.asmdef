@@ -1,0 +1,14 @@
+{
+    "name": "Solo.MOST_IN_ONE",
+    "rootNamespace": "Solo.MOST_IN_ONE",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

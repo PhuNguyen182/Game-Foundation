@@ -1,0 +1,20 @@
+{
+    "name": "DracoRuan.PrebuildServices.MobileVibration.Editor",
+    "rootNamespace": "DracoRuan.PrebuildServices.MobileVibration.Editor",
+    "references": [
+        "DracoRuan.PrebuildServices.MobileVibration",
+        "DracoRuan.PrebuildServices.MobileVibration.Logic",
+        "Solo.MOST_IN_ONE"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

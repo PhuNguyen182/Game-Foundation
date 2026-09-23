@@ -2,9 +2,11 @@ using System;
 using DracoRuan.PrebuildServices.MobileVibration.Data;
 using DracoRuan.PrebuildServices.MobileVibration.Interfaces;
 using DracoRuan.PrebuildServices.MobileVibration.Logic;
-using Solo.MOST_IN_ONE;
 using UnityEngine;
 using VContainer.Unity;
+#if USE_MOST_HAPTICS
+using Solo.MOST_IN_ONE;
+#endif
 
 namespace DracoRuan.PrebuildServices.MobileVibration.Core
 {
@@ -28,6 +30,11 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Core
     /// <c>_lastHapticTime</c> across the whole plugin, so two different entries would throttle each
     /// other. <see cref="VibrationCooldownGate"/> keys the cooldown per entry instead, and this
     /// service only ever calls the plain, cooldown-less <c>Generate(...)</c> overloads.</para>
+    ///
+    /// <para><b>Everything native is gated by <c>USE_MOST_HAPTICS</c>.</b> The MOST Haptics plugin
+    /// is a separate Asset Store import, not something this system can require via UPM. Without the
+    /// define, every call below is a no-op and every capability query reports false, so a project
+    /// that has not installed the plugin still compiles and runs — it just never vibrates.</para>
     /// </remarks>
     public sealed class VibrationService : IVibrationService, ITickable, IDisposable
     {
@@ -37,6 +44,10 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Core
         private int _currentlyPlayingIndex = -1;
         private float _time;
         private bool _isDisposed;
+
+#if !USE_MOST_HAPTICS
+        private bool _hapticsEnabledFallback;
+#endif
 
         public VibrationService(VibrationCollection collection)
         {
@@ -53,12 +64,22 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Core
         /// <inheritdoc />
         public bool HapticsEnabled
         {
+#if USE_MOST_HAPTICS
             get => MOST_HapticFeedback.HapticsEnabled;
             set => MOST_HapticFeedback.HapticsEnabled = value;
+#else
+            get => this._hapticsEnabledFallback;
+            set => this._hapticsEnabledFallback = value;
+#endif
         }
 
         /// <inheritdoc />
-        public bool IsPlaying => MOST_HapticFeedback.IsPlaying;
+        public bool IsPlaying =>
+#if USE_MOST_HAPTICS
+            MOST_HapticFeedback.IsPlaying;
+#else
+            false;
+#endif
 
         /// <inheritdoc />
         public string CurrentlyPlayingId =>
@@ -78,6 +99,7 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Core
             if (!this._cooldownGate.TryAcquire(index, this._time, entry.MinIntervalSeconds))
                 return false;
 
+#if USE_MOST_HAPTICS
             switch (entry.SourceMode)
             {
                 case VibrationSourceMode.Preset:
@@ -90,6 +112,7 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Core
                     MOST_HapticFeedback.Generate(entry.Curve);
                     break;
             }
+#endif
 
             this._currentlyPlayingIndex = index;
             return true;
@@ -98,7 +121,9 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Core
         /// <inheritdoc />
         public void Stop()
         {
+#if USE_MOST_HAPTICS
             MOST_HapticFeedback.Stop();
+#endif
             this._currentlyPlayingIndex = -1;
         }
 
@@ -117,25 +142,40 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Core
         }
 
         /// <inheritdoc />
-        public void Prewarm() => MOST_HapticFeedback.Prewarm();
+        public void Prewarm()
+        {
+#if USE_MOST_HAPTICS
+            MOST_HapticFeedback.Prewarm();
+#endif
+        }
 
         /// <inheritdoc />
-        public bool IsSupported() => MOST_HapticFeedback.IsSupported();
+        public bool IsSupported() =>
+#if USE_MOST_HAPTICS
+            MOST_HapticFeedback.IsSupported();
+#else
+            false;
+#endif
 
         /// <inheritdoc />
-        public bool IsCoreHapticsSupported() => MOST_HapticFeedback.IsCoreHapticsSupported();
+        public bool IsCoreHapticsSupported() =>
+#if USE_MOST_HAPTICS
+            MOST_HapticFeedback.IsCoreHapticsSupported();
+#else
+            false;
+#endif
 
         /// <summary>
         /// Inspect vibration enable or not
         /// </summary>
         /// <returns></returns>
         public bool IsHapticsEnable() => this.HapticsEnabled;
-        
+
         /// <summary>
         /// Turn On/Off vibration
         /// </summary>
         /// <param name="hapticsEnabled"></param>
-        public void ToggleHaptics(bool hapticsEnabled) => this.HapticsEnabled = hapticsEnabled; 
+        public void ToggleHaptics(bool hapticsEnabled) => this.HapticsEnabled = hapticsEnabled;
 
         /// <inheritdoc />
         public void Tick()
@@ -145,10 +185,12 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Core
 
             this._time += Time.unscaledDeltaTime;
 
+#if USE_MOST_HAPTICS
             // A Preset play is "done" the instant Play returns; only Pattern/Curve keep IsPlaying
             // true while they run. Once the plugin reports nothing running, stop tracking the id.
             if (this._currentlyPlayingIndex >= 0 && !MOST_HapticFeedback.IsPlaying)
                 this._currentlyPlayingIndex = -1;
+#endif
         }
 
         /// <inheritdoc />
@@ -160,7 +202,9 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Core
             this._isDisposed = true;
             this.IsReady = false;
 
+#if USE_MOST_HAPTICS
             MOST_HapticFeedback.Stop();
+#endif
             this._database.Clear();
         }
     }

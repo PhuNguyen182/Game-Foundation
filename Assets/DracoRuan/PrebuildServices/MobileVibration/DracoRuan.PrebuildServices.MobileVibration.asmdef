@@ -1,0 +1,22 @@
+{
+    "name": "DracoRuan.PrebuildServices.MobileVibration",
+    "rootNamespace": "DracoRuan.PrebuildServices.MobileVibration",
+    "references": [
+        "DracoRuan.PrebuildServices.MobileVibration.Logic",
+        "DracoRuan.Foundation.Initializers",
+        "VContainer",
+        "UniTask",
+        "Unity.Addressables",
+        "Unity.ResourceManager",
+        "Solo.MOST_IN_ONE"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
