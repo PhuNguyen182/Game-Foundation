@@ -36,8 +36,8 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Installer
     /// VContainer's own <c>ITickable</c>, and VContainer only calls <c>Tick()</c> on types registered
     /// through <c>RegisterEntryPoint</c> — that is what wires a type into its
     /// <c>EntryPointDispatcher</c>. A plain <c>Register(...).As&lt;ITickable&gt;()</c> is never
-    /// ticked. <c>MobileNotificationManager</c>, the project's other <c>ITickable</c> service, is
-    /// registered the same way in <c>MobileNotificationInstaller</c>.
+    /// ticked. <c>MobileNotificationService</c>, the project's other <c>ITickable</c> service, is
+    /// registered the same way in <c>MobileNotificationServiceRegistration</c>.
     /// </remarks>
     public static class VibrationServiceRegistration
     {

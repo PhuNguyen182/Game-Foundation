@@ -1,0 +1,22 @@
+{
+    "name": "DracoRuan.PrebuildServices.MobileNotification",
+    "rootNamespace": "DracoRuan.PrebuildServices.MobileNotification",
+    "references": [
+        "DracoRuan.Foundation.Initializers",
+        "VContainer",
+        "UniTask",
+        "Unity.Notifications.Android",
+        "Unity.Notifications.iOS",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

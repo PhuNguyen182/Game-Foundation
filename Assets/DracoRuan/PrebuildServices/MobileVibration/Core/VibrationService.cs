@@ -17,8 +17,8 @@ namespace DracoRuan.PrebuildServices.MobileVibration.Core
     /// <para><b>Synchronous startup, no <c>IAsyncInitializable</c>.</b> Unlike <c>AudioService</c>,
     /// which preloads clips and builds a mixer and therefore has real async work to do,
     /// <see cref="VibrationDatabase.Initialize"/> only builds a dictionary and returns immediately, so
-    /// the constructor finishes ready. <c>MobileNotificationManager</c> is the project's other
-    /// synchronous-startup service and does not implement <c>IAsyncInitializable</c> either.</para>
+    /// the constructor finishes ready. <c>MobileNotificationService</c> also starts synchronously, but
+    /// implements <c>IAsyncInitializable</c> anyway, reporting ready as soon as it is constructed.</para>
     ///
     /// <para><b>One playback slot, not a pool.</b> <c>MOST_HapticFeedback</c> tracks exactly one
     /// active playback (<c>_activePlayback</c>); there is nothing here to pool or mix, unlike
