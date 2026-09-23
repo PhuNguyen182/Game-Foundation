@@ -1,3 +1,5 @@
+using DracoRuan.PrebuildServices.AudioSystem.Core;
+using DracoRuan.PrebuildServices.AudioSystem.Data;
 using Temps.Scripts.StaticDataSample;
 using Temps.Scripts.TestRiseProgressData;
 using UnityEngine;
@@ -67,6 +69,8 @@ namespace Temps.Scripts
 
             this._riseProgression.Data.Number++;
 
+            AudioService audioService = new AudioService(null, null);
+            audioService.Play(new AudioEntry());
             // Queues the write; the scheduler decides when it actually hits disk.
             this._riseProgression.MarkDirty();
         }

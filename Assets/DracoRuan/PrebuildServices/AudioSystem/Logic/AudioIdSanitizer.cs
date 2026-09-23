@@ -35,7 +35,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Logic
         /// <c>record</c> are legal identifiers and must not be escaped, or perfectly ordinary ids
         /// would come out looking mangled.
         /// </remarks>
-        private static readonly HashSet<string> ReservedKeywords = new HashSet<string>(StringComparer.Ordinal)
+        private static readonly HashSet<string> ReservedKeywords = new(StringComparer.Ordinal)
         {
             "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked",
             "class", "const", "continue", "decimal", "default", "delegate", "do", "double", "else",
@@ -141,12 +141,18 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Logic
 
             foreach (char character in text)
             {
-                if (character == LowerDWithStroke)
-                    builder.Append('d');
-                else if (character == UpperDWithStroke)
-                    builder.Append('D');
-                else
-                    builder.Append(character);
+                switch (character)
+                {
+                    case LowerDWithStroke:
+                        builder.Append('d');
+                        break;
+                    case UpperDWithStroke:
+                        builder.Append('D');
+                        break;
+                    default:
+                        builder.Append(character);
+                        break;
+                }
             }
 
             return builder.ToString();

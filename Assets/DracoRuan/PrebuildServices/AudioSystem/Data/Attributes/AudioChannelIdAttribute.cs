@@ -8,7 +8,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Data.Attributes
     /// <see cref="AudioConfig"/>.
     /// </summary>
     /// <remarks>Same mechanism and the same reasoning as <see cref="AudioIdAttribute"/>.</remarks>
-    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Field)]
     public sealed class AudioChannelIdAttribute : PropertyAttribute
     {
         public AudioChannelIdAttribute(bool allowEmpty = false) => this.AllowEmpty = allowEmpty;

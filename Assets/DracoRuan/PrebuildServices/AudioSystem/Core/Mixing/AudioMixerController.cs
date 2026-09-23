@@ -177,30 +177,30 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core.Mixing
             for (int i = 0; i < this._channels.Length; i++)
                 volumes[i] = new AudioChannelVolume
                 {
-                    ChannelId = this._channels[i].Id,
-                    Linear = this._channels[i].Muted ? this._channels[i].PreMuteVolume : this._channels[i].LinearVolume,
-                    Muted = this._channels[i].Muted,
+                    channelId = this._channels[i].Id,
+                    linear = this._channels[i].Muted ? this._channels[i].PreMuteVolume : this._channels[i].LinearVolume,
+                    muted = this._channels[i].Muted,
                 };
 
-            return new AudioVolumeSnapshot { Channels = volumes };
+            return new AudioVolumeSnapshot { channels = volumes };
         }
 
         public void ApplySnapshot(in AudioVolumeSnapshot snapshot)
         {
-            if (snapshot.Channels == null)
+            if (snapshot.channels == null)
                 return;
 
-            for (int i = 0; i < snapshot.Channels.Length; i++)
+            for (int i = 0; i < snapshot.channels.Length; i++)
             {
-                AudioChannelVolume saved = snapshot.Channels[i];
+                AudioChannelVolume saved = snapshot.channels[i];
 
                 // A build that dropped a channel must still load an older save.
-                if (!this.TryGetChannelIndex(saved.ChannelId, out int index))
+                if (!this.TryGetChannelIndex(saved.channelId, out int index))
                     continue;
 
                 this.SetChannelMuted(index, false);
-                this.SetChannelVolume(index, saved.Linear);
-                this.SetChannelMuted(index, saved.Muted);
+                this.SetChannelVolume(index, saved.linear);
+                this.SetChannelMuted(index, saved.muted);
             }
         }
 

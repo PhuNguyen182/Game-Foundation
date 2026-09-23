@@ -43,13 +43,13 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
 
         private readonly AudioConfig _config;
         private readonly AudioCollection _collection;
-        private readonly AudioDatabase _database = new AudioDatabase();
-        private readonly CancellationTokenSource _disposeCts = new CancellationTokenSource();
+        private readonly AudioDatabase _database = new();
+        private readonly CancellationTokenSource _disposeCts = new();
 
-        private readonly List<int> _slotsToStop = new List<int>();
-        private readonly List<AudioFadeResult> _completionBuffer = new List<AudioFadeResult>();
-        private readonly List<int> _channelSlotBuffer = new List<int>();
-        private readonly Dictionary<int, int> _lastVariantIndexByEntry = new Dictionary<int, int>();
+        private readonly List<int> _slotsToStop = new();
+        private readonly List<AudioFadeResult> _completionBuffer = new();
+        private readonly List<int> _channelSlotBuffer = new();
+        private readonly Dictionary<int, int> _lastVariantIndexByEntry = new();
 
         private AudioMixerController _mixer;
         private AudioVoicePool _pool;
@@ -91,7 +91,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
         {
             try
             {
-                if (this._config == null)
+                if (!this._config)
                 {
                     Debug.LogError($"[{LogTag}] No AudioConfig was supplied. Audio is disabled.");
                     return;
@@ -145,7 +145,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
             for (int index = 0; index < this._database.Count; index++)
             {
                 AudioEntry entry = this._database.GetEntry(index);
-                if (entry == null || !entry.Preload)
+                if (!entry || !entry.Preload)
                     continue;
 
                 try
@@ -191,7 +191,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
             this._database.Clear();
 
             // Unity's overloaded == also covers the object already being destroyed on quit.
-            if (this._voiceRoot != null)
+            if (this._voiceRoot)
                 Object.Destroy(this._voiceRoot);
 
             this._voiceRoot = null;
@@ -280,7 +280,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
             for (int i = 0; i < active.Count; i++)
             {
                 AudioVoice voice = this._pool.GetBySlot(active[i]);
-                if (voice?.FollowTarget != null)
+                if (voice?.FollowTarget)
                     voice.Transform.position = voice.FollowTarget.position;
             }
         }
@@ -323,7 +323,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
 
         public AudioHandle Play(AudioEntry entry, in AudioPlayRequest request)
         {
-            if (!this.IsReady || entry == null)
+            if (!this.IsReady || !entry)
                 return AudioHandle.None;
 
             int index = this._database.GetOrRegisterTransient(entry);
@@ -345,7 +345,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
 
         public AudioHandle PlayOneShot(AudioEntry entry, in AudioPlayRequest request)
         {
-            if (!this.IsReady || entry == null)
+            if (!this.IsReady || !entry)
                 return AudioHandle.None;
 
             int index = this._database.GetOrRegisterTransient(entry);
@@ -392,7 +392,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
             AudioEntry entry, int entryIndex, in AudioPlayRequest request,
             bool forceOneShot, float initialFadeVolume = 1f, bool markProtected = false)
         {
-            if (entry == null || entryIndex < 0)
+            if (!entry || entryIndex < 0)
                 return AudioHandle.None;
 
             string channelId = request.ChannelOverride ?? entry.ChannelId;
@@ -479,7 +479,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
             voice.ApplyVolume();
             voice.ApplyPitch(this._mixer.GetPerVoicePitch(voice.ChannelIndex), this._masterPitch);
 
-            if (request.FollowTarget != null)
+            if (request.FollowTarget)
                 voice.Transform.position = request.FollowTarget.position;
             else if (request.Position.HasValue)
                 voice.Transform.position = request.Position.Value;
@@ -497,12 +497,12 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
 
             if (entry.HasVariants)
             {
-                int last = this._lastVariantIndexByEntry.TryGetValue(voice.EntryIndex, out int stored) ? stored : -1;
+                int last = this._lastVariantIndexByEntry.GetValueOrDefault(voice.EntryIndex, -1);
                 selected = entry.SelectClip(ref last, Random.value);
                 this._lastVariantIndexByEntry[voice.EntryIndex] = last;
             }
 
-            if (selected == null)
+            if (!selected)
             {
                 this.ReleaseVoice(voice.SlotIndex);
                 return;
@@ -565,7 +565,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
                 return;
             }
 
-            if (clip == null)
+            if (!clip)
             {
                 this.ReleaseVoice(voice.SlotIndex);
                 return;
@@ -733,7 +733,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
                 return;
 
             int entryIndex = voice.EntryIndex;
-            bool wasAddressable = voice.Entry != null && voice.Entry.ClipMode == AudioClipSourceMode.AssetReference;
+            bool wasAddressable = voice.Entry && voice.Entry.ClipMode == AudioClipSourceMode.AssetReference;
 
             voice.LoadCts?.Cancel();
             voice.LoadCts?.Dispose();
@@ -819,7 +819,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
         public AudioHandle CrossFadeChannel(string channelId, AudioEntry toEntry, float duration,
             AudioFadeCurveType curve = AudioFadeCurveType.EqualPower)
         {
-            if (!this.IsReady || toEntry == null)
+            if (!this.IsReady || !toEntry)
                 return AudioHandle.None;
 
             return this.CrossFadeInternal(

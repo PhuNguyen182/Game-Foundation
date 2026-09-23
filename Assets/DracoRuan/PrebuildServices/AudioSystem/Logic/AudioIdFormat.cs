@@ -22,11 +22,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Logic
 
         /// <summary>Whether <paramref name="character"/> may appear in an audio id.</summary>
         public static bool IsAllowedCharacter(char character) =>
-            (character >= 'a' && character <= 'z')
-            || (character >= 'A' && character <= 'Z')
-            || (character >= '0' && character <= '9')
-            || character == '_'
-            || character == '-';
+            character is >= 'a' and <= 'z' or >= 'A' and <= 'Z' or >= '0' and <= '9' or '_' or '-';
 
         /// <summary>Returns whether <paramref name="audioId"/> is usable, and if not, why.</summary>
         public static bool IsValid(string audioId, out string error)

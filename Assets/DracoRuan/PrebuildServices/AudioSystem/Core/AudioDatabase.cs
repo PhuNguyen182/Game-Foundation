@@ -22,9 +22,9 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
     /// </remarks>
     public sealed class AudioDatabase
     {
-        private readonly AudioIdRegistry _registry = new AudioIdRegistry();
-        private readonly List<AudioEntry> _entries = new List<AudioEntry>();
-        private readonly Dictionary<int, int> _transientIndexByInstanceId = new Dictionary<int, int>();
+        private readonly AudioIdRegistry _registry = new();
+        private readonly List<AudioEntry> _entries = new();
+        private readonly Dictionary<int, int> _transientIndexByInstanceId = new();
 
         /// <summary>How many entries are known, including any picked up at runtime.</summary>
         public int Count => this._entries.Count;
@@ -43,7 +43,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
         {
             this.Clear();
 
-            if (collection == null)
+            if (!collection)
                 return;
 
             List<AudioEntry> collected = new List<AudioEntry>();
@@ -88,7 +88,7 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
         /// </remarks>
         public int GetOrRegisterTransient(AudioEntry entry)
         {
-            if (entry == null)
+            if (!entry)
                 return -1;
 
             if (!string.IsNullOrEmpty(entry.Id) && this._registry.TryGetIndex(entry.Id, out int known))

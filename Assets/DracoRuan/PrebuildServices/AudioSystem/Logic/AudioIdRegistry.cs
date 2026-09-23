@@ -18,9 +18,9 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Logic
     /// </remarks>
     public sealed class AudioIdRegistry
     {
-        private readonly Dictionary<string, int> _indexById = new Dictionary<string, int>(StringComparer.Ordinal);
-        private readonly List<string> _ids = new List<string>();
-        private readonly List<string> _owners = new List<string>();
+        private readonly Dictionary<string, int> _indexById = new(StringComparer.Ordinal);
+        private readonly List<string> _ids = new();
+        private readonly List<string> _owners = new();
 
         /// <summary>How many ids are registered.</summary>
         public int Count => this._ids.Count;

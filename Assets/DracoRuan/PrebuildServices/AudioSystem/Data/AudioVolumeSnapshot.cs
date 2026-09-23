@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Serialization;
 
 namespace DracoRuan.PrebuildServices.AudioSystem.Data
 {
@@ -6,9 +7,9 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Data
     [Serializable]
     public struct AudioChannelVolume
     {
-        public string ChannelId;
-        public float Linear;
-        public bool Muted;
+        [FormerlySerializedAs("ChannelId")] public string channelId;
+        [FormerlySerializedAs("Linear")] public float linear;
+        [FormerlySerializedAs("Muted")] public bool muted;
     }
 
     /// <summary>
@@ -27,6 +28,6 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Data
     [Serializable]
     public struct AudioVolumeSnapshot
     {
-        public AudioChannelVolume[] Channels;
+        [FormerlySerializedAs("Channels")] public AudioChannelVolume[] channels;
     }
 }
