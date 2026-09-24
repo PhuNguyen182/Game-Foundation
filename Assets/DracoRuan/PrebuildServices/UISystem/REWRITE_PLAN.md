@@ -49,14 +49,27 @@
 |---|---|
 | Nền tảng | **Mobile + PC/Console**: có Back/Esc, safe area, focus/gamepad navigation ngay từ đầu |
 | UI tech | **Chỉ uGUI**. Ban đầu chọn uGUI + UI Toolkit, sau đó user đổi ý để tập trung tối đa vào uGUI. Không làm lớp backend abstraction |
-| Phạm vi | **Viết lại theo phase**, theo khuôn AudioSystem (asmdef, Logic thuần C# có test, Installer `[AutoInstall]`, README). Giữ ý tưởng "animation recipe bằng ScriptableObject" (compose Sequential/Parallel) nhưng chuyển sang dạng stateless |
+| Phạm vi | **Viết lại theo phase**, theo khuôn AudioSystem (asmdef, Logic thuần C# có test, Installer `[AutoInstall]`, README). Animation cũ (nhiều SO, mỗi SO là một loại component) được thay bằng component `UIMotion` (xem dòng Animation) |
 | Pattern | **MVVM, ViewModel-first**: code game chỉ biết ViewModel (`OpenAsync<ShopViewModel>(args)`). Registry map VM type → prefab view. VM là C# thuần, tạo qua VContainer, test EditMode được. Câu hỏi "key bằng Type hay id sinh code" được trả lời luôn: **key = VM type** |
 | Collection binding | **Thêm ObservableCollections** (Cysharp, NuGet `ObservableCollections` + `ObservableCollections.R3`) để bind list/grid vào `UIRecycleList` |
+| Thực thể UI | **Chỉ một loại View**. Screen/Popup/HUD/Toast/Hint/System/Tutorial là **preset cấu hình**, không phải class riêng. Một popup full màn hình có animation kiểu screen vẫn chạy được, nhưng muốn có hành vi của screen thì phải bật các cờ (`hidesBelow`, `history`). Tab/panel bên trong một screen là widget, không đi qua router (mục 2.2) |
+| Animation | **Component `UIMotion` tự viết** (asmdef riêng, độc lập với UIView). Timeline chỉnh ngay trong Inspector, preview trong Edit mode, runtime tự sample. **Không DOTween, không adapter, không Unity Timeline**. Mecanim là một loại track (`AnimatorState`). Serialization thường, không `SerializeReference` (mục 2.7) |
+| Disposable | **Không dùng `CompositeDisposable`**, theo yêu cầu của user. Dùng các kiểu struct của R3: `Disposable.CreateBuilder()` / `DisposableBag` / `Disposable.Combine`. `UIBinder` là `ref struct` (mục 2.3, 2.4) |
 
 **Lịch sử chỉnh plan:**
 - **Bản 1** (commit `fb4b461`): uGUI + UI Toolkit, có lớp backend abstraction.
 - **Bản 2** (không commit riêng, gộp vào bản này): bỏ UI Toolkit. Thêm mục "uGUI chuyên sâu": hide bằng `Canvas.enabled`, raycast/layout hygiene, URP camera stacking, particle sorting. Virtualized list thành phase chính thức.
-- **Bản 3** (file này): tự review lại bản 2 theo hướng MVVM. Kết quả ở mục 2.0.
+- **Bản 3** (commit `606327d`): tự review lại bản 2 theo hướng MVVM. Kết quả ở mục 2.0.
+- **Bản 4** (không commit riêng): thêm View preset (Hint/Tooltip, HUD, `UITabGroup` đưa lên phase chính), animation adapter, và bỏ `CompositeDisposable`. Đây là kết quả của các câu hỏi:
+  - "Có cần Screen/View/Panel/Hint riêng không, hay coi popup là thể duy nhất?"
+  - "Tổ chức Mecanim/DOTween thành adapter để sau này thay bằng LitMotion/PrimeTween được không?"
+  - góp ý của user về `CompositeDisposable`.
+- **Bản 5** (file này): **bỏ adapter**, thay bằng component `UIMotion` (mục 2.7), có thêm track Animator State. Diễn biến dẫn tới quyết định này:
+  - User thấy nhiều SO, mỗi SO là một loại component, kém hiệu quả.
+  - User hỏi "dùng Timeline được không". Kết luận: không dùng Unity Timeline, mà tự viết component dạng timeline.
+  - User đặt 5 tiêu chí: nhiều target; tuần tự hoặc song song; reset khi bật lại; Show/Hide chờ xong mới despawn; độc lập với UIView. Đáp ứng đủ nên bỏ DOTween, Mecanim backend và adapter.
+  - User đặt 3 điều kiện cho track Animator: test được trong Editor, runtime tốt mọi platform, ổn định.
+  - User hỏi "dùng gì, có ổn định không". Kết quả: chuyển từ `SerializeReference` sang serialization thường.
 
 **Việc còn mở:**
 - User chưa duyệt plan. Đọc mục 2.0 (thay đổi so với bản 2) và mục 5 (các phase) trước khi bắt đầu phase 1.
@@ -147,6 +160,8 @@ Bản 2 gọi là MVVM nhưng thực chất là **view-first/MVP**. API `OpenAsy
 | B10 | **UI Debugger** (Editor window ở Play mode): stack, queue, input lock, VM đang active, binding count | Debug navigation phức tạp |
 | B11 | **UI scale** runtime (hệ số nhân `CanvasScaler`) cho tuỳ chọn cỡ UI trên PC/Console | Yêu cầu accessibility phổ biến trên PC/Console |
 | B12 | Extension point **`IUITextLocalizer`** + binder `b.Localized(text, key, args)`. Adapter tới `ILocalizationService` đặt ở phía game. `PrebuildServices/Localization` chưa có asmdef nên UISystem chưa reference được | Text tĩnh vẫn dùng `LocalizableTextMeshPro`, text động thì bind qua VM |
+| B13 | **`UIMotion`** (mục 2.7): component animation độc lập. Timeline trong Inspector, preview trong Edit mode, có Show/Hide và preset SO. Runtime tự sample, không phụ thuộc thư viện tween. Có track Animator State | Một asset/component thay cho 4–5 SO. Chỉnh trực quan, dùng được cho mọi object. Không khoá vào thư viện nào |
+| B14 | **View preset** (mục 2.2) + **Hint/Tooltip** (`UIAnchorPlacement`) + **HUD** (`visibleOnScreens`) + `UITabGroup` được đưa lên phase chính | Một primitive duy nhất cho router, còn hành vi do cờ quyết định. Tooltip và tab là nhu cầu phổ biến của mid-core |
 
 **Loại bỏ / đơn giản hoá:**
 - Bỏ API view-first `OpenAsync<TView, TModel>`, `UIView<TModel>`, `IResultView`. Kết quả chuyển sang `IResultViewModel<TResult>`.
@@ -154,7 +169,7 @@ Bản 2 gọi là MVVM nhưng thực chất là **view-first/MVP**. API `OpenAsy
 - `cachePolicy` còn Destroy / KeepAlive. `preload` tách thành cờ `bool` riêng vì hai thứ này độc lập nhau.
 - `Enqueue` bây giờ **trả kết quả** (`UniTask<TResult>`), không còn là `void`.
 - Cooldown của `UIButton` giảm xuống vai trò phụ: mặc định 0, việc chống double-tap giao cho async command. `BindClick → Observable<Unit>` vẫn giữ, dùng cho trường hợp không cần command.
-- Animator transition lùi xuống cuối phase transitions (có thể bỏ nếu không có nhu cầu). DOTween recipe là đường chính.
+- Bỏ `AnimationMachine`, `ViewAnimationConfig` và các SO `Fade/Scale/MoveAnchor/Sequential/ParallelAnimation`. Mỗi loại chỉ có 1 asset mẫu và không prefab nào dùng, nên không cần công cụ chuyển đổi. **Bỏ DOTween khỏi UISystem.** Mecanim chỉ còn là track `AnimatorState` bên trong `UIMotion`.
 - Badge/red-dot (phase tuỳ chọn) được viết thành service VM thuần, không phụ thuộc engine.
 
 ### 2.1 Assemblies
@@ -163,13 +178,16 @@ Bản 2 gọi là MVVM nhưng thực chất là **view-first/MVP**. API `OpenAsy
 | `…UISystem.Logic` | `Logic/` | Không | `UIStack`, `UIPopupQueue` (priority + FIFO), `SortOrderAllocator`, `UIViewStateMachine` (Hidden→Showing→Shown→Hiding, chống re-entrance), `InputLockCounter`, `BackRouter` |
 | `…UISystem.MVVM` | `MVVM/` | Không | `UIViewModel`, `UIViewModel<TArgs>`, `IResultViewModel<TResult>`, `BackResult`, `UICommand` / `AsyncUICommand`, `IUINavigator`. Chỉ reference R3 core + ObservableCollections (+ `.R3`) |
 | `…UISystem.Testing` | `Testing/` | Không | `FakeUINavigator` (ghi lại các lệnh open/close, trả result giả) để game test VM |
-| `…UISystem` | `Data/ Core/ Core/Loading/ Views/ Binding/ Transitions/ Components/ Focus/ Input/ Installer/` | Có | Runtime uGUI trực tiếp: `IUIService : IUINavigator`, registry, router, VM factory/scope, layer root, `UIView<TVM>`, `UIWidget<TVM>`, `UIBinder`, transitions, components, focus, back input, installer |
+| `…UISystem.Motion` | `Motion/` | Có | `UIMotion`, `UIMotionTrack`, `UIEase`, `UIMotionRunner`, `UIMotionPreset` SO, `IUIMotionTriggerSource`, `IUIMotionCustomTrack`. **Không reference UISystem runtime.** Chỉ phụ thuộc UniTask + `PlayerLoopSystem.UpdateServices` |
+| `…UISystem.Motion.Editor` | `Motion/Editor/` | Editor | Inspector timeline, preview/scrub bằng `AnimationMode`, bake Animator track, validator |
+| `…UISystem` | `Data/ Core/ Core/Loading/ Views/ Binding/ Components/ Focus/ Input/ Installer/` | Có | Runtime uGUI trực tiếp: `IUIService : IUINavigator`, registry, router, VM factory/scope, layer root, `UIView<TVM>`, `UIWidget<TVM>`, `UIBinder`, components, focus, back input, installer. Reference `Motion` (chiều ngược lại thì không) |
 | `…UISystem.Editor` | `Editor/` | Editor | Registry window, VM type picker, validator + build validator, UI Debugger |
 | `…UISystem.Tests` | `Tests/Editor/` | Editor | EditMode test cho Logic + MVVM |
 | `…UISystem.PlayModeTests` | `Tests/Runtime/` | | Smoke test runtime |
 
 Dependencies của runtime:
-- UniTask (+ `UniTask.DOTween`, `UniTask.Addressables`), VContainer, R3 + `R3.Unity`, ObservableCollections(+`.R3`), DOTween, `Unity.ugui`, TextMeshPro.
+- UniTask (+ `UniTask.Addressables`), VContainer, R3 + `R3.Unity`, ObservableCollections(+`.R3`), `Unity.ugui`, TextMeshPro.
+- UISystem **không** phụ thuộc thư viện tween nào (kể cả DOTween). Phần còn lại của game vẫn dùng DOTween bình thường nếu muốn.
 - Input System qua `versionDefines` → `UISYSTEM_INPUT_SYSTEM`.
 - Addressables sau `USE_EXTENDED_ADDRESSABLE`.
 - `DracoRuan.Foundation.Initializers`.
@@ -183,25 +201,63 @@ Dependencies của runtime:
 - `UIRootConfig`: danh sách layer, `CanvasScaler` (reference resolution, match), render mode (Overlay hoặc Screen Space Camera với UI camera), plane distance, `pixelPerfect`, giới hạn UI scale. Được áp dụng **lúc runtime** khi dựng layer root.
 - `UIViewDefinition` (entry trong `UIRegistry`):
   - **Key = ViewModel Type**, chọn qua type picker. Validator kiểm tra prefab có `UIView<TVM>` với đúng VM đó.
-  - Layer, kind.
+  - Layer, **`preset`** (xem bảng bên dưới).
   - Prefab: direct reference hoặc `AssetReferenceGameObject`.
   - `cachePolicy` (Destroy / KeepAlive), `preload`, `hideMode` (DisableCanvas mặc định / Deactivate).
   - `reopenPolicy`.
   - `modal`, `closeOnBackdrop`, `defaultPriority`, `scope` (Screen / Global).
-  - Transition in/out.
+  - `hidesBelow`: tắt Canvas của các view bên dưới sau khi transition in xong, và bật lại trước khi transition out bắt đầu.
+  - `history`: có vào lịch sử screen không.
+  - `participatesInStack`, `visibleOnScreens` (dành cho HUD).
+  - Animation: `UIMotion` trên root prefab (timeline Show/Hide, mục 2.7). Không có `UIMotion` thì xem như Instant. `speedOverride` cho từng view.
+
+**Nguyên tắc: View là thực thể duy nhất mà router quản lý.** Screen/Popup/HUD… **không phải class riêng**. `UIViewPreset` chỉ **điền giá trị mặc định** cho các cờ, và từng cờ vẫn chỉnh riêng được. Ví dụ: một popup full màn hình bật `hidesBelow` để không vẽ phần bên dưới, mà Back vẫn là "close". Về hình ảnh, popup full màn hình với animation kiểu screen (slide ngang) trông không khác gì screen. Khác biệt chỉ nằm ở **hành vi**, và hành vi do cờ quyết định. Nếu thiếu `hidesBelow` thì mọi thứ bên dưới vẫn được render (overdraw, tốn batch).
+
+| Preset | Layer mặc định | Cờ mặc định | Ghi chú |
+|---|---|---|---|
+| **Screen** | Screen | `hidesBelow`, `history`, Back = pop, đóng popup có `scope = Screen` khi rời screen | Có thể mở kiểu "Replace" để không lưu lịch sử (ví dụ Loading → Home). Tính là "màn hình hiện tại" cho analytics/tutorial |
+| **Popup** | Popup | `modal`, backdrop, Back = close | Có queue và trả kết quả |
+| **Overlay / HUD** | Overlay | `participatesInStack = false`, Back = PassThrough, không backdrop | Mở một lần và tồn tại lâu. Hiện hoặc ẩn theo `visibleOnScreens` khi screen active thay đổi |
+| **Toast** | Toast | không chặn input, tự đóng, `AllowMultiple`, có queue | Không nhận raycast |
+| **Hint / Tooltip** | Tooltip | không modal, bấm ra ngoài thì đóng, `reopenPolicy = Replace` (một instance cho mỗi layer) | Cần thêm `UIAnchorPlacement` (mục 2.5) |
+| **System** | System | khoá input, nuốt Back | Loading, blocker. Luôn nằm trên cùng |
+| **Tutorial** | Tutorial | chặn input ngoài vùng highlight | Phase tuỳ chọn |
+
+**Những thứ không phải View** (không đi qua router, để không làm rối lịch sử và Back):
+- Tab/panel bên trong một screen (các tab của Shop, Inventory, Event): dùng `UITabGroup` + `UIWidget<TVM>`, việc đổi tab là state của VM. Nếu muốn Back quay về tab trước thì xử lý trong `HandleBack()` của VM.
+- Thành phần con (CurrencyBar, TimerLabel, item trong list): dùng `UIWidget<TVM>`.
 - `UIRegistry`: dictionary `Type → definition` được dựng **trong service**, không nằm trong SO. Validate lúc init. Có nhiều registry: một cho root, và mỗi `UIScope` thêm registry của riêng nó.
 
 ### 2.3 MVVM
 ```csharp
 // .MVVM — C# thuần
 public abstract class UIViewModel : IDisposable {
-    protected CompositeDisposable Disposables { get; }       // reset mỗi lần activate
+    private IDisposable _activation = Disposable.Empty;      // subscription của lần activate hiện tại
+    private DisposableBag _late;                              // subscription thêm sau khi activate (async load, v.v.)
     protected IUINavigator Navigator { get; }                // inject
-    protected virtual void OnActivated() {}  protected virtual void OnDeactivated() {}
+    protected CancellationToken ActivationToken { get; }     // bị cancel khi deactivate
+
+    internal void Activate() {                               // framework gọi
+        var d = Disposable.CreateBuilder();
+        OnActivated(ref d);
+        _activation = d.Build();
+    }
+    internal void Deactivate() { _activation.Dispose(); _activation = Disposable.Empty; _late.Clear(); OnDeactivated(); }
+
+    protected virtual void OnActivated(ref DisposableBuilder d) {}
+    protected virtual void OnDeactivated() {}
+    protected ref DisposableBag Late => ref _late;           // dùng: x.Subscribe(...).AddTo(ref Late)
     public virtual BackResult HandleBack() => BackResult.Close;
     protected void RequestClose();
 }
-public abstract class UIViewModel<TArgs> : UIViewModel { protected abstract void OnActivated(TArgs args); }
+public abstract class UIViewModel<TArgs> : UIViewModel {
+    protected abstract void OnActivated(TArgs args, ref DisposableBuilder d);
+}
+// ví dụ
+protected override void OnActivated(ShopArgs args, ref DisposableBuilder d) {
+    _wallet.Gold.Subscribe(g => Gold.Value = g).AddTo(ref d);
+    Buy.Subscribe(OnBuy).AddTo(ref d);
+}
 public interface IResultViewModel<TResult> { void Complete(TResult result); }   // base helper: ResultViewModel<TArgs, TResult>
 
 public interface IUINavigator {
@@ -221,20 +277,36 @@ public interface IUINavigator {
   4. Khi Close: View `Unbind`, VM `Deactivate`, rồi `Dispose`.
   
   KeepAlive chỉ áp dụng cho **instance prefab**, không giữ lại VM.
+- **Quản lý disposable (không dùng `CompositeDisposable`)**: `CompositeDisposable` là class, thread-safe (có lock), và alloc khi thêm phần tử. Framework chỉ chạy trên main thread nên không cần những thứ đó. Dùng các kiểu struct của R3 theo tài liệu chính chủ:
+  | Trường hợp | Dùng |
+  |---|---|
+  | Subscription đăng ký một lượt, số lượng thay đổi (activate, bind) | `Disposable.CreateBuilder()` + `.AddTo(ref d)` + `d.Build()` |
+  | Số lượng cố định, biết trước | `Disposable.Combine(d1, d2, …)` (nhanh nhất) |
+  | Cần thêm dần sau khi đã build (subscription sau async load, item động) | `DisposableBag` (struct, field không `readonly`, `.AddTo(ref bag)`, `Clear()`/`Dispose()`) |
+  | Tài nguyên VM sở hữu suốt đời (các field `ReactiveProperty`, command) | Builder trong constructor, rồi `Build()` vào một field `_owned`. `Dispose()` của VM dispose `_owned` |
+
+  Các ràng buộc cần nhớ:
+  - `DisposableBuilder` là struct nên **phải truyền bằng `ref`**. Vì vậy `OnActivated` không được là `async`, và không được capture trong lambda.
+  - Việc async trong VM dùng `ActivationToken`, hoặc đi qua `AsyncUICommand`.
+  - Sau `Build()` thì không `Add` thêm được nữa. Cần thêm về sau thì dùng `Late` (`DisposableBag`).
+  - Tất cả chỉ dùng trên main thread.
+  
+  Validator/grep kiểm tra: code foundation không có `CompositeDisposable`.
 - **Command**: `UICommand` / `UICommand<T>` / `AsyncUICommand`. `CanExecute` là `ReadOnlyReactiveProperty<bool>`, có thể ghép từ nhiều nguồn. `IsExecuting` dùng cho spinner. Async command dùng `AwaitOperation.Drop` và hỗ trợ cancel khi VM deactivate.
 - **State**: R3 `ReactiveProperty<T>` / `ReadOnlyReactiveProperty<T>`. Collection dùng `ObservableList<T>` / `ObservableDictionary<TKey,TValue>`, expose ra ngoài dưới dạng read-only.
 
 ### 2.4 View, Widget, Binder (uGUI)
 ```csharp
 public abstract class UIView<TVM> : UIViewBase where TVM : UIViewModel {      // routed, root prefab
-    protected abstract void Bind(UIBinder b, TVM vm);
+    protected abstract void Bind(ref UIBinder b, TVM vm);
     [SerializeField] Selectable defaultSelectable;                            // focus
 }
 public abstract class UIWidget<TVM> : MonoBehaviour where TVM : class {       // không routed: sub-view, list item
-    protected abstract void Bind(UIBinder b, TVM vm);
+    protected abstract void Bind(ref UIBinder b, TVM vm);
 }
+// framework: var b = new UIBinder(...); Bind(ref b, vm); _binding = b.Build();   Unbind: _binding.Dispose();
 // ví dụ
-protected override void Bind(UIBinder b, ShopViewModel vm) {
+protected override void Bind(ref UIBinder b, ShopViewModel vm) {
     b.Text(goldText, vm.Gold);                          // int → TMP.SetText không alloc
     b.Command(buyButton, vm.Buy);                       // interactable = CanExecute, bấm lại khi đang chạy bị bỏ qua
     b.TwoWay(volumeSlider, vm.Volume);
@@ -244,7 +316,7 @@ protected override void Bind(UIBinder b, ShopViewModel vm) {
 }
 ```
 - `UIViewBase` (MonoBehaviour trên root prefab, `[RequireComponent(Canvas, GraphicRaycaster, CanvasGroup)]`). Framework gọi các hook (**protected virtual**): `OnCreated`, `OnOpening`, `OnOpened`, `OnClosing`, `OnClosed`, `OnFocused` / `OnBlurred`. Hook chỉ dành cho việc thuần hiển thị như animation hay VFX. Logic đặt trong VM. Base class **không dùng Unity message virtual** (`Awake`/`OnDestroy`) cho logic framework, nhằm tránh lặp lại lỗi A10.
-- `UIBinder`: một instance cho mỗi lần bind. Mỗi hàm trả `IDisposable` và được gom lại, `Unbind` dispose hết.
+- `UIBinder` là **`ref struct`** bọc một `DisposableBuilder`, nên bản thân binder không alloc class nào. Mỗi hàm bind thêm subscription vào builder. Sau `Bind`, framework gọi `Build()` để ra đúng một `IDisposable` cho lần bind đó, và `Unbind` dispose nó. Widget con (`b.Widget`, item của `b.List`) tự có builder riêng. Binder cha chỉ giữ disposable "unbind con" của từng widget.
   - One-way: `Text`, `Active`, `Interactable`, `Fill`, `Sprite`, `Color`, `Localized`.
   - Two-way: `TwoWay(slider / toggle / TMP_InputField)`.
   - Command: `Command(UIButton)`.
@@ -270,18 +342,21 @@ protected override void Bind(UIBinder b, ShopViewModel vm) {
   - Khi blur thì nhớ `EventSystem.currentSelectedGameObject`, khi lộ lại thì khôi phục.
   - Chỉ select khi thiết bị cuối cùng là gamepad hoặc bàn phím. Dùng chuột/touch thì bỏ select.
   - Chặn navigation thoát ra khỏi view modal.
-- **Transition**: mọi tween và delay dùng **unscaled time** (`SetUpdate(true)`, `DelayType.UnscaledDeltaTime`). Trong transition, input bị lock và `CanvasGroup.blocksRaycasts = false`. Hủy qua `CancellationToken` của view.
-- **Animation recipe**:
-  - `UITransition` SO **không có state**, chỉ có `Tween Create(in UITransitionTarget t)` với `t` = (RectTransform, CanvasGroup, rest pose).
-  - Base class xử lý delay/loop/ease một chỗ.
-  - Mọi tween được `SetLink(go)` + `SetTarget` rồi trả về để host giữ và kill.
-  - Sequential/Parallel compose bằng cách tạo tween mới mỗi lần.
-  - Move dùng offset `anchoredPosition`.
+- **Transition**: UIView gọi `UIMotion.PlayShowAsync` / `PlayHideAsync` và **await Hide xong mới** ẩn, despawn hoặc release. UIView implement `IUIMotionTriggerSource`, để các `UIMotion` con có trigger OnParentShow chạy theo. Luôn dùng unscaled time. Trong transition, input bị lock và `CanvasGroup.blocksRaycasts = false`. Hủy qua `CancellationToken` của view (hủy thì snap về pose cuối). Chi tiết ở **mục 2.7**.
+- **HUD**: view preset Overlay, không vào stack. Router bật hoặc tắt HUD theo `visibleOnScreens` mỗi khi screen active thay đổi (dùng `hideMode`, không destroy).
+- **Hint/Tooltip**: `UIAnchorPlacement` làm các việc sau:
+  - neo vào `RectTransform` đích;
+  - chọn phía (trên/dưới/trái/phải) theo chỗ trống, có danh sách phía ưu tiên;
+  - clamp trong safe area;
+  - đổi toạ độ giữa hai canvas khác render mode (Overlay ↔ Camera);
+  - tuỳ chọn bám theo đích khi đích di chuyển hoặc scroll.
+  
+  Mỗi layer chỉ có một hint: mở hint mới thì hint cũ bị thay. Bấm ra ngoài thì đóng. Trên PC/Console, hint mở khi hover hoặc khi đích được focus (gamepad).
 - **Loading**: `IUIAssetProvider` có 2 cách load là Direct và Addressables. Addressables dùng lease + refcount, theo mẫu `AudioSystem/Core/Loading/AudioClipLibrary.cs` + `AudioClipLease.cs`. Instantiate thẳng vào parent với `worldPositionStays = false` (sửa A5). Preload chạy trong `IAsyncInitializable` của service. `Application.lowMemory` → release view KeepAlive đang ẩn.
 - **Components**:
-  - `UIButton` là class concrete, không kế thừa view. Cooldown tuỳ chọn (mặc định 0), dùng unscaled time. Trạng thái `interactable` tách khỏi cooldown lock (AND hai cờ). Có hook `IUIClickFeedback` để game cắm AudioSystem/MobileVibration.
-  - `UISlider`, `UIToggle`.
-  - `SafeAreaFitter`, `UIBackdrop`, `UIParticleSortingBinder`.
+  - `UIButton` là class concrete, không kế thừa view. Cooldown tuỳ chọn (mặc định 0), dùng unscaled time. Trạng thái `interactable` tách khỏi cooldown lock (AND hai cờ). Có hook `IUIClickFeedback` để game cắm AudioSystem/MobileVibration. Click punch là preset `ButtonPunch` của `UIMotion`.
+  - `UISlider`, `UIToggle`, `UITabGroup`.
+  - `SafeAreaFitter`, `UIBackdrop`, `UIParticleSortingBinder`, `UIAnchorPlacement`. Effect idle (pulse/shake) dùng `UIMotion` có loop.
   - `UIRecycleList`.
 - **Events**: `Observable<UIViewEvent>` (Opened / Closed / Focused / BackAtRoot, kèm VM type) cho analytics và tutorial.
 - **Installer**: `UIInstaller` (SO, `[AutoInstall]`) + `builder.AddUIService(rootConfig, registry)` + `builder.AddUIScope(registry)`, theo mẫu `AudioSystem/Installer/`. Installer tự `Register` VM trong registry với lifetime Transient.
@@ -293,8 +368,140 @@ protected override void Bind(UIBinder b, ShopViewModel vm) {
 - **Layout hygiene**: validator cảnh báo `LayoutGroup` lồng sâu, và `ContentSizeFitter` nằm trong `LayoutGroup`. Khuyến nghị dùng `RectMask2D` thay cho `Mask`.
 - **URP camera stacking**: hỗ trợ `Screen Space - Camera` với UI camera dạng Overlay trong stack của main camera, dùng cho particle và model 3D trong UI.
 - **Particle trong UI**: `UIParticleSortingBinder` gán `sortingOrder` của renderer = `canvas.sortingOrder + offset`, nằm trong khoảng `sortStep`.
-- **Không alloc khi bind**: TMP dùng `SetText`. Collection binding cập nhật theo từng phần tử, không rebuild cả list.
+- **Không alloc khi bind**: TMP dùng `SetText`. Binder là `ref struct` + `DisposableBuilder`, không dùng `CompositeDisposable`. Collection binding cập nhật theo từng phần tử, không rebuild cả list.
 - (Ngoài scope, chỉ để link) Sprite atlas, TMP font fallback.
+
+### 2.7 UIMotion: animation component độc lập
+**Quyết định:** bỏ cơ chế adapter (`IUITransition` + `IUITweenDriver` + các asmdef `Tween.DOTween/PrimeTween/LitMotion`), thay bằng một component animation **tự viết**, thống nhất và trực quan ngay trong Inspector.
+- **Không dùng DOTween**, và **không dùng Mecanim làm backend**. Mecanim chỉ còn là một loại track (`AnimatorState`).
+- **Không dùng Unity Timeline package**, vì những lý do sau:
+  - không chỉnh được trong Inspector (phải mở cửa sổ riêng);
+  - Animation track dùng Animator, mà Animator trên uGUI ghi mọi property mỗi frame nên canvas rebuild liên tục;
+  - custom track cần 3–4 class Playables cho mỗi loại;
+  - mỗi lần play phải dựng một `PlayableGraph`;
+  - không có sẵn giá trị tương đối với rest pose;
+  - project chưa cài package này.
+
+**Tiêu chí của user và cách đáp ứng:**
+| Tiêu chí | Cách đáp ứng |
+|---|---|
+| Target được nhiều object/component | Mỗi track có field `target` tham chiếu trực tiếp (kéo thả) |
+| Xếp chồng track, tuần tự hoặc song song | `startMode`: WithPrevious / AfterPrevious / AtTime, cộng `offset` |
+| Tắt rồi bật lại thì reset, chạy từ đầu | Rest pose chụp lúc `Awake`. Mỗi lần play về frame 0 trước. Trigger OnEnable |
+| Show/Hide, chờ Hide xong mới despawn | 2 timeline Show/Hide + `PlayHideAsync()`. UIView await xong mới ẩn/despawn |
+| Component độc lập, chạy với mọi object | Asmdef `UISystem.Motion` **không reference UISystem runtime** |
+
+**Công nghệ sử dụng** (không có thư viện bên thứ ba):
+| Phần | Công nghệ |
+|---|---|
+| Lưu dữ liệu | `MonoBehaviour` + `ScriptableObject` (preset), serialization **thường** của Unity |
+| Nội suy | Toán tự viết (`LerpUnclamped`), bộ ease Penner (khoảng 30 hàm tĩnh, cùng công thức DOTween/PrimeTween dùng), `AnimationCurve.Evaluate` |
+| Vòng lặp runtime | Một `UIMotionRunner` trên PlayerLoop, dùng lại `PlayerLoopSystem/UpdateServices` (`IUpdateHandler`), lấy `Time.unscaledDeltaTime` |
+| Await | UniTask, completion source có pool |
+| Track Animator | API public của `Animator` |
+| Preview trong Editor | `AnimationMode`: chính API mà cửa sổ Animation và Timeline của Unity dùng để preview rồi tự khôi phục |
+
+**Mô hình dữ liệu**
+- `UIMotion` (MonoBehaviour) có 2 timeline là **Show** và **Hide**. Hide có thể chọn **Mirror Show**: đảo thời gian, đảo from↔to, đảo ease.
+- Mỗi timeline là một `List<UIMotionTrack>` với **serialization thường, không dùng `[SerializeReference]`**. `UIMotionTrack` là một `[Serializable] class` cụ thể gồm:
+  - `kind` (enum `UIMotionTrackKind`);
+  - `Object target`;
+  - `startMode` + `offset`, `duration`;
+  - `UIEase` hoặc `AnimationCurve`;
+  - `Vector4 from/to` (đủ cho float/Vector2/Vector3/Color);
+  - `loops` (−1 = vô hạn, chỉ dành cho effect idle);
+  - `stagger` + `staggerDelay` (áp dụng lần lượt cho các con);
+  - các field riêng của Animator (xem bên dưới).
+  
+  Custom drawer chỉ hiện các field hợp với `kind`. Lý do không dùng `SerializeReference`, vì các lỗi dữ liệu đã biết của nó:
+  - đổi tên class hoặc namespace là mất dữ liệu;
+  - IL2CPP có thể strip mất class;
+  - prefab variant override phần tử trong list dễ lỗi;
+  - lỗi "missing managed reference".
+- `kind` bản đầu: Fade (CanvasGroup), Move (anchoredPosition), Scale, Rotate, Color (Graphic), Fill (`Image.fillAmount`), Punch, Shake, SetActive, **AnimatorState**, **Custom**.
+- Giá trị **tương đối với rest pose**: Scale là hệ số nhân, Move là offset theo tỉ lệ kích thước parent. Fade, Color và Fill dùng giá trị tuyệt đối. Nhờ vậy một bộ track dùng được cho mọi kích thước.
+- **Mở rộng**: kind `Custom` tham chiếu tới một component implement `IUIMotionCustomTrack` (`Capture` / `Sample(t)` / `Snap`). Đây là tham chiếu Unity bình thường nên không có rủi ro serialization.
+- **Preset**: `UIMotionPreset` (SO) chứa timeline dùng chung, ví dụ PopupIn, SlideFromBottom, ScreenPush, ToastDrop, Pulse, ButtonPunch. Track trong preset trỏ tới `Self` hoặc tới đường dẫn con. Có thể "Apply preset" (copy vào component) hoặc tham chiếu preset (dùng chung). Foundation kèm sẵn một bộ preset.
+
+**Hành vi**
+- **Trigger**:
+  - **OnEnable**;
+  - **OnParentShow**: nghe interface `IUIMotionTriggerSource` do cha phát ra. Interface này nằm trong asmdef Motion, nên Motion không biết UIView. Cần trigger này vì UIView ẩn bằng `Canvas.enabled`, lúc đó `OnEnable` không chạy lại;
+  - **Manual**.
+- **Reset**: rest pose chụp một lần lúc `Awake`, không bao giờ serialize. Mỗi lần play thì về frame 0 trước. `OnDisable` dừng và tuỳ chọn trả về rest pose.
+- **API**:
+  - `UniTask PlayShowAsync(ct)`, `UniTask PlayHideAsync(ct)`;
+  - `HideAndDeactivateAsync()` / `SetActiveAnimated(bool)`. Unity không cho trì hoãn `SetActive(false)`, nên muốn chờ Hide xong thì phải gọi API này;
+  - `Snap(Show|Hide)`, `Stop()`.
+- **Play khi đang play**: cancel lần play cũ bằng **snap về pose cuối**, rồi chạy lần mới. Cancel qua `CancellationToken` cũng snap về pose cuối, để UI không bao giờ kẹt ở trạng thái mờ dở.
+- Luôn dùng **unscaled time**. Có `speed` (UIView có `speedOverride`) và "reduce motion" (tất cả thành Instant).
+- Code API nhỏ `UIMotionRunner.Tween(from, to, duration, ease, state, setter)`, dạng struct state, không closure, cho các effect viết bằng code. Binder `b.CountUp` dùng API này.
+- `UIButton` punch và pulse chỉ là **preset** của `UIMotion`. Không có `UILoopEffect` riêng.
+
+**Runtime performance (mọi platform)**
+- **Một** `UIMotionRunner` tick mọi motion đang chạy trong một callback PlayerLoop.
+- Motion đang chạy được giữ trong mảng (xoá bằng swap-remove). Không LINQ, không alloc mỗi lần play.
+- `kind` được ánh xạ sang **evaluator tĩnh** qua bảng tra: không virtual call cho mỗi track, không boxing.
+- **Schedule** (thời điểm bắt đầu tuyệt đối của mỗi track) được tính một lần lúc `Awake`, và chỉ tính lại khi dữ liệu đổi (trong Editor). Danh sách con cho stagger cũng được cache lúc `Awake`.
+- Chỉ ghi giá trị khi track đang trong khoảng thời gian hoạt động, và bỏ qua nếu giá trị không đổi, để không làm canvas dirty thừa.
+- Không reflection, không `dynamic`, an toàn với IL2CPP/AOT (iOS, Android, console, WebGL).
+
+**Track `AnimatorState` (Mecanim)**
+
+Ba yêu cầu của user: test được trong Editor, runtime tốt trên mọi platform, ổn định.
+- **Dữ liệu**:
+  - `Animator animator`, `int layer`;
+  - `stateName` (chỉ để hiển thị) + `stateHash` được **bake trong Editor**, runtime không dùng string;
+  - `bakedDuration` = độ dài clip / speed của state, **bake trong Editor** (runtime không tra được clip từ state);
+  - `speed`.
+- **Runtime performance**:
+  - Animator trên uGUI ghi mọi property mỗi frame và làm canvas rebuild. Vì vậy track **chỉ bật `animator.enabled` trong khoảng thời gian của track**, rồi tắt ngay khi xong. Khi tắt, pose được giữ lại (`keepAnimatorStateOnDisable = true`, `writeDefaultValuesOnDisable = false`). **Hành vi này cần xác minh trên 6000.3 ở phase 4a.**
+  - `updateMode = UnscaledTime`, `cullingMode = AlwaysAnimate`.
+  - **Phát hiện kết thúc** bằng cách runner poll mỗi frame: `GetCurrentAnimatorStateInfo(layer)` có `shortNameHash == stateHash`, `normalizedTime ≥ 1` và `!IsInTransition(layer)`. Kết thúc thật lấy theo poll. `bakedDuration` chỉ dùng để xếp lịch cho các track AfterPrevious.
+  - **Timeout** = `bakedDuration × 2 + 0.5s`: quá thời gian thì snap và log warning một lần. Nhờ vậy không bao giờ treo Hide, và UIView không bao giờ kẹt không despawn được.
+  - Snap về cuối: `Play(stateHash, layer, 1f)` + `Update(0f)`. Reset về đầu: `Play(stateHash, layer, 0f)` + `Update(0f)`. Cả hai làm trong lúc Animator đang bật, sau đó mới tắt.
+  - Validator khuyến nghị đặt Animator trên một **sub-canvas riêng** để cô lập rebuild.
+- **Test được trong Editor**:
+  - Preview và scrub dùng `AnimationMode.StartAnimationMode` + `AnimationMode.SampleAnimationClip(go, clip, time)`. Clip được lấy từ `AnimatorController` (Editor API) theo `stateHash`.
+  - State là **BlendTree** hoặc không có clip thì báo "không preview được", và track vẫn chạy bình thường ở Play mode.
+  - PlayMode test với một controller mẫu: kết thúc đúng lúc khi `timeScale = 0`, snap khi cancel, timeout khi state sai, và Animator bị tắt sau khi track xong.
+- **Ổn định dữ liệu**:
+  - `stateHash` và `bakedDuration` được re-bake ở 3 thời điểm: `OnValidate`, khi controller thay đổi (`AssetPostprocessor`), và trong `IPreprocessBuildWithReport`.
+  - Validator báo **lỗi** khi: state không tồn tại trong controller, `layer` vượt số layer, hoặc Animator null.
+  - Validator báo **cảnh báo** khi: dữ liệu bake đã cũ, hoặc Animator đang animate cùng property với một track khác trên cùng target trong khoảng thời gian chồng nhau (kiểm tra bằng `AnimationUtility.GetCurveBindings`).
+  - **Mirror Show không áp dụng được** cho Animator track (Animator không phát ngược được nếu không có tham số speed). Timeline Show có Animator track mà Hide chọn Mirror thì validator báo lỗi và yêu cầu chỉ định state Hide riêng.
+
+**Test trong Editor (mọi loại track)**
+- Inspector của `UIMotion` và `UIMotionPreset` có:
+  - timeline vẽ trực tiếp (mỗi track là một thanh theo thời điểm bắt đầu và duration đã tính, màu theo `kind`);
+  - nút "Add Track" (liệt kê giá trị enum);
+  - kéo thả target;
+  - Play Show / Play Hide / scrub / loop.
+- **Preview dùng `AnimationMode`** cho mọi track: mọi lệnh ghi giá trị đi qua một helper duy nhất, helper này đăng ký `AddPropertyModification` trước khi ghi. Nhờ vậy khi tắt preview, Unity tự khôi phục. **Preview không bao giờ ghi vào scene hay prefab.**
+- Tự dừng preview khi:
+  - đổi selection;
+  - vào Play mode;
+  - trước khi reload assembly;
+  - `EditorSceneManager.sceneSaving` / `PrefabStage` saving, để giá trị preview không bị lưu nhầm.
+- Chỉnh trong Play mode có hiệu lực ở lần play tiếp theo (schedule bị đánh dấu dirty).
+
+**Ổn định dữ liệu**
+- Serialization thường nên không cần `[MovedFrom]`, `[Preserve]` hay `link.xml` cho track. Thêm giá trị enum mới thì chỉ **append** vào cuối và ghi giá trị số tường minh, không bao giờ đánh lại số.
+- Có `dataVersion` trên `UIMotion` và `UIMotionPreset`. Khi format thay đổi thì migration chạy trong `OnValidate`/`ISerializationCallbackReceiver` (chỉ trong Editor).
+- Validator bắt các lỗi:
+  - `target` sai kiểu so với `kind` (ví dụ Fade nhưng target không phải `CanvasGroup`);
+  - target null;
+  - target nằm ngoài hierarchy của motion (tham chiếu chéo prefab);
+  - `duration ≤ 0`;
+  - loop vô hạn trong timeline Hide (Hide sẽ không bao giờ xong).
+- Runtime chịu được target bị destroy giữa chừng: dùng Unity null-check, bỏ qua track đó và vẫn hoàn thành motion. Motion bị destroy thì tự huỷ đăng ký khỏi runner và hoàn thành task, không treo `await`.
+
+**Đánh giá độ ổn định (nói thẳng)**
+- So với DOTween (đã kiểm chứng khoảng 10 năm), code này mới viết nên giai đoạn đầu sẽ có bug.
+- Bù lại, phạm vi hẹp hơn nhiều: khoảng 10 loại track cho UI, không có path hay physics. Mô hình cũng đơn giản hơn: pose là một hàm của thời gian (`Sample(t)`), không phải state machine tween. Mô hình này tránh được cả nhóm lỗi "hai tween tranh nhau một property" (loại lỗi A6/A7 của code cũ), và test được đầy đủ.
+- **Rủi ro còn lại cần xác minh sớm ở phase 4a:**
+  - hành vi giữ pose khi tắt Animator trên 6000.3;
+  - Animator dùng chung property với track khác (validator cảnh báo).
 
 ---
 
@@ -305,7 +512,8 @@ UISystem/
   Logic/        Navigation/ Queue/ Layers/ Lifecycle/ Input/                 (.Logic, no engine)
   MVVM/         ViewModels/ Commands/ Navigation/                            (.MVVM, no engine)
   Testing/                                                                  (.Testing, no engine)
-  Data/ Core/ Core/Loading/ Views/ Binding/ Transitions/
+  Motion/       Runtime/ Tracks/ Easing/ Presets/ Editor/                     (.Motion + .Motion.Editor, độc lập với UIView)
+  Data/ Core/ Core/Loading/ Views/ Binding/
   Components/ Focus/ Input/ Installer/                                       (runtime asmdef ở root UISystem)
   Editor/       Windows/ Drawers/ Validation/ Debugger/                      (.Editor)
   Tests/Editor/  Tests/Runtime/
@@ -320,7 +528,8 @@ Code cũ (`Animations/ Canvases/ Popups/ Views/ UIElements/ UIManager.cs`) sẽ 
 - Mẫu Addressables lease/refcount + `USE_EXTENDED_ADDRESSABLE`: `AudioSystem/Core/Loading/AudioClipLibrary.cs`, `AudioClipLease.cs`.
 - `[AutoInstall]`, `IAsyncInitializable`: `Foundation/Initializers/`.
 - Localization: `PrebuildServices/Localization/ILocalizationService.cs`. Adapter `IUITextLocalizer` viết phía game. `LocalizableTextMeshPro` vẫn dùng cho text tĩnh.
-- Ý tưởng recipe (Fade/Scale/Move/Sequential/Parallel): chuyển sang dạng stateless.
+- Ý tưởng các loại animation Fade/Scale/Move được giữ lại dưới dạng track của `UIMotion`. Sequential/Parallel được thay bằng `startMode` (mục 2.7).
+- `PlayerLoopSystem/UpdateServices` (`IUpdateHandler`, `UpdateServiceManager`) cho `UIMotionRunner`.
 - **Không** dùng `Utilities/ObjectPooling` (có các lỗi ở A5/A11). Một view chỉ cần một instance cache. `UIRecycleList` tự quản lý item pool của riêng nó.
 
 ---
@@ -328,19 +537,34 @@ Code cũ (`Animations/ Canvases/ Popups/ Views/ UIElements/ UIManager.cs`) sẽ 
 ## 5. Thứ tự triển khai (mỗi phase kết thúc bằng compile-check, và chạy test nếu phase đó có test)
 0. ~~Lưu review + plan thành `UISystem/REWRITE_PLAN.md`~~ (**đã xong**: chính là file này).
 1. **Logic**: asmdef `.Logic` + `UIStack`, `UIPopupQueue`, `SortOrderAllocator`, `UIViewStateMachine`, `InputLockCounter`, `BackRouter`. Viết EditMode test cho từng class: thứ tự priority, re-entrance, back khi đang lock, cấp lại sort order sau khi pop.
-2. **MVVM**: cài ObservableCollections + ObservableCollections.R3 qua NuGetForUnity. Tạo asmdef `.MVVM` và `.Testing`: `UIViewModel`, command, `IUINavigator`, `FakeUINavigator`. Viết EditMode test cho vòng đời VM (activate/deactivate/dispose, reset `Disposables`), async command (drop, cancel, `CanExecute`) và `ResultViewModel`.
+2. **MVVM**: cài ObservableCollections + ObservableCollections.R3 qua NuGetForUnity. Tạo asmdef `.MVVM` và `.Testing`: `UIViewModel`, command, `IUINavigator`, `FakeUINavigator`. Viết EditMode test cho vòng đời VM (activate/deactivate/dispose; subscription của lần activate trước và `Late` bị dispose hết; activate lại không bị leak), async command (drop, cancel, `CanExecute`) và `ResultViewModel`.
 3. **Core runtime**:
    - Data SO, layer root theo `UIRootConfig`.
    - `UIViewBase`, `UIView<TVM>`, `UIWidget<TVM>`, `UIBinder` (one-way, two-way, command, widget).
    - `UIService : IUINavigator`, router, VM factory + `UIScope`, cache, `IUIAssetProvider` (Direct), backdrop, input lock.
    - Installer (tự register VM).
-4. **Transitions + Components**: viết lại Fade/Scale/Move/Sequential/Parallel ở dạng stateless, unscaled time (Animator để cuối phase, có thể bỏ). Thêm `UIButton`, `UISlider`, `UIToggle`, `SafeAreaFitter`, `UIParticleSortingBinder`. PlayMode smoke test gồm open/close, CloseAll, queue, `timeScale = 0`, popup đã đóng không còn chặn raycast, và hai view dùng chung một transition.
+4a. **Motion** (mục 2.7). Asmdef `Motion` + `Motion.Editor`, không phụ thuộc UIView, có thể làm song song với phase 1–3:
+   - `UIEase` + test đối chiếu giá trị tham chiếu. Schedule + test `startMode` → thời điểm bắt đầu.
+   - `UIMotionRunner`, `UIMotionTrack` + các evaluator tĩnh (Fade/Move/Scale/Rotate/Color/Fill/Punch/Shake/SetActive/Custom).
+   - Show/Hide/Mirror, trigger, `UIMotionPreset` + bộ preset mặc định.
+   - `AnimatorState` track + bake + validator. **Xác minh sớm** `keepAnimatorStateOnDisable` / `writeDefaultValuesOnDisable` trên 6000.3.
+   - Inspector timeline + preview bằng `AnimationMode` (dừng preview khi save, đổi selection, vào Play mode, reload assembly).
+   - PlayMode test cho các kịch bản (o)–(r2) ở mục 6.
+
+   4b. **Components**:
+   - `UIButton` (punch = preset `UIMotion`), `UISlider`, `UIToggle`, `SafeAreaFitter`, `UIParticleSortingBinder`.
+   - UIView nối vào `UIMotion` (await Hide, `IUIMotionTriggerSource`).
+   - `UIAnchorPlacement` + preset Hint/Tooltip, HUD `visibleOnScreens`.
+   - PlayMode smoke test: open/close, CloseAll, queue, `timeScale = 0`, popup đã đóng không còn chặn raycast, hai view dùng chung một transition, và `hidesBelow`.
 5. **Input + Focus**: `InputSystemBackInputSource`, `BackRouter` → `vm.HandleBack()`, focus controller. PlayMode test cho Back và focus.
 6. **Addressables provider** (lease/refcount, preload, release, lowMemory) sau `USE_EXTENDED_ADDRESSABLE`.
-7. **`UIRecycleList` + collection binding**: dọc/ngang/grid, item có kích thước cố định (bản đầu), `ScrollTo(index)`, bind `ObservableList` qua `ISynchronizedView` → `UIWidget<TItemVM>`.
+7. **`UIRecycleList` + collection binding + `UITabGroup`**:
+   - `UIRecycleList`: dọc/ngang/grid, item có kích thước cố định (bản đầu), `ScrollTo(index)`, bind `ObservableList` qua `ISynchronizedView` → `UIWidget<TItemVM>`.
+   - `UITabGroup`: tab là widget, tab đang chọn là state của VM, hỗ trợ điều hướng bằng gamepad (LB/RB).
 8. **Editor**: Registry window, VM type picker, validator (key, prefab ↔ VM, raycast/layout hygiene, VM không dùng `UnityEngine`) + build validator + UI Debugger.
 9. **Samples + README**: Confirm, Toast, Loading, 2 screen, Inventory, Settings. Sau đó `git rm` code cũ.
-10. (Tuỳ chọn) `UITabGroup`, Badge/red-dot service (VM thuần, cây key → count), hook tutorial highlight (mask lỗ + chặn input ngoài vùng), UI scale setting.
+10. (Tuỳ chọn) Badge/red-dot service (VM thuần, cây key → count), hook tutorial highlight (mask lỗ + chặn input ngoài vùng), UI scale setting.
+11. (Tuỳ chọn) Benchmark `UIMotionRunner`: 1000 motion chạy cùng lúc trên thiết bị mobile tầm trung, đo bằng Profiler. Mục tiêu GC alloc/frame = 0, và ghi lại CPU/frame làm baseline.
 
 ---
 
@@ -361,7 +585,22 @@ Code cũ (`Animations/ Canvases/ Popups/ Views/ UIElements/ UIManager.cs`) sẽ 
   - (k) bấm liên tiếp nút gắn async command chỉ chạy 1 lần;
   - (l) `ObservableList` Add/Remove/Move được phản ánh đúng vào `UIRecycleList`;
   - (m) dispose scene `LifetimeScope` thì đóng view của scope đó, và VM được `Dispose`;
-  - (n) sau Close không còn subscription nào (đếm binding bằng UI Debugger/test hook).
+  - (n) sau Close không còn subscription nào (đếm binding bằng UI Debugger/test hook);
+  - (o) cancel `UIMotion` giữa chừng thì về đúng pose cuối. Play khi đang play thì snap lần cũ rồi chạy lại;
+  - (p) tắt/bật lại object thì motion chạy lại từ frame 0. View không có `UIMotion` thì mở/đóng Instant;
+  - (q) Hide được await xong mới despawn. Hide có loop vô hạn thì validator báo lỗi;
+  - (r) track `AnimatorState` kết thúc đúng lúc với `timeScale = 0`, snap khi cancel, timeout khi state sai, và Animator bị tắt sau khi track xong;
+  - (r2) target bị destroy giữa chừng không làm treo `await`, và motion loop (pulse/punch) dừng sạch khi hide hoặc destroy;
+  - (s) popup có `hidesBelow` thì Canvas bên dưới bị tắt sau khi transition in xong, và bật lại trước khi transition out;
+  - (t) Hint nằm trong safe area ở các góc màn hình, và mở hint mới thì hint cũ bị thay.
+- **EditMode bổ sung**:
+  - schedule `startMode` (WithPrevious/AfterPrevious/AtTime + offset + stagger) ra đúng thời điểm bắt đầu;
+  - `UIEase` khớp giá trị tham chiếu cho mọi giá trị enum;
+  - Mirror Show đảo đúng;
+  - validator bắt đủ các lỗi dữ liệu ở mục 2.7.
+- **Toàn vẹn dữ liệu**: preview trong Editor rồi Save scene/prefab thì **diff file phải rỗng** (preview không làm bẩn dữ liệu).
+- **IL2CPP**: build Android (IL2CPP) chạy sample, mọi loại track đều hoạt động.
+- **Grep**: không có `DG.Tweening` trong toàn bộ `UISystem/`. Không có `CompositeDisposable` trong code foundation. `Motion/` không `using` namespace nào của UISystem runtime.
 - **Thủ công trong Editor**:
   - Chạy sample scene trên Device Simulator (safe area, notch, đổi orientation).
   - Thử gamepad/bàn phím (PC).
