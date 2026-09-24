@@ -1,0 +1,16 @@
+{
+    "name": "DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer",
+    "rootNamespace": "DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer",
+    "references": [
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.Handlers"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

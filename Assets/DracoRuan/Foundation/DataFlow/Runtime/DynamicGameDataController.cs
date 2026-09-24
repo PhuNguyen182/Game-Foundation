@@ -114,6 +114,20 @@ namespace DracoRuan.Foundation.DataFlow.Runtime
         /// <summary>Called when no save exists. Override to seed a new player's starting state.</summary>
         protected virtual TData CreateDefault() => new();
 
+        /// <summary>
+        /// Called from <see cref="Save"/>, after the gate/disposed checks and before serialization.
+        /// </summary>
+        /// <remarks>
+        /// Override to pull a live snapshot into <see cref="Data"/> right before it is written, for a
+        /// controller whose real state lives outside <typeparamref name="TData"/> (e.g. a scheduler's
+        /// in-memory records) rather than being kept in sync on every mutation. Doing this here,
+        /// rather than eagerly on every change, means the potentially expensive capture only runs at
+        /// the moment a flush is about to happen.
+        /// </remarks>
+        protected virtual void OnBeforeSave()
+        {
+        }
+
         public void MarkDirty()
         {
             if (!this.IsInitialized || this._isDisposed)
@@ -138,6 +152,11 @@ namespace DracoRuan.Foundation.DataFlow.Runtime
 
             try
             {
+                // Gives a controller whose real state lives outside Data (e.g. a scheduler) one
+                // chance to capture a fresh snapshot into it, right before that snapshot is turned
+                // into bytes - never earlier, so an expensive capture happens only at flush time.
+                this.OnBeforeSave();
+
                 // Serialize on the calling (main) thread. Handing a live object to a background
                 // thread races with gameplay mutating its collections, and the result is a torn
                 // payload whose checksum is computed over the torn bytes - so it verifies perfectly

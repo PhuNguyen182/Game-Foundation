@@ -1,0 +1,25 @@
+{
+    "name": "DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests",
+    "rootNamespace": "DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests",
+    "references": [
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.Handlers",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
