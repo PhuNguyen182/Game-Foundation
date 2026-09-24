@@ -223,6 +223,15 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         /// <c>StartMs</c> earlier (speed up - elapsed time increases, deadlines arrive sooner),
         /// negative moves it later (delay).
         /// </summary>
+        /// <remarks>
+        /// A large enough <paramref name="deltaMs"/> can push one or more boundaries into the past
+        /// relative to <c>now</c> immediately, without waiting for the next <see cref="Tick"/> -
+        /// e.g. speeding up a 3-stage timer by more than its first stage's remaining time. Gameplay
+        /// calling <c>GetCurrentStage</c> or expecting the listener callback right after
+        /// <c>SpeedUp</c> returns needs that to already be reflected, exactly like
+        /// <see cref="CompleteNow"/> and <see cref="SkipCurrentStage"/>, so this drains synchronously
+        /// instead of leaving newly-due boundaries stranded until the caller happens to Tick.
+        /// </remarks>
         private void ShiftDeadlines(TimerHandle h, long deltaMs)
         {
             if (!this.TryResolve(h, out TimerRecord record))
@@ -237,6 +246,13 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             {
                 record.NextDeadlineMs -= deltaMs;
                 this._heap.Update(h.Index);
+
+                // Only speeding up (deltaMs > 0, deadlines moved earlier) can make a boundary due
+                // immediately; delaying only pushes deadlines further into the future. Draining
+                // unconditionally would fire ProcessDueRecord even for a delay or a too-small
+                // speed-up that hasn't actually crossed a boundary yet.
+                if (record.NextDeadlineMs <= this._cachedNowMs)
+                    this.DrainDueTimer(h.Index, allowMultiple: true);
             }
 
             this._structureChangedThisTick = true;
