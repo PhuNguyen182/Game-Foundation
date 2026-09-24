@@ -11,6 +11,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         {
             this.DeviceUtcMs = startUtcMs;
             this.MonotonicMs = 0;
+            this.UtcNowMs = startUtcMs;
         }
 
         /// <summary>What the device clock currently reads; settable directly to simulate a user changing the clock.</summary>

@@ -29,7 +29,8 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
 
         private TimerHandle _timerHandle;
 
-        public RegenerationCounter(TimerScheduler scheduler, string key, long stored, long max, long intervalMs, long anchorMs, int channel = 0)
+        public RegenerationCounter(TimerScheduler scheduler, string key, long stored, long max, long intervalMs,
+            long anchorMs, int channel = 0)
         {
             this._scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
             this.Key = key ?? throw new ArgumentNullException(nameof(key));
@@ -61,8 +62,12 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         /// <summary>Current whole units available as of <paramref name="nowMs"/>, without mutating state.</summary>
         public long GetCurrent(long nowMs)
         {
+            // Not clamped to Max here: Add(..., allowOverMax: true) can legitimately leave Stored
+            // above Max (e.g. a reward pushing Lives past its cap), and that state must stay visible
+            // to callers until consumption brings it back down - clamping the read would silently
+            // hide units the player was actually given.
             if (this.Stored >= this.Max)
-                return this.Max;
+                return this.Stored;
 
             long elapsed = nowMs - this.AnchorMs;
             if (elapsed <= 0)
@@ -210,10 +215,11 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
                 Key = this._timerKey,
                 Channel = this._channel,
                 DurationMs = remaining,
-                // Anchored to nowMs (the theoretical moment, e.g. e.AtMs from the firing event), not
-                // left to default to the scheduler's actual "now" - otherwise a late-dispatched Tick
-                // would push this and every subsequent regen deadline later by the same lateness,
-                // accumulating drift across ticks instead of staying locked to the absolute schedule.
+                // StartUtcMs + DurationMs must land exactly on AnchorMs + IntervalMs (the next
+                // absolute regen boundary). remaining was computed from the same nowMs via
+                // GetNextRegenRemainingMs, which floors against AnchorMs - never against nowMs
+                // itself - so no drift is introduced regardless of which "now" is passed here, late
+                // dispatch included: AnchorMs is what carries the absolute schedule.
                 StartUtcMs = nowMs,
                 AutoRelease = true
             };
@@ -239,14 +245,20 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             if (e.Type != TimerEventType.Completed)
                 return;
 
-            long nowMs = e.AtMs;
+            // Normalize against the scheduler's actual current time, not e.AtMs (the fired timer's
+            // own theoretical deadline - just the *next* single unit). Using e.AtMs here silently
+            // caps a catch-up to at most one interval's worth of gain, because Normalize only sees
+            // elapsed = e.AtMs - AnchorMs, which is exactly one IntervalMs by construction. A 2-hour
+            // offline gap with a 30-minute interval must fold all 4 missed intervals in one shot
+            // (REWRITE_PLAN.md 5.3), which requires the real "now".
+            long nowMs = this._scheduler.NowMs;
             long before = this.Stored;
 
             this._timerHandle = TimerHandle.Invalid;
             this.Normalize(nowMs);
 
             long gained = this.Stored - before;
-            this.OnRegenerated?.Invoke(gained, this.Stored, e.AtMs);
+            this.OnRegenerated?.Invoke(gained, this.Stored, nowMs);
 
             this.RescheduleTimer(nowMs);
         }

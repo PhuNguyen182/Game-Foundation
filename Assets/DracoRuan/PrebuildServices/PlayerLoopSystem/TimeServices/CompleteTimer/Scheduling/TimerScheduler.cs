@@ -73,8 +73,28 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         /// <summary>Number of timer count currently in <see cref="TimerState.Completed"/> state.</summary>
         public int CompletedCount => this._completedCount;
 
-        /// <summary>Cached "now" from the most recent <see cref="Tick"/> (or construction, before the first tick).</summary>
-        public long NowMs => this._cachedNowMs;
+        /// <summary>
+        /// Current time. Always re-reads <see cref="ITimeProvider.UtcNowMs"/> rather than returning
+        /// the value cached during the last <see cref="Tick"/>: gameplay can call any query or
+        /// control method (e.g. <see cref="GetCurrentStage"/>, <see cref="Pause"/>) at any point in a
+        /// frame, including before the very first <see cref="Tick"/> ever runs after construction or
+        /// a <see cref="Restore"/> - a value frozen at construction time would silently read as
+        /// "now" until the next Tick happened to run, which is exactly the offline/pre-Tick case
+        /// REWRITE_PLAN.md 6.1.2 requires <see cref="GetCurrentStage"/> to get right.
+        /// </summary>
+        public long NowMs => this._clock.UtcNowMs;
+
+        /// <summary>
+        /// Re-reads the clock into <see cref="_cachedNowMs"/>. Every public method that isn't
+        /// <see cref="Tick"/> itself must call this before comparing against <c>_cachedNowMs</c> -
+        /// including internally through <see cref="DrainDueTimer"/> - since only <see cref="Tick"/>
+        /// refreshes it on its own. Kept as one field (rather than always calling
+        /// <c>this._clock.UtcNowMs</c> inline) so a single Tick's heap-draining loop and the
+        /// synchronous drains in <see cref="CompleteNow"/>/<see cref="SkipCurrentStage"/> compare
+        /// every boundary against one consistent snapshot instead of a clock that could tick forward
+        /// mid-loop on a real (non-fake) provider.
+        /// </summary>
+        private void RefreshNow() => this._cachedNowMs = this._clock.UtcNowMs;
 
         /// <summary>Fired for non-fatal problems (bad snapshot entries, threshold breaches). Core has no Unity, so logging is a callback.</summary>
         public event Action<string> OnWarning;
@@ -104,7 +124,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             int index = this.AcquireSlot();
             TimerRecord record = this._records[index];
 
-            long startMs = spec.StartUtcMs ?? this._cachedNowMs;
+            long startMs = spec.StartUtcMs ?? this.NowMs;
 
             record.Key = spec.Key;
             record.Channel = spec.Channel;
@@ -195,6 +215,8 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             if (!this.TryResolve(h, out TimerRecord record) || record.State != TimerState.Running)
                 return;
 
+            this.RefreshNow();
+
             record.PausedAtMs = this._cachedNowMs;
             record.State = TimerState.Paused;
             this._heap.Remove(h.Index);
@@ -205,6 +227,8 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         {
             if (!this.TryResolve(h, out TimerRecord record) || record.State != TimerState.Paused)
                 return;
+
+            this.RefreshNow();
 
             long shift = this._cachedNowMs - record.PausedAtMs;
             record.StartMs += shift;
@@ -240,6 +264,8 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             if (record.State != TimerState.Running && record.State != TimerState.Paused)
                 return;
 
+            this.RefreshNow();
+
             record.StartMs -= deltaMs;
 
             if (record.State == TimerState.Running)
@@ -264,12 +290,28 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             if (!this.TryResolve(h, out TimerRecord record) || record.State != TimerState.Running)
                 return;
 
+            this.RefreshNow();
+
+            // currentStage is the stage the caller actually sees right now (e.g. via
+            // GetCurrentStage), computed live from now - it can be ahead of DispatchedStage when no
+            // Tick has run since creation/restore/a previous synchronous op (the exact pre-Tick case
+            // NowMs's remarks describe). DispatchedStage is only a dispatch cursor and must be caught
+            // up to currentStage before ProcessDueRecord advances it, or the single event this fires
+            // reports the wrong (stale) stage.
             int currentStage = this.ComputeCurrentStage(record, this._cachedNowMs);
+            record.DispatchedStage = currentStage;
+
             long currentStageEnd = record.StartMs + record.StageEnds[currentStage];
             long shift = currentStageEnd - this._cachedNowMs;
 
             record.StartMs -= shift;
-            record.NextDeadlineMs -= shift;
+
+            // Recomputed from the now-corrected StartMs/DispatchedStage, not "NextDeadlineMs -=
+            // shift": NextDeadlineMs could still be holding a stale boundary left over from whatever
+            // stage DispatchedStage pointed at before the sync above (e.g. stage A's end, if no Tick
+            // ever ran) - shifting that stale value would hand ProcessDueRecord the wrong AtMs for
+            // the event this dispatches.
+            record.NextDeadlineMs = record.StartMs + record.StageEnds[currentStage];
             this._heap.Update(h.Index);
 
             this.DrainDueTimer(h.Index, allowMultiple: false);
@@ -281,6 +323,8 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         {
             if (!this.TryResolve(h, out TimerRecord record) || record.State != TimerState.Running)
                 return;
+
+            this.RefreshNow();
 
             long finalDeadline = record.StartMs + record.StageEnds[record.StageEnds.Length - 1];
 
@@ -358,7 +402,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
 
         private long GetElapsedMsInternal(TimerRecord record)
         {
-            long referenceNow = record.State == TimerState.Paused ? record.PausedAtMs : this._cachedNowMs;
+            long referenceNow = this.ReferenceNow(record);
             long elapsed = referenceNow - record.StartMs;
             long total = record.StageEnds[record.StageEnds.Length - 1];
 
@@ -380,7 +424,9 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         }
 
         public long GetEndUtcMs(TimerHandle h) =>
-            this.TryResolve(h, out TimerRecord record) ? record.StartMs + record.StageEnds[record.StageEnds.Length - 1] : 0;
+            this.TryResolve(h, out TimerRecord record)
+                ? record.StartMs + record.StageEnds[record.StageEnds.Length - 1]
+                : 0;
 
         public int GetStageCount(TimerHandle h) =>
             this.TryResolve(h, out TimerRecord record) ? record.StageEnds.Length : 0;
@@ -391,10 +437,14 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         /// first Tick after Restore or while <c>ProcessingEnabled</c> is false (see REWRITE_PLAN.md 6.1.2).
         /// </summary>
         public int GetCurrentStage(TimerHandle h) =>
-            this.TryResolve(h, out TimerRecord record) ? this.ComputeCurrentStage(record, this.ReferenceNow(record)) : 0;
+            this.TryResolve(h, out TimerRecord record)
+                ? this.ComputeCurrentStage(record, this.ReferenceNow(record))
+                : 0;
 
+        // Reads the clock live (this.NowMs), not the Tick-only cache: queries must be correct even
+        // before the scheduler's first Tick after construction or Restore (see NowMs's remarks).
         private long ReferenceNow(TimerRecord record) =>
-            record.State == TimerState.Paused ? record.PausedAtMs : this._cachedNowMs;
+            record.State == TimerState.Paused ? record.PausedAtMs : this.NowMs;
 
         private int ComputeCurrentStage(TimerRecord record, long now)
         {
@@ -525,7 +575,8 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
                 this.DeliverStoredPendingInOrder(indices[i], listener, isChannelListener: true, channelFilter: channel);
         }
 
-        private void DeliverStoredPendingInOrder(int recordIndex, ITimerListener listener, bool isChannelListener, int channelFilter = 0)
+        private void DeliverStoredPendingInOrder(int recordIndex, ITimerListener listener, bool isChannelListener,
+            int channelFilter = 0)
         {
             this._deliveryScratch.Clear();
             for (int i = 0; i < this._undelivered.Count; i++)
@@ -759,8 +810,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
 
                 this.ProcessDueRecord(recordIndex);
                 record = this._records[recordIndex];
-            }
-            while (allowMultiple && record.State == TimerState.Running && record.NextDeadlineMs <= this._cachedNowMs);
+            } while (allowMultiple && record.State == TimerState.Running && record.NextDeadlineMs <= this._cachedNowMs);
         }
 
         /// <summary>Dispatches to the per-timer listener first, then the channel listener, buffering if neither is present. Returns true if handed to at least one listener.</summary>
