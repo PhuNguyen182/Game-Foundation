@@ -70,6 +70,9 @@
   - User đặt 5 tiêu chí: nhiều target; tuần tự hoặc song song; reset khi bật lại; Show/Hide chờ xong mới despawn; độc lập với UIView. Đáp ứng đủ nên bỏ DOTween, Mecanim backend và adapter.
   - User đặt 3 điều kiện cho track Animator: test được trong Editor, runtime tốt mọi platform, ổn định.
   - User hỏi "dùng gì, có ổn định không". Kết quả: chuyển từ `SerializeReference` sang serialization thường.
+  - User hỏi "backend của UIMotion là gì". Trả lời: không có backend. `UIMotion` tự tính thời gian (PlayerLoop + `unscaledDeltaTime`), tự tính ease, và ghi thẳng vào component. Riêng track AnimatorState giao việc cho Animator.
+  - User yêu cầu animate đủ các thuộc tính của RectTransform (anchoredPosition, pivot, anchorMin/Max…), không chỉ vị trí. Kết quả: thêm track `Rect` (mục 2.7).
+  - User yêu cầu Start/Target value là **tuỳ chọn riêng của từng track**. Bật thì dùng cả Start và Target. Tắt thì Start = giá trị hiện tại của component, và Inspector ẩn field Start. Kết quả: thêm `useStartValue` cho từng track, value mode `RelativeToStart`, và Mirror xử lý theo từng track (mục 2.7).
 
 **Việc còn mở:**
 - User chưa duyệt plan. Đọc mục 2.0 (thay đổi so với bản 2) và mục 5 (các phase) trước khi bắt đầu phase 1.
@@ -99,7 +102,7 @@
 - `PlayHideBackground` set `interactable = true` khi đang hide (`AnimationMachine.cs:133`).
 - `SingleAnimation.TryKillAnimation` chỉ kill tween có target là CanvasGroup. Tween Scale (target là transform) và Move (target là RectTransform) không bị kill, nên leak tween khi destroy.
 - Các field `delay`/`loop` của `SingleAnimation` chỉ được `FadeAnimation` dùng. Scale và Move bỏ qua.
-- `MoveAnchorAnimation` tween **anchor** thay vì `anchoredPosition`, làm hỏng layout của các con.
+- `MoveAnchorAnimation` tween **anchor** thay vì `anchoredPosition`, và không bù offset, nên làm hỏng layout của các con. Bản mới hỗ trợ animate anchor một cách chủ đích (track `Rect`, có tuỳ chọn giữ nguyên vị trí hiển thị, mục 2.7).
 - Animator transition chờ theo `animationDuration` nhập tay, không chờ state kết thúc.
 - `BaseUIButton`: gọi `SetInteractable(false)` từ bên ngoài trong lúc cooldown sẽ bị bỏ qua, rồi bị cooldown bật lại true. Button kế thừa `BaseUIView` nên **mỗi button bắt buộc có `AnimationMachine`** (RequireComponent kế thừa). Class lại `abstract` nên muốn dùng phải tạo subclass.
 - `Show`/`Hide` không có state machine. Gọi `Show` trong lúc `Hide` chưa xong thì continuation của Hide vẫn chạy (có thể `Destroy`). `forceDestroyOnClose` cũng xung đột với pooling.
@@ -408,7 +411,7 @@ protected override void Bind(ref UIBinder b, ShopViewModel vm) {
   - `Object target`;
   - `startMode` + `offset`, `duration`;
   - `UIEase` hoặc `AnimationCurve`;
-  - `Vector4 from/to` (đủ cho float/Vector2/Vector3/Color);
+  - `bool useStartValue` + `Vector4 from` (start value) + `Vector4 to` (target value). Kiểu `Vector4` đủ cho float/Vector2/Vector3/Color. Xem mục "Start / Target value" bên dưới;
   - `loops` (−1 = vô hạn, chỉ dành cho effect idle);
   - `stagger` + `staggerDelay` (áp dụng lần lượt cho các con);
   - các field riêng của Animator (xem bên dưới).
@@ -418,8 +421,62 @@ protected override void Bind(ref UIBinder b, ShopViewModel vm) {
   - IL2CPP có thể strip mất class;
   - prefab variant override phần tử trong list dễ lỗi;
   - lỗi "missing managed reference".
-- `kind` bản đầu: Fade (CanvasGroup), Move (anchoredPosition), Scale, Rotate, Color (Graphic), Fill (`Image.fillAmount`), Punch, Shake, SetActive, **AnimatorState**, **Custom**.
+- `kind` bản đầu: Fade (CanvasGroup), Move (anchoredPosition, lối tắt hay dùng nhất), **Rect** (mọi thuộc tính layout của RectTransform, xem bên dưới), Scale, Rotate, Color (Graphic), Fill (`Image.fillAmount`), Punch, Shake, SetActive, **AnimatorState**, **Custom**.
 - Giá trị **tương đối với rest pose**: Scale là hệ số nhân, Move là offset theo tỉ lệ kích thước parent. Fade, Color và Fill dùng giá trị tuyệt đối. Nhờ vậy một bộ track dùng được cho mọi kích thước.
+
+**Start / Target value (áp dụng cho mọi track có giá trị)**
+- Đây là **tuỳ chọn riêng của từng track**, không phải của cả motion hay cả timeline. Trong cùng một timeline Show hoặc Hide có thể trộn track bật và track tắt, ví dụ Fade bật (0 → Rest) cùng với Move tắt (hiện tại → Rest). Mọi quy tắc bên dưới (chụp giá trị, mirror, validator) đều xử lý theo từng track.
+- Mỗi track có toggle **`useStartValue`**, mặc định **tắt**:
+  - **Tắt**: chỉ có **Target value**. Start value là **giá trị hiện tại của component target** tại thời điểm track bắt đầu. Inspector **ẩn field Start value** và hiện dòng mờ "Start: giá trị hiện tại".
+  - **Bật**: dùng cả **Start value** và **Target value**. Mỗi lần track bắt đầu, component bị đặt về Start value rồi mới chạy tới Target.
+  - Khi tắt, giá trị `from` vẫn được serialize (chỉ ẩn đi), nên bật lại không mất số đã nhập.
+- **Thời điểm chụp "giá trị hiện tại"**: lúc track **thực sự bắt đầu**, tức sau `offset`/delay và sau các track AfterPrevious trước nó, chứ không phải lúc gọi Play. Hai track nối tiếp trên cùng một thuộc tính vì thế chạy liền mạch: track sau đi tiếp từ chỗ track trước dừng. DOTween cũng chụp giá trị đầu theo cách này.
+- **Value mode** (bảng mode dùng chung cho mọi track có giá trị, không riêng track `Rect`):
+  - **Absolute**: dùng đúng giá trị nhập vào;
+  - **RelativeToRest**: cộng offset vào giá trị lúc rest;
+  - **RelativeToStart**: target = start + delta. Ví dụ "dịch thêm 100px từ chỗ đang đứng", dùng rất hợp với chế độ tắt `useStartValue`;
+  - **FractionOfParent**: offset theo tỉ lệ kích thước parent.
+  
+  Cả Start lẫn Target đều chọn được **"Rest"**, nghĩa là dùng đúng giá trị lúc rest (vị trí thiết kế).
+- **Stagger**: mỗi object con tự chụp giá trị hiện tại của riêng nó.
+- **Loop**: start value chụp **một lần** khi track bắt đầu, và mọi vòng lặp dùng lại giá trị đó (không trôi dần sau mỗi vòng).
+- **Kind không áp dụng**:
+  - `AnimatorState` và `SetActive` ẩn cả Start lẫn Target.
+  - `Punch` và `Shake` luôn dao động quanh giá trị hiện tại rồi trả về đúng giá trị đó, nên ẩn toggle và chỉ có biên độ.
+  - `Custom` nhận callback `CaptureStart()` khi track bắt đầu.
+- **Cách dùng khuyến nghị** (các preset mặc định làm theo, Inspector có gợi ý):
+  - **Show**: bật `useStartValue` (ví dụ alpha 0, scale 0.8), với Target = Rest. Lần mở đầu tiên, component đang ở pose thiết kế. Nếu Show tắt start value thì sẽ chạy từ 1 tới 1, tức không có chuyển động. Validator **cảnh báo** trường hợp Show có track tắt start value mà Target trùng giá trị rest.
+  - **Hide**: tắt `useStartValue` (đi từ chỗ hiện tại tới alpha 0 / scale 0.8). Nhờ vậy khi Hide cắt ngang Show đang chạy dở, chuyển động nối tiếp **mượt**, không bị giật về đầu.
+- **Mirror Show xử lý theo từng track**:
+  - Track **bật** start value: Hide đảo thành Target → Start value, đảo thời gian và đảo ease.
+  - Track **tắt** start value: khi track đó chạy trong Show, runtime chụp **snapshot** giá trị lúc nó bắt đầu (runtime state trên component, không serialize, bị xoá khi `Restart`). Bản mirror sẽ chạy từ giá trị hiện tại về snapshot đó. Nếu Show chưa từng chạy (Hide được gọi khi view đang ở rest) thì đích là giá trị Rest.
+  - Không cần bắt mọi track của Show phải bật start value. Validator chỉ **cảnh báo** track tắt start value được mirror, để người chỉnh biết đích của Hide phụ thuộc runtime.
+
+**Track `Rect` (RectTransform)**
+- Field `rectProperty` chọn thuộc tính cần animate:
+  | `rectProperty` | Kiểu | Ghi chú |
+  |---|---|---|
+  | AnchoredPosition | Vector2 | Giống `Move` nhưng có đủ các value mode bên dưới |
+  | AnchorMin / AnchorMax | Vector2 | Animate riêng từng góc |
+  | Anchors | Vector4 (min.xy + max.zw) | Animate cả hai góc cùng lúc. Ví dụ panel trượt vào bằng anchor, thay cho `MoveAnchorAnimation` cũ |
+  | Pivot | Vector2 | Thường dùng để đổi tâm scale hoặc xoay trước một hiệu ứng |
+  | SizeDelta | Vector2 | Co giãn kích thước (thanh mở rộng, panel mở ra) |
+  | OffsetMin / OffsetMax | Vector2 | Tương ứng Left/Bottom và Right/Top trong Inspector khi anchor dạng stretch |
+- Dùng chung Start/Target value và value mode ở trên. `FractionOfParent` chỉ áp dụng cho AnchoredPosition, SizeDelta và Offset. Hiệu ứng kiểu "trượt từ ngoài vào vị trí thiết kế" đặt Start = ngoài màn hình (FractionOfParent), Target = Rest.
+- **Giữ nguyên vị trí hiển thị** khi đổi pivot hoặc anchor (tuỳ chọn, bật mặc định):
+  - Đổi `Pivot` thì tự bù `anchoredPosition += (pivotMới − pivotCũ) × size`, để object không nhảy chỗ.
+  - Đổi `AnchorMin/Max/Anchors` thì tự bù offset để rect giữ nguyên trên màn hình, giống cách Inspector của Unity làm.
+  
+  Tắt tuỳ chọn này nếu muốn object dịch chuyển theo anchor (kiểu `MoveAnchorAnimation` cũ).
+- **Rest pose** của RectTransform chụp đủ `anchorMin`, `anchorMax`, `pivot`, `anchoredPosition`, `sizeDelta` một lần lúc `Awake`. Reset và Snap khôi phục đủ cả 5 giá trị.
+- **Hiệu năng**:
+  - `anchoredPosition` chỉ làm dịch geometry.
+  - `SizeDelta`, `Anchors`, `Pivot` và `Offset` **đổi kích thước rect**, nên kích hoạt `OnRectTransformDimensionsChange` và làm các con có LayoutGroup/ContentSizeFitter rebuild layout mỗi frame trong lúc track chạy.
+  - Inspector hiện badge "layout cost" cho các thuộc tính này, và khuyến nghị dùng Move/Scale khi chỉ cần hiệu ứng hình ảnh.
+- **Validator**:
+  - **Cảnh báo** khi target bị điều khiển bởi LayoutGroup của cha, hoặc có ContentSizeFitter/AspectRatioFitter trên chính nó, vì layout sẽ ghi đè giá trị animate. Kiểm tra bằng cách tìm `ILayoutController` trên cha và trên chính target.
+  - **Cảnh báo** khi có 2 track cùng ghi một thuộc tính của cùng RectTransform trong khoảng thời gian chồng nhau. Ví dụ `Move` và `Rect/AnchoredPosition`, hoặc `Anchors` và `AnchorMin`.
+- **Preview** (`AnimationMode`): đăng ký property path `m_AnchoredPosition`, `m_AnchorMin`, `m_AnchorMax`, `m_Pivot`, `m_SizeDelta`, nên Unity khôi phục đủ khi tắt preview.
 - **Mở rộng**: kind `Custom` tham chiếu tới một component implement `IUIMotionCustomTrack` (`Capture` / `Sample(t)` / `Snap`). Đây là tham chiếu Unity bình thường nên không có rủi ro serialization.
 - **Preset**: `UIMotionPreset` (SO) chứa timeline dùng chung, ví dụ PopupIn, SlideFromBottom, ScreenPush, ToastDrop, Pulse, ButtonPunch. Track trong preset trỏ tới `Self` hoặc tới đường dẫn con. Có thể "Apply preset" (copy vào component) hoặc tham chiếu preset (dùng chung). Foundation kèm sẵn một bộ preset.
 
@@ -428,12 +485,19 @@ protected override void Bind(ref UIBinder b, ShopViewModel vm) {
   - **OnEnable**;
   - **OnParentShow**: nghe interface `IUIMotionTriggerSource` do cha phát ra. Interface này nằm trong asmdef Motion, nên Motion không biết UIView. Cần trigger này vì UIView ẩn bằng `Canvas.enabled`, lúc đó `OnEnable` không chạy lại;
   - **Manual**.
-- **Reset**: rest pose chụp một lần lúc `Awake`, không bao giờ serialize. Mỗi lần play thì về frame 0 trước. `OnDisable` dừng và tuỳ chọn trả về rest pose.
+- **Reset**: rest pose chụp một lần lúc `Awake`, không bao giờ serialize.
+  - `Restart()` trả mọi target về rest pose rồi mới play.
+  - Trigger **OnEnable** luôn dùng `Restart()`, nên tắt rồi bật lại là chạy lại từ đầu.
+  - `PlayShowAsync` / `PlayHideAsync` **không** tự reset, để các track tắt start value đi tiếp từ trạng thái hiện tại.
+  - `OnDisable` dừng motion và tuỳ chọn trả về rest pose.
 - **API**:
   - `UniTask PlayShowAsync(ct)`, `UniTask PlayHideAsync(ct)`;
   - `HideAndDeactivateAsync()` / `SetActiveAnimated(bool)`. Unity không cho trì hoãn `SetActive(false)`, nên muốn chờ Hide xong thì phải gọi API này;
   - `Snap(Show|Hide)`, `Stop()`.
-- **Play khi đang play**: cancel lần play cũ bằng **snap về pose cuối**, rồi chạy lần mới. Cancel qua `CancellationToken` cũng snap về pose cuối, để UI không bao giờ kẹt ở trạng thái mờ dở.
+- **Play khi đang play** (ví dụ Hide cắt ngang Show): lần play cũ **dừng tại chỗ** (không snap), await của nó hoàn thành với trạng thái "bị thay thế", rồi lần play mới chạy.
+  - Track tắt start value đi tiếp mượt từ pose hiện tại.
+  - Track bật start value nhảy về Start value, đúng như cấu hình.
+- **Cancel qua `CancellationToken` mà không có lần play mới** thì snap về pose cuối của timeline đang chạy, để UI không bao giờ kẹt ở trạng thái mờ dở.
 - Luôn dùng **unscaled time**. Có `speed` (UIView có `speedOverride`) và "reduce motion" (tất cả thành Instant).
 - Code API nhỏ `UIMotionRunner.Tween(from, to, duration, ease, state, setter)`, dạng struct state, không closure, cho các effect viết bằng code. Binder `b.CountUp` dùng API này.
 - `UIButton` punch và pulse chỉ là **preset** của `UIMotion`. Không có `UILoopEffect` riêng.
@@ -469,7 +533,7 @@ Ba yêu cầu của user: test được trong Editor, runtime tốt trên mọi 
   - `stateHash` và `bakedDuration` được re-bake ở 3 thời điểm: `OnValidate`, khi controller thay đổi (`AssetPostprocessor`), và trong `IPreprocessBuildWithReport`.
   - Validator báo **lỗi** khi: state không tồn tại trong controller, `layer` vượt số layer, hoặc Animator null.
   - Validator báo **cảnh báo** khi: dữ liệu bake đã cũ, hoặc Animator đang animate cùng property với một track khác trên cùng target trong khoảng thời gian chồng nhau (kiểm tra bằng `AnimationUtility.GetCurveBindings`).
-  - **Mirror Show không áp dụng được** cho Animator track (Animator không phát ngược được nếu không có tham số speed). Timeline Show có Animator track mà Hide chọn Mirror thì validator báo lỗi và yêu cầu chỉ định state Hide riêng.
+  - **Mirror Show không áp dụng được** cho Animator track (Animator không phát ngược được nếu không có tham số speed). Timeline Show có Animator track mà Hide chọn Mirror thì validator báo lỗi và yêu cầu chỉ định state Hide riêng. Animator track không có Start/Target value: pose do clip quyết định.
 
 **Test trong Editor (mọi loại track)**
 - Inspector của `UIMotion` và `UIMotionPreset` có:
@@ -549,7 +613,9 @@ Code cũ (`Animations/ Canvases/ Popups/ Views/ UIElements/ UIManager.cs`) sẽ 
    - Show/Hide/Mirror, trigger, `UIMotionPreset` + bộ preset mặc định.
    - `AnimatorState` track + bake + validator. **Xác minh sớm** `keepAnimatorStateOnDisable` / `writeDefaultValuesOnDisable` trên 6000.3.
    - Inspector timeline + preview bằng `AnimationMode` (dừng preview khi save, đổi selection, vào Play mode, reload assembly).
-   - PlayMode test cho các kịch bản (o)–(r2) ở mục 6.
+   - Track `Rect` (6 thuộc tính, bù pivot/anchor) + validator LayoutGroup và trùng thuộc tính.
+   - Start/Target value theo từng track: `useStartValue`, chụp giá trị lúc track bắt đầu, 4 value mode (Absolute, RelativeToRest, RelativeToStart, FractionOfParent) + Rest, Mirror theo từng track, drawer ẩn Start khi tắt toggle.
+   - PlayMode test cho các kịch bản (o)–(r4) ở mục 6.
 
    4b. **Components**:
    - `UIButton` (punch = preset `UIMotion`), `UISlider`, `UIToggle`, `SafeAreaFitter`, `UIParticleSortingBinder`.
@@ -591,6 +657,18 @@ Code cũ (`Animations/ Canvases/ Popups/ Views/ UIElements/ UIManager.cs`) sẽ 
   - (q) Hide được await xong mới despawn. Hide có loop vô hạn thì validator báo lỗi;
   - (r) track `AnimatorState` kết thúc đúng lúc với `timeScale = 0`, snap khi cancel, timeout khi state sai, và Animator bị tắt sau khi track xong;
   - (r2) target bị destroy giữa chừng không làm treo `await`, và motion loop (pulse/punch) dừng sạch khi hide hoặc destroy;
+  - (r3) track `Rect`:
+    - đổi Pivot và Anchors khi bật "giữ nguyên vị trí hiển thị" thì world corners không đổi (sai số < 0.01);
+    - Reset/Snap khôi phục đủ 5 thuộc tính RectTransform;
+    - Start/Target = Rest hoạt động đúng trên nhiều độ phân giải;
+  - (r4) Start/Target value theo từng track:
+    - track tắt `useStartValue` chụp giá trị hiện tại **lúc track bắt đầu** (sau offset và sau track trước);
+    - hai track nối tiếp trên cùng thuộc tính chạy liền mạch;
+    - timeline trộn track bật và tắt chạy đúng;
+    - loop không trôi giá trị sau mỗi vòng;
+    - Hide cắt ngang Show giữa chừng thì chuyển tiếp mượt (không giật);
+    - Mirror của track tắt start value trả về đúng snapshot;
+    - tắt toggle rồi bật lại vẫn giữ Start value đã nhập;
   - (s) popup có `hidesBelow` thì Canvas bên dưới bị tắt sau khi transition in xong, và bật lại trước khi transition out;
   - (t) Hint nằm trong safe area ở các góc màn hình, và mở hint mới thì hint cũ bị thay.
 - **EditMode bổ sung**:
