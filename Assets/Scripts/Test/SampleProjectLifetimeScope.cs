@@ -1,6 +1,7 @@
 using DracoRuan.Foundation.DataFlow.Runtime;
 using DracoRuan.Foundation.DataFlow.StaticData;
 using DracoRuan.Foundation.DataFlow.StaticData.Sources;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.CompleteTimerIntegration;
 using DracoRuan.RemoteConfig;
 using DracoRuan.VContainerInstallerSupport.Generated;
 using Temps.Scripts;
@@ -95,6 +96,8 @@ namespace Test
                 domainId: RiseProgressionDataController.Id,
                 targetSchemaVersion: 1,
                 legacyTypeName: "RiseProgressData");
+
+            builder.AddCompleteTimer(dataFlow);
         }
     }
 }
