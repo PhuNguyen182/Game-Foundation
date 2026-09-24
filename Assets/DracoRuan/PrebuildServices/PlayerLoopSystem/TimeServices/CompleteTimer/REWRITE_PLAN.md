@@ -1,6 +1,8 @@
 # CompleteTimer: review và plan viết lại
 
-> Tổng hợp phiên review ngày 2026-09-23/24. **Chưa sửa dòng code nào.** Phiên sau bắt đầu từ mục [Bắt đầu phiên sau](#0-bắt-đầu-phiên-sau).
+> Tổng hợp phiên review ngày 2026-09-23/24. Phiên 2026-09-24 đã **triển khai xong** theo mục
+> [Bắt đầu phiên sau](#0-bắt-đầu-phiên-sau) và merge vào `main`. Còn lại: chạy Test Runner
+> (EditMode → Run All) để xác nhận toàn bộ test pass trên máy có Unity Editor mở sẵn.
 
 **Mục tiêu:** dùng cho game mid-core trở lên (nông trại, RPG, puzzle có Lives). Yêu cầu: hàng nghìn timer chạy cùng lúc, tiến trình offline đúng, không mất dữ liệu, khó gian lận. Các use case chính:
 - Cây trồng sinh trưởng qua nhiều giai đoạn.
@@ -9,14 +11,36 @@
 
 ---
 
-## 0. Bắt đầu phiên sau
+## 0. Bắt đầu phiên sau — ĐÃ TRIỂN KHAI (2026-09-24)
 Thứ tự triển khai đề xuất. Mỗi bước kết thúc bằng một lần compile-check (và chạy test nếu bước đó có test):
-1. Tạo asmdef core `CompleteTimer/` và `Clock/` (`ITimeProvider`, `TimerClock`). Viết `TimerClockTests`.
-2. Viết `Scheduling/` (heap, record, scheduler, snapshot, delivery buffer). Viết `TimerSchedulerTests`, `MultiStageTierTests`, `TimerSnapshotTests`, `RealTimeElapsedTests`, `DeliveryGuaranteeTests`, `TimerSchedulerPerfTests`.
-3. Viết `Production/` và `ProductionQueueTests`.
-4. Viết `Regeneration/` và `RegenerationCounterTests`.
-5. Thêm hook `OnBeforeSave` vào `DynamicGameDataController`, rồi viết `CompleteTimerIntegration/` (save data, controller, runtime, registration).
-6. `git rm` code cũ trong `Core/` và `Models/`. Wiring vào `SampleProjectLifetimeScope`. Chạy verification (mục 8).
+1. ✅ Tạo asmdef core `CompleteTimer/` và `Clock/` (`ITimeProvider`, `TimerClock`). Viết `TimerClockTests`.
+2. ✅ Viết `Scheduling/` (heap, record, scheduler, snapshot, delivery buffer). Viết `TimerSchedulerTests`, `MultiStageTierTests`, `TimerSnapshotTests`, `RealTimeElapsedTests`, `DeliveryGuaranteeTests`, `TimerSchedulerPerfTests`.
+3. ✅ Viết `Production/` và `ProductionQueueTests`.
+4. ✅ Viết `Regeneration/` và `RegenerationCounterTests`.
+5. ✅ Thêm hook `OnBeforeSave` vào `DynamicGameDataController`, rồi viết `CompleteTimerIntegration/` (save data, controller, runtime, registration).
+6. ✅ `git rm` code cũ trong `Core/` và `Models/`. Wiring vào `SampleProjectLifetimeScope`.
+7. ⏳ **Còn lại:** chạy Test Runner (EditMode → Run All) trong Unity Editor để xác nhận toàn bộ
+   test pass, đặc biệt các test `SpeedUp`/`SkipCurrentStage` (xem ghi chú review bên dưới).
+
+### Ghi chú triển khai thực tế
+- Việc triển khai được giao cho 1 agent chạy trong git worktree riêng (`worktree-agent-*`),
+  theo đúng plan này, sau đó review kỹ và merge `--no-ff` vào `main`.
+- **3 lỗi tìm thấy khi review và đã sửa trước khi merge:**
+  1. `SpeedUp`/`Delay` không xử lý đồng bộ khi thời gian bù vượt qua ranh giới stage — mâu thuẫn
+     với chính test agent viết (`SpeedUp_CanSkipMultipleStages`, kỳ vọng event bắn ngay không cần
+     gọi `Tick()`). Đã sửa `TimerScheduler.ShiftDeadlines` để drain giống `CompleteNow`, có canh để
+     `Delay` (hoặc `SpeedUp` quá nhỏ) không bị bắn nhầm.
+  2. `CompleteTimerIntegration/` bị đặt **lồng trong** `CompleteTimer/` thay vì ngang hàng — vì
+     `CompleteTimer/` có asmdef `noEngineReferences: true`, các file dùng UnityEngine/VContainer/
+     MessagePack sẽ bị Unity gán nhầm asmdef và không compile được. Đã chuyển ra ngang hàng đúng
+     mục 6.2.
+  3. `TimerClock.CheckDrift()` (lớp phòng vệ thứ 2 cho drift, mục 5.1) được viết và test nhưng
+     chưa từng được gọi trong runtime thật — chỉ có `ReanchorFromDevice()` lúc focus regain.
+     `CompleteTimerRuntime` nay tự đăng ký thêm 1 `IUpdateHandler` để gọi `CheckDrift()` mỗi
+     frame, tick trước scheduler.
+- Compile-check: core asmdef biên dịch sạch bằng `csc` thủ công (theo memory `rider-hook-stale-buffer`)
+  trước và sau khi sửa. Sau đó mở Unity Editor thật, compile sạch, `.meta` đã được sinh cho toàn bộ
+  file mới (44 file, đã commit).
 
 ---
 
