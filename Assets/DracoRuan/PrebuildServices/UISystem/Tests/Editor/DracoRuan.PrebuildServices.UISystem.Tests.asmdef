@@ -1,0 +1,26 @@
+{
+    "name": "DracoRuan.PrebuildServices.UISystem.Tests",
+    "rootNamespace": "DracoRuan.PrebuildServices.UISystem.Tests",
+    "references": [
+        "DracoRuan.PrebuildServices.UISystem.Logic",
+        "DracoRuan.PrebuildServices.UISystem.MVVM",
+        "DracoRuan.PrebuildServices.UISystem.Testing",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

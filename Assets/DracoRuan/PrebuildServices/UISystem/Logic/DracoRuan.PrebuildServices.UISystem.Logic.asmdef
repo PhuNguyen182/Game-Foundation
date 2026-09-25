@@ -1,0 +1,14 @@
+{
+    "name": "DracoRuan.PrebuildServices.UISystem.Logic",
+    "rootNamespace": "DracoRuan.PrebuildServices.UISystem.Logic",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
