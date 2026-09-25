@@ -44,6 +44,18 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         }
 
         [Test]
+        public void TryReplace_OnEmptyStack_PushesAsRootAndReturnsFalse()
+        {
+            bool replaced = this._stack.TryReplace("Home", out string previous);
+
+            Assert.That(replaced, Is.False);
+            Assert.That(previous, Is.Null);
+            Assert.That(this._stack.Count, Is.EqualTo(1));
+            this._stack.TryPeek(out string top);
+            Assert.That(top, Is.EqualTo("Home"));
+        }
+
+        [Test]
         public void TryReplace_WithItemsPresent_SwapsTopWithoutGrowingHistory()
         {
             this._stack.Push("A");

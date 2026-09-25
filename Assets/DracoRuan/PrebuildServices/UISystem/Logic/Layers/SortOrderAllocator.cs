@@ -14,6 +14,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Logic
         private readonly int _baseSortOrder;
         private readonly int _step;
         private readonly List<int> _freeSlots = new List<int>();
+        private readonly HashSet<int> _allocated = new HashSet<int>();
         private int _nextSlot;
 
         public SortOrderAllocator(int baseSortOrder, int step)
@@ -28,21 +29,31 @@ namespace DracoRuan.PrebuildServices.UISystem.Logic
 
         public int Allocate()
         {
+            int allocated;
             if (this._freeSlots.Count > 0)
             {
                 int lastIndex = this._freeSlots.Count - 1;
-                int reused = this._freeSlots[lastIndex];
+                allocated = this._freeSlots[lastIndex];
                 this._freeSlots.RemoveAt(lastIndex);
-                return reused;
+            }
+            else
+            {
+                allocated = this._nextSlot;
+                this._nextSlot += this._step;
             }
 
-            int allocated = this._nextSlot;
-            this._nextSlot += this._step;
+            this._allocated.Add(allocated);
             return allocated;
         }
 
         public void Release(int sortOrder)
         {
+            if (!this._allocated.Remove(sortOrder))
+            {
+                throw new InvalidOperationException(
+                    $"SortOrderAllocator.Release called with sort order {sortOrder}, which is not currently allocated (double release, or it was never allocated by this instance).");
+            }
+
             int currentTop = this._nextSlot - this._step;
             if (sortOrder != currentTop)
             {

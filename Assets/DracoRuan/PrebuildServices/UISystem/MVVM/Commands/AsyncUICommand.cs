@@ -59,7 +59,16 @@ namespace DracoRuan.PrebuildServices.UISystem.MVVM
             }
             finally
             {
-                this._isExecuting.Value = false;
+                // executeAsync may ignore ct (e.g. it wraps a call that isn't cooperatively
+                // cancellable), so this can still be resuming after Dispose() already tore
+                // down _isExecuting. Guard rather than let a late completion throw.
+                try
+                {
+                    this._isExecuting.Value = false;
+                }
+                catch (ObjectDisposedException)
+                {
+                }
             }
         }
 

@@ -1,3 +1,4 @@
+using System.Threading;
 using DracoRuan.PrebuildServices.UISystem.MVVM;
 using DracoRuan.PrebuildServices.UISystem.Testing;
 using NUnit.Framework;
@@ -32,6 +33,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
 
             public void SubscribeLate(Observable<int> source) =>
                 source.Subscribe(_ => this.LateObservedCount++).AddTo(ref this.Late);
+
+            public CancellationToken ReadActivationToken() => this.ActivationToken;
         }
 
         [Test]
@@ -109,6 +112,58 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
             var vm = new CountingViewModel(new FakeUINavigator());
 
             Assert.That(vm.HandleBack(), Is.EqualTo(BackResult.Close));
+        }
+
+        [Test]
+        public void Dispose_WhileStillActivated_RunsOnDeactivated_ThenOnDispose()
+        {
+            var vm = new CountingViewModel(new FakeUINavigator());
+            vm.Activate();
+
+            vm.Dispose();
+
+            Assert.That(vm.DeactivatedCount, Is.EqualTo(1));
+            Assert.That(vm.DisposedCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Dispose_AfterExplicitDeactivate_DoesNotCallOnDeactivatedAgain()
+        {
+            var vm = new CountingViewModel(new FakeUINavigator());
+            vm.Activate();
+            vm.Deactivate();
+
+            vm.Dispose();
+
+            Assert.That(vm.DeactivatedCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ActivationToken_WhileActive_IsNotCancelled()
+        {
+            var vm = new CountingViewModel(new FakeUINavigator());
+            vm.Activate();
+
+            Assert.That(vm.ReadActivationToken().IsCancellationRequested, Is.False);
+        }
+
+        [Test]
+        public void ActivationToken_AfterDeactivate_ReportsCancelled()
+        {
+            var vm = new CountingViewModel(new FakeUINavigator());
+            vm.Activate();
+
+            vm.Deactivate();
+
+            Assert.That(vm.ReadActivationToken().IsCancellationRequested, Is.True);
+        }
+
+        [Test]
+        public void ActivationToken_BeforeEverActivated_IsNone()
+        {
+            var vm = new CountingViewModel(new FakeUINavigator());
+
+            Assert.That(vm.ReadActivationToken(), Is.EqualTo(CancellationToken.None));
         }
     }
 }

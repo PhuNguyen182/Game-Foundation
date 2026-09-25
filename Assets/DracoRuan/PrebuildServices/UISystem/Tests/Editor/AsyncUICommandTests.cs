@@ -90,5 +90,22 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
 
             Assert.That(observedToken.IsCancellationRequested, Is.True);
         }
+
+        [Test]
+        public void Dispose_WhileExecuting_ThenLateCompletion_DoesNotThrow_EvenIfExecuteAsyncIgnoresCancellation()
+        {
+            // executeAsync deliberately never observes ct, simulating a wrapped call
+            // (e.g. into a library) that can't be cancelled cooperatively.
+            var gate = new TaskCompletionSource<bool>();
+            var command = new AsyncUICommand(ct => new ValueTask(gate.Task));
+
+            command.Execute();
+            WaitUntil(() => command.IsExecuting.CurrentValue);
+
+            command.Dispose();
+
+            Assert.DoesNotThrow(() => gate.SetResult(true));
+            WaitUntil(() => true, timeoutMs: 200); // give the late continuation a chance to run
+        }
     }
 }

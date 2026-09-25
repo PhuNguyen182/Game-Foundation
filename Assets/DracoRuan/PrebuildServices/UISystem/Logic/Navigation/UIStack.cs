@@ -43,7 +43,12 @@ namespace DracoRuan.PrebuildServices.UISystem.Logic
             return true;
         }
 
-        /// <summary>Swaps the top item without growing history (e.g. Loading -> Home).</summary>
+        /// <summary>
+        /// Swaps the top item without growing history (e.g. Loading -> Home). If the stack is
+        /// empty there is nothing to swap: the item is pushed as the new root instead, and this
+        /// returns false so callers can tell "seeded a root" apart from "replaced an existing
+        /// top" — it never leaves the caller needing to Push separately.
+        /// </summary>
         public bool TryReplace(T item, out T replaced)
         {
             if (this._items.Count == 0)

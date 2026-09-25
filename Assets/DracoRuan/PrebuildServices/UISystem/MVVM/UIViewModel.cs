@@ -12,20 +12,37 @@ namespace DracoRuan.PrebuildServices.UISystem.MVVM
     /// </summary>
     public abstract class UIViewModel : IDisposable
     {
+        private static readonly CancellationToken CancelledActivationToken = new CancellationToken(true);
+
         private IDisposable _activation = Disposable.Empty;
         private DisposableBag _late;
         private CancellationTokenSource _activationCts;
+        private bool _hasActivatedAtLeastOnce;
         private bool _isDisposed;
 
         protected UIViewModel(IUINavigator navigator) => this.Navigator = navigator;
 
         protected IUINavigator Navigator { get; }
 
-        /// <summary>Cancelled when this view model is deactivated (view closed/hidden).</summary>
-        protected CancellationToken ActivationToken => this._activationCts?.Token ?? CancellationToken.None;
+        /// <summary>
+        /// Cancelled when this view model is deactivated (view closed/hidden). Stays cancelled
+        /// (never reverts to "not cancelled") once this VM has been through a Deactivate, so
+        /// code that re-reads it after teardown still observes cancellation correctly.
+        /// </summary>
+        protected CancellationToken ActivationToken
+        {
+            get
+            {
+                if (this._activationCts != null)
+                    return this._activationCts.Token;
+
+                return this._hasActivatedAtLeastOnce ? CancelledActivationToken : CancellationToken.None;
+            }
+        }
 
         internal void Activate()
         {
+            this._hasActivatedAtLeastOnce = true;
             this._activationCts = new CancellationTokenSource();
             DisposableBuilder builder = Disposable.CreateBuilder();
             this.OnActivated(ref builder);
@@ -67,16 +84,21 @@ namespace DracoRuan.PrebuildServices.UISystem.MVVM
         /// <summary>Ask the navigator to close this view model's view.</summary>
         protected void RequestClose() => _ = this.Navigator.CloseAsync(this);
 
+        /// <summary>
+        /// Disposing an active view model implicitly deactivates it first (running
+        /// OnDeactivated and disposing its subscriptions) so abrupt teardown paths that skip
+        /// an explicit Deactivate() still run the same cleanup as a normal close.
+        /// </summary>
         public void Dispose()
         {
             if (this._isDisposed)
                 return;
 
             this._isDisposed = true;
-            this._activationCts?.Cancel();
-            this._activationCts?.Dispose();
-            this._activation.Dispose();
-            this._late.Dispose();
+
+            if (this._activationCts != null)
+                this.Deactivate();
+
             this.OnDispose();
         }
 

@@ -1,3 +1,4 @@
+using System;
 using DracoRuan.PrebuildServices.UISystem.Logic;
 using NUnit.Framework;
 
@@ -65,6 +66,21 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
             int reused = this._allocator.Allocate();
 
             Assert.That(reused, Is.EqualTo(a));
+        }
+
+        [Test]
+        public void Release_CalledTwiceForSameSlot_Throws()
+        {
+            int slot = this._allocator.Allocate();
+            this._allocator.Release(slot);
+
+            Assert.Throws<InvalidOperationException>(() => this._allocator.Release(slot));
+        }
+
+        [Test]
+        public void Release_ValueThatWasNeverAllocated_Throws()
+        {
+            Assert.Throws<InvalidOperationException>(() => this._allocator.Release(999));
         }
     }
 }
