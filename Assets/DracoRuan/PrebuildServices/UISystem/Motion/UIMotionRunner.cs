@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DracoRuan.PrebuildServices.PlayerLoopSystem.Core.Handlers;
@@ -36,17 +37,24 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                 return;
 
             this.Playback.elapsed = this.Playback.totalDuration;
-            UIMotionRunner.TickTracks(this.Playback);
+            UIMotionRunner.TickTracksSafe(this.Playback);
             if (this.Playback.completionSource.TrySetResult(UIMotionPlaybackResult.Completed))
                 this.Playback.removed = true;
         }
     }
 
     /// <summary>
-    /// Single PlayerLoop-driven tick for every in-flight UIMotion timeline. Registers
-    /// itself once (static ctor) and always reads Time.unscaledDeltaTime directly -
-    /// UpdateServiceManager.Tick(deltaTime) passes scaled Time.deltaTime, and motion
-    /// must keep running under timeScale = 0 (e.g. a pause menu popup).
+    /// Single PlayerLoop-driven tick for every in-flight UIMotion timeline. Registration
+    /// is lazy (EnsureRegistered, called from UIMotion.Awake) and reset every time a new
+    /// play session starts via RuntimeInitializeOnLoadMethod - NOT a static constructor.
+    /// This project runs with domain reload disabled on entering play mode, so a static
+    /// constructor only ever runs once for the whole editor process; a second Play press
+    /// would leave the runner permanently unregistered and every PlayShowAsync/
+    /// PlayHideAsync await hanging forever. RuntimeInitializeOnLoadMethod is guaranteed to
+    /// fire on every play-mode entry regardless of the domain/scene reload setting, which
+    /// is exactly why it exists. Also always reads Time.unscaledDeltaTime directly -
+    /// UpdateServiceManager.Tick(deltaTime) passes scaled Time.deltaTime, and motion must
+    /// keep running under timeScale = 0 (e.g. a pause menu popup).
     /// </summary>
     public sealed class UIMotionRunner : IUpdateHandler
     {
@@ -60,7 +68,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
 
         internal sealed class Playback
         {
-            public IReadOnlyList<UIMotionTrack> tracks;
+            public UIMotionTrack[] tracks;
             public float[] startTimes;
             public TrackState[] trackStates;
             public Vector4[] restPoses;
@@ -76,36 +84,52 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         }
 
         private static readonly UIMotionRunner Instance = new UIMotionRunner();
+        private static bool _registered;
 
         private readonly List<Playback> _active = new List<Playback>(capacity: 16);
 
-        static UIMotionRunner()
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetForNewPlaySession()
         {
+            Instance._active.Clear();
+            _registered = false;
+        }
+
+        /// <summary>Idempotent; call before relying on the runner (UIMotion.Awake does).</summary>
+        public static void EnsureRegistered()
+        {
+            if (_registered)
+                return;
+
+            _registered = true;
             UpdateServiceManager.RegisterUpdateHandler(Instance);
         }
 
-        /// <summary>Touching this triggers the static ctor, ensuring registration has happened.</summary>
-        public static void EnsureRegistered()
+        public static UIMotionPlaybackHandle Play(IReadOnlyList<UIMotionTrack> tracks, Vector4[] restPoses, float speed)
         {
-        }
+            EnsureRegistered();
 
-        public static UIMotionPlaybackHandle Play(
-            IReadOnlyList<UIMotionTrack> tracks, Vector4[] restPoses, float speed)
-        {
-            var scheduleInputs = new UIMotionScheduleInput[tracks.Count];
-            for (int i = 0; i < tracks.Count; i++)
-                scheduleInputs[i] = new UIMotionScheduleInput(tracks[i].startMode, tracks[i].offset, tracks[i].duration);
+            // Snapshot into an array: the caller's List<UIMotionTrack> is a live,
+            // editor-editable field. Adding a track mid-playback must not let
+            // trackStates/startTimes go out of sync with tracks.Count.
+            var trackArray = new UIMotionTrack[tracks.Count];
+            for (int i = 0; i < trackArray.Length; i++)
+                trackArray[i] = tracks[i];
+
+            var scheduleInputs = new UIMotionScheduleInput[trackArray.Length];
+            for (int i = 0; i < trackArray.Length; i++)
+                scheduleInputs[i] = new UIMotionScheduleInput(trackArray[i].startMode, trackArray[i].offset, trackArray[i].duration);
 
             float[] startTimes = UIMotionScheduler.ComputeStartTimes(scheduleInputs);
             float totalDuration = UIMotionScheduler.ComputeTotalDuration(scheduleInputs, startTimes);
 
-            var trackStates = new TrackState[tracks.Count];
+            var trackStates = new TrackState[trackArray.Length];
             for (int i = 0; i < trackStates.Length; i++)
                 trackStates[i] = new TrackState();
 
             var playback = new Playback
             {
-                tracks = tracks,
+                tracks = trackArray,
                 startTimes = startTimes,
                 trackStates = trackStates,
                 restPoses = restPoses,
@@ -116,7 +140,20 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
 
             var handle = new UIMotionPlaybackHandle { Playback = playback };
 
-            if (tracks.Count == 0 || totalDuration <= 0f)
+            // Pre-apply every useStartValue-on track's resolved Start value immediately,
+            // even for tracks that won't actually start until later (AfterPrevious
+            // chains). Otherwise a not-yet-started track still shows its rest pose -
+            // e.g. a Show recommended-pattern track (alpha 0 -> Rest) would render fully
+            // visible until its own turn, then pop to invisible and fade in.
+            PreApplyPendingStartValues(playback);
+
+            // Sample frame 0 synchronously instead of waiting for the next Tick: the
+            // UpdateServices callback runs before Update()/Start(), so a track that opens
+            // this same frame (e.g. OnEnable -> Restart -> PlayShowAsync from a button
+            // click) would otherwise render one full frame at the rest pose first.
+            TickTracksSafe(playback);
+
+            if (playback.elapsed >= playback.totalDuration)
             {
                 playback.removed = true;
                 playback.completionSource.TrySetResult(UIMotionPlaybackResult.Completed);
@@ -141,20 +178,62 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                 }
 
                 playback.elapsed += deltaTime * playback.speed;
-                TickTracks(playback);
+                TickTracksSafe(playback);
 
-                if (playback.elapsed >= playback.totalDuration)
+                if (playback.elapsed >= playback.totalDuration && !playback.removed)
                 {
                     playback.removed = true;
                     this._active.RemoveAt(i);
                     playback.completionSource.TrySetResult(UIMotionPlaybackResult.Completed);
                 }
+                else if (playback.removed)
+                {
+                    // TickTracksSafe's own catch block ended this playback (see below).
+                    this._active.RemoveAt(i);
+                }
             }
         }
 
-        internal static void TickTracks(Playback playback)
+        /// <summary>
+        /// Ticks one playback, isolating any exception (a destroyed target, a track
+        /// referencing a component that was never Awoken, ...) to that single playback
+        /// instead of letting it escape into UpdateServiceManager's shared loop, where it
+        /// would skip every lower-index handler this frame and repeat forever since the
+        /// failing playback would never be removed.
+        /// </summary>
+        internal static void TickTracksSafe(Playback playback)
         {
-            for (int i = 0; i < playback.tracks.Count; i++)
+            try
+            {
+                TickTracks(playback);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                if (playback.completionSource.TrySetResult(UIMotionPlaybackResult.Completed))
+                    playback.removed = true;
+            }
+        }
+
+        private static void PreApplyPendingStartValues(Playback playback)
+        {
+            for (int i = 0; i < playback.tracks.Length; i++)
+            {
+                UIMotionTrack track = playback.tracks[i];
+                if (!track.useStartValue || playback.trackStates[i].started)
+                    continue;
+
+                Float4 rest = playback.restPoses[i].ToFloat4();
+                Float4 parentSize = UIMotionTrackEvaluator.GetParentSize(track).ToFloat4();
+                bool multiplicative = track.kind == UIMotionTrackKind.Scale;
+                Float4 from = UIMotionValueResolver.Resolve(track.fromValueMode, track.from.ToFloat4(), rest, rest, parentSize, multiplicative);
+                UIMotionTrackEvaluator.Write(track, from.ToVector4());
+            }
+        }
+
+        private static void TickTracks(Playback playback)
+        {
+            for (int i = 0; i < playback.tracks.Length; i++)
             {
                 UIMotionTrack track = playback.tracks[i];
                 TrackState state = playback.trackStates[i];
@@ -166,13 +245,28 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                     state.started = true;
                     Float4 rest = playback.restPoses[i].ToFloat4();
                     Float4 parentSize = UIMotionTrackEvaluator.GetParentSize(track).ToFloat4();
+                    bool multiplicative = track.kind == UIMotionTrackKind.Scale;
+
                     Float4 currentOrFrom = track.useStartValue
-                        ? UIMotionValueResolver.Resolve(track.fromValueMode, track.from.ToFloat4(), rest, rest, parentSize)
+                        ? UIMotionValueResolver.Resolve(track.fromValueMode, track.from.ToFloat4(), rest, rest, parentSize, multiplicative)
                         : UIMotionTrackEvaluator.Capture(track).ToFloat4();
+                    Float4 resolvedTo = UIMotionValueResolver
+                        .Resolve(track.toValueMode, track.to.ToFloat4(), rest, currentOrFrom, parentSize, multiplicative);
+
                     state.resolvedFrom = currentOrFrom.ToVector4();
-                    state.resolvedTo = UIMotionValueResolver
-                        .Resolve(track.toValueMode, track.to.ToFloat4(), rest, currentOrFrom, parentSize)
-                        .ToVector4();
+                    state.resolvedTo = resolvedTo.ToVector4();
+
+                    if (track.kind == UIMotionTrackKind.Rotate)
+                        state.resolvedTo = UIMotionTrackEvaluator.UnwrapRotation(state.resolvedFrom, state.resolvedTo);
+
+                    if (track.kind == UIMotionTrackKind.SetActive)
+                    {
+                        // Discrete action: fires once, the instant the track starts, no
+                        // easing and no further writes for the rest of this track's window.
+                        UIMotionTrackEvaluator.Write(track, state.resolvedTo);
+                        state.finished = true;
+                        continue;
+                    }
                 }
 
                 float localT = track.duration <= 0f

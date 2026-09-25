@@ -17,7 +17,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             switch (track.kind)
             {
                 case UIMotionTrackKind.Fade:
-                    return AsCanvasGroup(track.target, out CanvasGroup cg) ? new Vector4(cg.alpha, 0f, 0f, 0f) : Vector4.zero;
+                    return As<CanvasGroup>(track.target, out CanvasGroup cg) ? new Vector4(cg.alpha, 0f, 0f, 0f) : Vector4.zero;
 
                 case UIMotionTrackKind.Move:
                     return AsRectTransform(track.target, out RectTransform rtMove) ? (Vector4)(Vector2)rtMove.anchoredPosition : Vector4.zero;
@@ -29,10 +29,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                     return AsTransform(track.target, out Transform tRotate) ? (Vector4)tRotate.localEulerAngles : Vector4.zero;
 
                 case UIMotionTrackKind.Color:
-                    return AsGraphic(track.target, out Graphic graphic) ? (Vector4)graphic.color : Vector4.zero;
+                    return As<Graphic>(track.target, out Graphic graphic) ? (Vector4)graphic.color : Vector4.zero;
 
                 case UIMotionTrackKind.Fill:
-                    return AsImage(track.target, out Image image) ? new Vector4(image.fillAmount, 0f, 0f, 0f) : Vector4.zero;
+                    return As<Image>(track.target, out Image image) ? new Vector4(image.fillAmount, 0f, 0f, 0f) : Vector4.zero;
 
                 case UIMotionTrackKind.SetActive:
                     return AsGameObject(track.target, out GameObject go) ? new Vector4(go.activeSelf ? 1f : 0f, 0f, 0f, 0f) : Vector4.zero;
@@ -47,7 +47,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             switch (track.kind)
             {
                 case UIMotionTrackKind.Fade:
-                    if (AsCanvasGroup(track.target, out CanvasGroup cg))
+                    if (As<CanvasGroup>(track.target, out CanvasGroup cg))
                         cg.alpha = value.x;
                     break;
 
@@ -67,24 +67,37 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                     break;
 
                 case UIMotionTrackKind.Color:
-                    if (AsGraphic(track.target, out Graphic graphic))
+                    if (As<Graphic>(track.target, out Graphic graphic))
                         graphic.color = value;
                     break;
 
                 case UIMotionTrackKind.Fill:
-                    if (AsImage(track.target, out Image image))
+                    if (As<Image>(track.target, out Image image))
                         image.fillAmount = value.x;
                     break;
 
                 case UIMotionTrackKind.SetActive:
-                    // Binary, not interpolated: any progress past the midpoint of the
-                    // track's own [0,1] t flips it. UIMotionRunner calls Write once at
-                    // t=1 for this kind rather than every tick (see PlayTimelineAsync).
+                    // Discrete, not interpolated. UIMotionRunner fires this exactly once,
+                    // the moment the track starts - never on every tick - so value.x is
+                    // always either 0 or 1 here (see UIMotionRunner.TickTracks).
                     if (AsGameObject(track.target, out GameObject go))
                         go.SetActive(value.x > 0.5f);
                     break;
             }
         }
+
+        /// <summary>
+        /// Rewrites `to` so each axis is the shortest angular delta from `from`, instead
+        /// of a raw Lerp between two [0,360) angles (which can spin the long way round -
+        /// e.g. from 350 deg to 0 deg would otherwise travel 350 deg instead of 10 deg).
+        /// Only meaningful for the Rotate kind.
+        /// </summary>
+        public static Vector4 UnwrapRotation(Vector4 from, Vector4 to) =>
+            new Vector4(
+                from.x + Mathf.DeltaAngle(from.x, to.x),
+                from.y + Mathf.DeltaAngle(from.y, to.y),
+                from.z + Mathf.DeltaAngle(from.z, to.z),
+                to.w);
 
         /// <summary>
         /// Size of the target's parent RectTransform, for FractionOfParent value mode.
@@ -105,50 +118,110 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             return new Vector4(size.x, size.y, 0f, 0f);
         }
 
-        private static bool AsCanvasGroup(Object target, out CanvasGroup canvasGroup)
-        {
-            canvasGroup = target as CanvasGroup;
-            return canvasGroup != null;
-        }
+        // RectTransform is also a Transform, so it needs its own resolver rather than
+        // going through the generic As<T> (which would let a plain-Transform-typed track
+        // silently accept a RectTransform's owning GameObject and then fail the cast).
+        // Unity's "fake null" (a destroyed object whose C# wrapper is still a live,
+        // non-null CLR reference) is only caught by UnityEngine.Object's overloaded
+        // == / != operator - never by an `is`/`as` type pattern alone, and calling an
+        // instance member on a fake-null reference throws MissingReferenceException. So
+        // every helper below casts with `as` and then explicitly compares `!= null`
+        // before touching the result, rather than using `is` pattern matching.
 
         private static bool AsRectTransform(Object target, out RectTransform rectTransform)
         {
-            rectTransform = target as RectTransform;
-            return rectTransform != null;
+            var direct = target as RectTransform;
+            if (direct != null)
+            {
+                rectTransform = direct;
+                return true;
+            }
+
+            var go = target as GameObject;
+            if (go != null)
+                return go.TryGetComponent(out rectTransform);
+
+            var component = target as Component;
+            if (component != null)
+                return component.TryGetComponent(out rectTransform);
+
+            rectTransform = null;
+            return false;
         }
 
         private static bool AsTransform(Object target, out Transform transform)
         {
-            transform = target as Transform;
-            return transform != null;
+            var direct = target as Transform;
+            if (direct != null)
+            {
+                transform = direct;
+                return true;
+            }
+
+            var go = target as GameObject;
+            if (go != null)
+            {
+                transform = go.transform;
+                return true;
+            }
+
+            var component = target as Component;
+            if (component != null)
+            {
+                transform = component.transform;
+                return true;
+            }
+
+            transform = null;
+            return false;
         }
 
-        private static bool AsGraphic(Object target, out Graphic graphic)
+        /// <summary>
+        /// Resolves `target` to a component of type T: a direct reference, or - if the
+        /// author dragged in the GameObject (or a different component on it) instead of
+        /// the specific component the track kind needs - a TryGetComponent fallback, so
+        /// a mismatched drag-and-drop is inert only when the component truly isn't there,
+        /// not whenever the reference isn't of the exact expected type.
+        /// </summary>
+        private static bool As<T>(Object target, out T component) where T : Component
         {
-            graphic = target as Graphic;
-            return graphic != null;
-        }
+            var direct = target as T;
+            if (direct != null)
+            {
+                component = direct;
+                return true;
+            }
 
-        private static bool AsImage(Object target, out Image image)
-        {
-            image = target as Image;
-            return image != null;
+            var go = target as GameObject;
+            if (go != null)
+                return go.TryGetComponent(out component);
+
+            var other = target as Component;
+            if (other != null)
+                return other.TryGetComponent(out component);
+
+            component = null;
+            return false;
         }
 
         private static bool AsGameObject(Object target, out GameObject gameObject)
         {
-            switch (target)
+            var go = target as GameObject;
+            if (go != null)
             {
-                case GameObject go:
-                    gameObject = go;
-                    return true;
-                case Component component:
-                    gameObject = component.gameObject;
-                    return true;
-                default:
-                    gameObject = null;
-                    return false;
+                gameObject = go;
+                return true;
             }
+
+            var component = target as Component;
+            if (component != null)
+            {
+                gameObject = component.gameObject;
+                return true;
+            }
+
+            gameObject = null;
+            return false;
         }
     }
 }

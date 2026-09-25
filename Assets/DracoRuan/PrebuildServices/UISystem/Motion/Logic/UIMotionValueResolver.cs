@@ -7,22 +7,29 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion.Logic
     /// </summary>
     public static class UIMotionValueResolver
     {
-        public static Float4 Resolve(UIMotionValueMode mode, Float4 rawValue, Float4 rest, Float4 start, Float4 parentSize)
+        /// <param name="multiplicativeRelative">
+        /// For kinds where the raw value is a literal multiplier of the reference pose
+        /// (Scale: "0.8" means "80% of rest/start", not "rest/start + 0.8") rather than
+        /// an offset to add to it. Only affects RelativeToRest/RelativeToStart.
+        /// </param>
+        public static Float4 Resolve(
+            UIMotionValueMode mode, Float4 rawValue, Float4 rest, Float4 start, Float4 parentSize,
+            bool multiplicativeRelative = false)
         {
             switch (mode)
             {
                 case UIMotionValueMode.RelativeToRest:
-                    return rest + rawValue;
+                    return multiplicativeRelative ? Float4.Scale(rest, rawValue) : rest + rawValue;
                 case UIMotionValueMode.RelativeToStart:
-                    return start + rawValue;
+                    return multiplicativeRelative ? Float4.Scale(start, rawValue) : start + rawValue;
                 case UIMotionValueMode.FractionOfParent:
-                    return Float4.Scale(rawValue, parentSize);
+                    // An OFFSET from rest, not an absolute position: "0.5" means "half the
+                    // parent's width away from where this element sits at rest".
+                    return rest + Float4.Scale(rawValue, parentSize);
                 case UIMotionValueMode.Absolute:
                 default:
                     return rawValue;
             }
         }
-
-        public static Float4 ResolveRest(Float4 rest) => rest;
     }
 }
