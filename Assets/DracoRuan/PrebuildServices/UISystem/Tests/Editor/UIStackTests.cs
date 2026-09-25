@@ -71,6 +71,30 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         }
 
         [Test]
+        public void Remove_MiddleItem_RemovesItAndKeepsOthersInOrder()
+        {
+            this._stack.Push("A");
+            this._stack.Push("B");
+            this._stack.Push("C");
+
+            bool removed = this._stack.Remove("B");
+
+            Assert.That(removed, Is.True);
+            Assert.That(this._stack.Items, Is.EqualTo(new[] { "A", "C" }));
+        }
+
+        [Test]
+        public void Remove_ItemNotInStack_ReturnsFalse()
+        {
+            this._stack.Push("A");
+
+            bool removed = this._stack.Remove("Z");
+
+            Assert.That(removed, Is.False);
+            Assert.That(this._stack.Count, Is.EqualTo(1));
+        }
+
+        [Test]
         public void PopToRoot_LeavesOnlyFirstPushedItem_ReturnsPoppedInLifoOrder()
         {
             this._stack.Push("A");

@@ -5,6 +5,7 @@
         "DracoRuan.PrebuildServices.UISystem.Logic",
         "DracoRuan.PrebuildServices.UISystem.MVVM",
         "DracoRuan.PrebuildServices.UISystem.Testing",
+        "DracoRuan.PrebuildServices.UISystem",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
