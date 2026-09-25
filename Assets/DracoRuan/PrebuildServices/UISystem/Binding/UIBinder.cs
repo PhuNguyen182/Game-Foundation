@@ -18,11 +18,6 @@ namespace DracoRuan.PrebuildServices.UISystem.Binding
     {
         private DisposableBuilder _builder;
 
-        public UIBinder()
-        {
-            this._builder = Disposable.CreateBuilder();
-        }
-
         public IDisposable Build() => this._builder.Build();
 
         // ---- One-way ----
@@ -56,19 +51,22 @@ namespace DracoRuan.PrebuildServices.UISystem.Binding
         public void TwoWay(Slider target, ReactiveProperty<float> source)
         {
             source.Subscribe(target, static (value, t) => t.SetValueWithoutNotify(value)).AddTo(ref this._builder);
-            target.OnValueChangedAsObservable().Subscribe(source, static (value, s) => s.Value = value).AddTo(ref this._builder);
+            target.OnValueChangedAsObservable().Subscribe(source, static (value, s) => s.Value = value)
+                .AddTo(ref this._builder);
         }
 
         public void TwoWay(Toggle target, ReactiveProperty<bool> source)
         {
             source.Subscribe(target, static (value, t) => t.SetIsOnWithoutNotify(value)).AddTo(ref this._builder);
-            target.OnValueChangedAsObservable().Subscribe(source, static (value, s) => s.Value = value).AddTo(ref this._builder);
+            target.OnValueChangedAsObservable().Subscribe(source, static (value, s) => s.Value = value)
+                .AddTo(ref this._builder);
         }
 
         public void TwoWay(TMP_InputField target, ReactiveProperty<string> source)
         {
             source.Subscribe(target, static (value, t) => t.SetTextWithoutNotify(value)).AddTo(ref this._builder);
-            target.OnValueChangedAsObservable().Subscribe(source, static (value, s) => s.Value = value).AddTo(ref this._builder);
+            target.OnValueChangedAsObservable().Subscribe(source, static (value, s) => s.Value = value)
+                .AddTo(ref this._builder);
         }
 
         // ---- Command ----

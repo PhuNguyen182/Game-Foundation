@@ -583,7 +583,9 @@ UISystem/
   Tests/Editor/  Tests/Runtime/
   Samples/      Confirm (result), Toast, Loading, 2 screen, Inventory (list + widget), Settings (two-way)
 ```
-Code cũ (`Animations/ Canvases/ Popups/ Views/ UIElements/ UIManager.cs`) sẽ bị `git rm` ở phase 9, sau khi sample mới chạy được. Folder `Views/` mới thay cho folder cũ cùng tên. Khi viết thì dùng scratchpad + `cp` để tránh lỗi Rider hook.
+Code cũ (`Animations/ Canvases/ Views/ UIElements/ UIManager.cs` trong `UISystem/`, cộng `Popups/` đã dời sang `Assets/DracoRuan/PrebuildServices/Popups/`) sẽ bị `git rm` ở phase 9, sau khi sample mới chạy được. Folder `Views/` mới thay cho folder cũ cùng tên (4 file cũ `BaseUIView.cs`/`BaseUIViewWithModel.cs`/`IUIModel.cs`/`IUIView.cs` vẫn còn nằm chung thư mục `Views/` với file mới — asmdef không tách được vì chúng chỉ dùng namespace asmdef-less, không lỗi biên dịch). Khi viết thì dùng scratchpad + `cp` để tránh lỗi Rider hook.
+
+**Ghi chú kỹ thuật (session 2026-09-25):** asmdef `DracoRuan.PrebuildServices.UISystem` đặt ở gốc `UISystem/` sẽ tự động "nuốt" mọi file .cs cũ nằm dưới cây thư mục đó (asmdef-scope đệ quy tới khi gặp asmdef con). `Popups/` là folder duy nhất trong số code cũ thực sự lỗi biên dịch khi bị nuốt vào, vì nó dùng `DracoRuan.Utilities.ObjectPooling.IPoolableObject` — namespace này không có asmdef riêng (compile ngầm vào `Assembly-CSharp`), nên một asmdef tường minh không thể reference tới nó. Cách sửa duy nhất là dời vật lý ra ngoài cây thư mục của asmdef mới (đã làm: dời sang `Assets/DracoRuan/PrebuildServices/Popups/`), để nó rơi lại về `Assembly-CSharp` — nơi vẫn thấy được cả asmdef mới (vì `Assembly-CSharp` luôn tham chiếu ngầm mọi asmdef tường minh) lẫn `DracoRuan.Utilities` (asmdef-less, cùng biên dịch ngầm). `Canvases/ Animations/ UIElements/ UIManager.cs` và 4 file `Views/` cũ không dùng gì ngoài UnityEngine/VContainer/UniTask/DOTween(precompiled)/Odin(precompiled) nên không lỗi khi bị nuốt vào asmdef mới — để nguyên chỗ cũ, không cần dời.
 
 ---
 
