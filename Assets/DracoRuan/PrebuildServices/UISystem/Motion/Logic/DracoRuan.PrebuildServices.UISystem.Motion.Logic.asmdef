@@ -1,0 +1,14 @@
+{
+    "name": "DracoRuan.PrebuildServices.UISystem.Motion.Logic",
+    "rootNamespace": "DracoRuan.PrebuildServices.UISystem.Motion.Logic",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

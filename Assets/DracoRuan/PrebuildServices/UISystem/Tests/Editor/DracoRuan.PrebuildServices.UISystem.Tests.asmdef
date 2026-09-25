@@ -3,6 +3,7 @@
     "rootNamespace": "DracoRuan.PrebuildServices.UISystem.Tests",
     "references": [
         "DracoRuan.PrebuildServices.UISystem.Logic",
+        "DracoRuan.PrebuildServices.UISystem.Motion.Logic",
         "DracoRuan.PrebuildServices.UISystem.MVVM",
         "DracoRuan.PrebuildServices.UISystem.Testing",
         "DracoRuan.PrebuildServices.UISystem",
