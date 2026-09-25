@@ -73,8 +73,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
 
                 (GameObject go, bool _) = await this.AcquireInstanceAsync(definition, CancellationToken.None);
                 var view = go.GetComponent<UIViewBase>();
-                view.Canvas.enabled = false;
-                view.GraphicRaycaster.enabled = false;
+                view.OnCreated(); // preload bypasses OpenCoreAsync, so this is the only place it can fire
+                ApplyHide(definition, view, go);
                 this._keepAliveCache[definition.ViewModelType] = go;
             }
 
@@ -231,16 +231,18 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             }
         }
 
-        private void ApplyHide(ViewInstance instance)
+        private void ApplyHide(ViewInstance instance) => ApplyHide(instance.Definition, instance.View, instance.GameObject);
+
+        private static void ApplyHide(UIViewDefinition definition, UIViewBase view, GameObject gameObject)
         {
-            if (instance.Definition.HideMode == UIHideMode.DisableCanvas)
+            if (definition.HideMode == UIHideMode.DisableCanvas)
             {
-                instance.View.Canvas.enabled = false;
-                instance.View.GraphicRaycaster.enabled = false;
+                view.Canvas.enabled = false;
+                view.GraphicRaycaster.enabled = false;
             }
             else
             {
-                instance.GameObject.SetActive(false);
+                gameObject.SetActive(false);
             }
         }
 
@@ -287,6 +289,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                 var view = go.GetComponent<UIView<TVM>>();
                 if (view == null)
                 {
+                    // go was either freshly instantiated or pulled from the KeepAlive cache
+                    // above; either way it's not registered anywhere yet, so it would otherwise
+                    // leak silently rather than surfacing only as a thrown exception.
+                    UnityEngine.Object.Destroy(go);
                     throw new InvalidOperationException(
                         $"Prefab for '{vmType.Name}' has no UIView<{vmType.Name}> component on its root.");
                 }
@@ -477,7 +483,11 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             else
                 this._popupsByLayer[instance.Definition.Layer.LayerName].Remove(instance);
 
+            UILayerRoot layerRoot = this._layerRoots[instance.Definition.Layer.LayerName];
+            layerRoot.SortOrderAllocator.Release(instance.SortOrder);
+
             UnityEngine.Object.Destroy(instance.GameObject);
+            this._assetProvider.ReleasePrefab(instance.Definition, instance.Definition.Prefab);
         }
 
         // ---------------------------------------------------------------
@@ -522,14 +532,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         public async ValueTask<TResult> OpenForResultAsync<TViewModel, TArgs, TResult>(TArgs args, CancellationToken ct = default)
             where TViewModel : UIViewModel<TArgs>, IResultViewModel<TResult>
         {
-            var tcs = new TaskCompletionSource<TResult>();
             ViewInstance instance = await this.OpenCoreAsync<TViewModel>(vm => vm.SetArgs(args), ct).AsTask();
-            instance.CompleteResult = boxed => tcs.TrySetResult(boxed is TResult typed ? typed : default);
-
-            // CompletePendingResult (called from every close path) resolves this with
-            // default(TResult) if the view closes without Complete() having fired
-            // (Back, backdrop, CloseAll, scope dispose).
-            return await new ValueTask<TResult>(tcs.Task);
+            return await new ValueTask<TResult>(GetOrCreateResultTask<TResult>(instance));
         }
 
         public async ValueTask<TResult> EnqueueAsync<TViewModel, TArgs, TResult>(TArgs args, int priority = 0, CancellationToken ct = default)
@@ -539,13 +543,20 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             if (!this.TryResolve(vmType, out UIRegistry _, out IObjectResolver _, out UIViewDefinition definition, out UIScope _))
                 throw new InvalidOperationException($"No UIViewDefinition registered for view model type '{vmType.Name}'.");
 
+            // If it's already open (BringToFront/Ignore), reuse its pending result task instead
+            // of racing a fresh one that would never be completed.
+            if (this._openByType.TryGetValue(vmType, out ViewInstance alreadyOpen))
+                return await new ValueTask<TResult>(GetOrCreateResultTask<TResult>(alreadyOpen));
+
             var tcs = new TaskCompletionSource<TResult>();
             UIPopupQueue<Func<UniTask>> queue = this._queueByLayer[definition.Layer.LayerName];
 
             async UniTask OpenNow()
             {
                 ViewInstance instance = await this.OpenCoreAsync<TViewModel>(vm => vm.SetArgs(args), ct);
-                instance.CompleteResult = boxed => tcs.TrySetResult(boxed is TResult typed ? typed : default);
+                Task<TResult> resultTask = GetOrCreateResultTask<TResult>(instance);
+                TResult result = await resultTask;
+                tcs.TrySetResult(result);
             }
 
             bool hasModalOpen = false;
@@ -558,12 +569,36 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                 }
             }
 
-            if (!hasModalOpen && queue.Count == 0)
+            if (!hasModalOpen && queue.Count == 0 && !queue.IsPaused)
                 OpenNow().Forget();
             else
                 queue.Enqueue(OpenNow, priority);
 
             return await new ValueTask<TResult>(tcs.Task);
+        }
+
+        /// <summary>
+        /// Returns the current pending result task for this instance, creating one (and wiring
+        /// CompleteResult) if this is the first caller. A second caller hitting the same
+        /// already-open instance (ReopenPolicy.BringToFront/Ignore) gets the SAME task instead
+        /// of a fresh one the first caller's close would never complete.
+        /// </summary>
+        private static Task<TResult> GetOrCreateResultTask<TResult>(ViewInstance instance)
+        {
+            if (instance.PendingResultCompletionSource is TaskCompletionSource<TResult> existing)
+                return existing.Task;
+
+            var tcs = new TaskCompletionSource<TResult>();
+            instance.PendingResultCompletionSource = tcs;
+            instance.CompleteResult = vm =>
+            {
+                if (vm is IResultViewModel<TResult> resultVm && resultVm.HasResult)
+                    tcs.TrySetResult(resultVm.Result);
+                else
+                    tcs.TrySetResult(default);
+            };
+
+            return tcs.Task;
         }
 
         public async ValueTask CloseAsync<TViewModel>() where TViewModel : UIViewModel
@@ -581,27 +616,21 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         }
 
         /// <summary>
-        /// Reads HasResult/Result off a ResultViewModel&lt;,&gt; subclass via reflection and
-        /// forwards it through CompleteResult. Called from every close path (not just the
-        /// explicit CloseAsync a Complete()'d VM triggers) so a popup closed by Back, the
-        /// backdrop, CloseAll, or a disposed scope always resolves its caller's awaited
-        /// result — with default(TResult) when Complete() never fired.
+        /// Forwards the view model to CompleteResult (set by GetOrCreateResultTask, which reads
+        /// HasResult/Result through IResultViewModel&lt;TResult&gt; — no reflection). Called
+        /// from every close path (not just the explicit CloseAsync a Complete()'d VM triggers)
+        /// so a popup closed by Back, the backdrop, CloseAll, or a disposed scope always
+        /// resolves its caller's awaited result — with default(TResult) when Complete() never
+        /// fired.
         /// </summary>
         private static void CompletePendingResult(ViewInstance instance)
         {
             if (instance.CompleteResult == null)
                 return;
 
-            Type type = instance.ViewModel.GetType();
-            System.Reflection.PropertyInfo hasResultProp = type.GetProperty("HasResult");
-            System.Reflection.PropertyInfo resultProp = type.GetProperty("Result");
-
-            object result = null;
-            if (hasResultProp != null && resultProp != null && hasResultProp.GetValue(instance.ViewModel) is bool hasResult && hasResult)
-                result = resultProp.GetValue(instance.ViewModel);
-
-            instance.CompleteResult(result);
+            instance.CompleteResult(instance.ViewModel);
             instance.CompleteResult = null; // guard against a double-invoke if closed again
+            instance.PendingResultCompletionSource = null;
         }
 
         public async ValueTask PopScreenAsync()

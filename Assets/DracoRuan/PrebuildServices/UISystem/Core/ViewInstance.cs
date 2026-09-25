@@ -24,7 +24,20 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         public Action UnbindView;
         public Type ViewModelType;
 
-        /// <summary>Set only for result-yielding opens; completed by UIService.CloseAsync.</summary>
-        public Action<object> CompleteResult;
+        /// <summary>
+        /// Set only for result-yielding opens (OpenForResultAsync/EnqueueAsync); invoked with
+        /// the view model itself (typed generically only at the closure's capture site) by
+        /// every close path, so Back/backdrop/CloseAll/scope-dispose all resolve the caller's
+        /// awaited result — with default(TResult) if Complete() never fired.
+        /// </summary>
+        public Action<UIViewModel> CompleteResult;
+
+        /// <summary>
+        /// Boxed TaskCompletionSource&lt;TResult&gt; for the current result-yielding open, if
+        /// any. Reused (not replaced) when ReopenPolicy brings an already-open instance back to
+        /// the front instead of spawning a new one, so a second caller awaits the same result
+        /// as the first instead of orphaning it.
+        /// </summary>
+        public object PendingResultCompletionSource;
     }
 }
