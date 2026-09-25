@@ -64,6 +64,22 @@ namespace DracoRuan.PrebuildServices.UISystem.Logic
             return true;
         }
 
+        /// <summary>
+        /// Removes a specific item regardless of its position (not just the top), e.g. force-
+        /// closing one screen out of several stacked ones when its owning scope tears down.
+        /// Uses default equality, so reference types are matched by reference. Returns false if
+        /// the item isn't in the stack.
+        /// </summary>
+        public bool Remove(T item)
+        {
+            int index = this._items.IndexOf(item);
+            if (index < 0)
+                return false;
+
+            this._items.RemoveAt(index);
+            return true;
+        }
+
         /// <summary>Pops every item except the root, returned top-first (LIFO pop order).</summary>
         public IReadOnlyList<T> PopToRoot()
         {
