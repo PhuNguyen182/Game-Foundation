@@ -1,5 +1,10 @@
 using System;
+using System.Collections.Generic;
+using DracoRuan.PrebuildServices.UISystem.MVVM;
 using UnityEngine;
+#if USE_EXTENDED_ADDRESSABLE
+using UnityEngine.AddressableAssets;
+#endif
 
 namespace DracoRuan.PrebuildServices.UISystem.Data
 {
@@ -12,10 +17,17 @@ namespace DracoRuan.PrebuildServices.UISystem.Data
     [CreateAssetMenu(fileName = "UIViewDefinition", menuName = "DracoRuan/UISystem/View Definition")]
     public sealed class UIViewDefinition : ScriptableObject
     {
-        [SerializeField] private SerializableTypeRef viewModelType;
+        [SerializeField] [TypeConstraint(typeof(UIViewModel))] private SerializableTypeRef viewModelType;
         [SerializeField] private UILayerDefinition layer;
         [SerializeField] private UIViewPreset preset;
         [SerializeField] private GameObject prefab;
+#if USE_EXTENDED_ADDRESSABLE
+        /// <summary>Addressables alternative to `prefab` (REWRITE_PLAN.md 2.2: "Prefab: direct
+        /// reference hoặc AssetReferenceGameObject"). Set this and leave `prefab` null to load
+        /// through Addressables instead - AddressableUIAssetProvider prefers this when both are
+        /// somehow set, though authoring only one at a time is the expectation.</summary>
+        [SerializeField] private AssetReferenceGameObject addressablePrefab;
+#endif
         [SerializeField] private UICachePolicy cachePolicy = UICachePolicy.Destroy;
         [SerializeField] private bool preload;
         [SerializeField] private UIHideMode hideMode = UIHideMode.DisableCanvas;
@@ -29,10 +41,19 @@ namespace DracoRuan.PrebuildServices.UISystem.Data
         [SerializeField] private bool participatesInStack = true;
         [SerializeField] private float speedOverride = 1f;
 
+        /// <summary>HUD-only (REWRITE_PLAN.md 2.5, "hideMode, không destroy"): screen VM types
+        /// this HUD should be visible on. Empty = always visible whenever open, no restriction.
+        /// The router re-evaluates this against the current topmost screen every time the
+        /// screen stack changes (see UIService.RefreshHudVisibility).</summary>
+        [SerializeField] [TypeConstraint(typeof(UIViewModel))] private SerializableTypeRef[] visibleOnScreens = Array.Empty<SerializableTypeRef>();
+
         public Type ViewModelType => this.viewModelType?.ResolveType();
         public UILayerDefinition Layer => this.layer;
         public UIViewPreset Preset => this.preset;
         public GameObject Prefab => this.prefab;
+#if USE_EXTENDED_ADDRESSABLE
+        public AssetReferenceGameObject AddressablePrefab => this.addressablePrefab;
+#endif
         public UICachePolicy CachePolicy => this.cachePolicy;
         public bool Preload => this.preload;
         public UIHideMode HideMode => this.hideMode;
@@ -45,5 +66,24 @@ namespace DracoRuan.PrebuildServices.UISystem.Data
         public bool History => this.history;
         public bool ParticipatesInStack => this.participatesInStack;
         public float SpeedOverride => this.speedOverride;
+
+        /// <summary>Resolved screen VM types this HUD is restricted to. Empty = always visible.
+        /// Resolves lazily every call rather than caching, matching ViewModelType's own
+        /// resolve-on-read pattern above (definitions are load-once SO assets, so the cost is
+        /// negligible against router traffic).</summary>
+        public IEnumerable<Type> VisibleOnScreens
+        {
+            get
+            {
+                foreach (SerializableTypeRef typeRef in this.visibleOnScreens)
+                {
+                    Type resolved = typeRef?.ResolveType();
+                    if (resolved != null)
+                        yield return resolved;
+                }
+            }
+        }
+
+        public bool HasVisibleOnScreensRestriction => this.visibleOnScreens.Length > 0;
     }
 }

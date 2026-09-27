@@ -11,11 +11,19 @@ namespace DracoRuan.PrebuildServices.UISystem.Installer
     public static class UIServiceInstallerExtensions
     {
         /// <summary>Registers the root UIService (as IUINavigator), its registry, and every view model in the collection (Transient).</summary>
-        public static void AddUIService(this IContainerBuilder builder, UIRootConfig rootConfig, UIViewCollection viewCollection)
+        public static void AddUIService(this IContainerBuilder builder, UIRootConfig rootConfig,
+            UIViewCollection viewCollection)
         {
             builder.RegisterInstance(rootConfig);
             builder.RegisterInstance(new UIRegistry(viewCollection.Definitions));
+#if USE_EXTENDED_ADDRESSABLE
+            // AddressableUIAssetProvider degrades to plain direct-reference behavior per
+            // definition when its addressablePrefab is unset, so it's a strict superset of
+            // DirectUIAssetProvider here - safe to register unconditionally, not per-definition.
+            builder.Register<IUIAssetProvider, AddressableUIAssetProvider>(Lifetime.Singleton);
+#else
             builder.Register<IUIAssetProvider, DirectUIAssetProvider>(Lifetime.Singleton);
+#endif
             builder.Register<UIService>(Lifetime.Singleton).AsSelf().As<IUINavigator>().As<IAsyncInitializable>();
 
             RegisterViewModels(builder, viewCollection);
@@ -30,7 +38,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Installer
         {
             var registry = new UIRegistry(viewCollection.Definitions);
             builder.RegisterInstance(registry);
-            builder.Register<UIScope>(resolver => resolver.Resolve<UIService>().RegisterScope(registry, resolver), Lifetime.Scoped);
+            builder.Register<UIScope>(resolver => resolver.Resolve<UIService>().RegisterScope(registry, resolver),
+                Lifetime.Scoped);
 
             RegisterViewModels(builder, viewCollection);
 
