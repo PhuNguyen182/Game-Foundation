@@ -1,0 +1,22 @@
+{
+    "name": "DracoRuan.PrebuildServices.UISystem.Editor",
+    "rootNamespace": "DracoRuan.PrebuildServices.UISystem.Editor",
+    "references": [
+        "DracoRuan.PrebuildServices.UISystem.Logic",
+        "DracoRuan.PrebuildServices.UISystem.MVVM",
+        "DracoRuan.PrebuildServices.UISystem.Motion",
+        "DracoRuan.PrebuildServices.UISystem",
+        "UniTask"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

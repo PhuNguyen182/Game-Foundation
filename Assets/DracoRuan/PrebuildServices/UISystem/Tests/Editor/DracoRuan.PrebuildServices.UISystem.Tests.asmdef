@@ -4,11 +4,17 @@
     "references": [
         "DracoRuan.PrebuildServices.UISystem.Logic",
         "DracoRuan.PrebuildServices.UISystem.Motion.Logic",
+        "DracoRuan.PrebuildServices.UISystem.Motion",
+        "UniTask",
         "DracoRuan.PrebuildServices.UISystem.MVVM",
         "DracoRuan.PrebuildServices.UISystem.Testing",
         "DracoRuan.PrebuildServices.UISystem",
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "UnityEditor.TestRunner",
+        "Unity.InputSystem",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [
         "Editor"
@@ -17,12 +23,21 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
-        "nunit.framework.dll"
+        "nunit.framework.dll",
+        "R3.dll",
+        "Microsoft.Bcl.AsyncInterfaces.dll",
+        "Microsoft.Bcl.TimeProvider.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "UISYSTEM_INPUT_SYSTEM"
+        }
+    ],
     "noEngineReferences": false
 }
