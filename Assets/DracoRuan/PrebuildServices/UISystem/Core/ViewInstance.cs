@@ -39,5 +39,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         /// as the first instead of orphaning it.
         /// </summary>
         public object PendingResultCompletionSource;
+
+        /// <summary>Set only while this instance is open, modal, and a focus handler is
+        /// attached (UIService.AttachFocusHandler) - disposed on close to stop clamping
+        /// EventSystem navigation to this view's root.</summary>
+        public IDisposable ModalFocusScope;
     }
 }

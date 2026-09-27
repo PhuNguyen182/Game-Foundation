@@ -6,7 +6,9 @@ using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.Initializers.Interfaces;
 using DracoRuan.PrebuildServices.UISystem.Core.Loading;
 using DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.Input;
 using DracoRuan.PrebuildServices.UISystem.Logic;
+using DracoRuan.PrebuildServices.UISystem.Motion;
 using DracoRuan.PrebuildServices.UISystem.MVVM;
 using DracoRuan.PrebuildServices.UISystem.Views;
 using UnityEngine;
@@ -18,8 +20,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
     /// <summary>
     /// Root implementation of IUINavigator. Owns the layer roots, the screen/popup stacks, the
     /// per-layer sort order allocators, the KeepAlive instance cache, and scope resolution.
-    /// No UIMotion in this phase, so every Show/Hide is instant (state machine still runs
-    /// through Showing/Hiding so later phases can hook animation in without changing callers).
+    /// Show/Hide plays each view's own UIMotion when present (see PlayShowTransitionAsync/
+    /// PlayHideTransitionAsync), Instant otherwise. Back input (HandleBackInput) is driven by
+    /// whatever IUIBackInputSource the game wires up (e.g. InputSystemBackInputSource, Phase 5);
+    /// this class only owns the BackRouter and the System/Popup/Screen tier logic.
     /// </summary>
     public sealed class UIService : IUINavigator, IAsyncInitializable, IDisposable
     {
@@ -27,6 +31,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         private readonly IUIAssetProvider _assetProvider;
         private readonly Transform _rootTransform;
         private readonly InputLockCounter _inputLock = new InputLockCounter();
+        private readonly BackRouter _backRouter = new BackRouter();
         private bool _isInitialized;
 
         private readonly Dictionary<string, UILayerRoot> _layerRoots = new Dictionary<string, UILayerRoot>();
@@ -40,12 +45,24 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         private readonly UIRegistry _rootRegistry;
         private readonly IObjectResolver _rootResolver;
 
+        /// <summary>
+        /// Debug-only discovery hook (REWRITE_PLAN.md mục 5 bước 8, "UI Debugger"): the most
+        /// recently constructed UIService, so an EditorWindow - which VContainer never injects
+        /// into - has something to read. UIService is registered as a Singleton, so in a normal
+        /// game there is exactly one; a test or sample that constructs several still gets a
+        /// sane answer (whichever is newest), which is all a debug view needs. Not used by any
+        /// runtime logic in this class itself.
+        /// </summary>
+        public static UIService Current { get; private set; }
+
         public UIService(UIRootConfig rootConfig, UIRegistry rootRegistry, IObjectResolver rootResolver, IUIAssetProvider assetProvider)
         {
             this._rootConfig = rootConfig;
             this._rootRegistry = rootRegistry;
             this._rootResolver = rootResolver;
             this._assetProvider = assetProvider;
+
+            Current = this;
 
             var rootGo = new GameObject("UISystem");
             UnityEngine.Object.DontDestroyOnLoad(rootGo);
@@ -59,10 +76,128 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                 this._queueByLayer[layerDefinition.LayerName] = new UIPopupQueue<Func<UniTask>>();
             }
 
+            // REWRITE_PLAN.md 2.5: "BackRouter duyệt từ layer cao xuống: System > Popup >
+            // Screen". Ruling (plan lists 3 tiers, UILayerKind has 6 values): Tutorial joins the
+            // System tier (both are "always on top, highest priority" layers); Overlay (HUD)
+            // and Toast never participate - HUD is non-modal by definition and Toast doesn't
+            // accept input, so neither should be able to swallow a Back press.
+            this._backRouter.RegisterLayer(() => this.HandleBackForKinds(UILayerKind.System, UILayerKind.Tutorial));
+            this._backRouter.RegisterLayer(() => this.HandleBackForKinds(UILayerKind.Popup));
+            this._backRouter.RegisterLayer(this.HandleBackForScreenStack);
+            this._backRouter.BackAtRoot += () => this.BackAtRoot?.Invoke();
+
+            Application.lowMemory += this.ReleaseHiddenKeepAliveViews;
+
             this.PreloadAsync().Forget();
         }
 
+        /// <summary>
+        /// REWRITE_PLAN.md 2.5: "Application.lowMemory → release view KeepAlive đang ẩn".
+        /// Destroys every currently-hidden (not open) KeepAlive-cached instance and releases its
+        /// prefab through the asset provider - an open KeepAlive view is left alone (its user is
+        /// looking at it right now). A closed one simply reacquires on its next Open, same as a
+        /// Destroy-policy view always does.
+        /// </summary>
+        private void ReleaseHiddenKeepAliveViews()
+        {
+            if (this._keepAliveCache.Count == 0)
+                return;
+
+            var toRelease = new List<Type>(this._keepAliveCache.Keys);
+            foreach (Type vmType in toRelease)
+            {
+                if (!this.TryResolve(vmType, out UIRegistry _, out IObjectResolver _, out UIViewDefinition definition, out UIScope _))
+                    continue;
+
+                GameObject cached = this._keepAliveCache[vmType];
+                this._keepAliveCache.Remove(vmType);
+                this._assetProvider.ReleasePrefab(definition, definition.Prefab);
+                UnityEngine.Object.Destroy(cached);
+            }
+        }
+
         public bool IsInitialized() => this._isInitialized;
+
+        /// <summary>Fired when Back passes through every layer unhandled (topmost/root
+        /// screen) - REWRITE_PLAN.md: "Ở root screen thì bắn BackAtRoot", for the game to
+        /// decide what "back" means globally (e.g. prompt to quit).</summary>
+        public event Action BackAtRoot;
+
+        /// <summary>
+        /// Subscribes this service's Back handling to the given source's BackRequested event -
+        /// optional, and not a constructor dependency, since not every game wires Back input the
+        /// same way (or at all, e.g. mobile-only UI). InputSystemBackInputSource is the plan's
+        /// default (REWRITE_PLAN.md 2.5) when UISYSTEM_INPUT_SYSTEM is defined; the game can
+        /// supply any other IUIBackInputSource instead. Call at most once per source instance.
+        /// </summary>
+        public void AttachBackInputSource(IUIBackInputSource source) => source.BackRequested += this.HandleBackInputInternal;
+
+        public void DetachBackInputSource(IUIBackInputSource source) => source.BackRequested -= this.HandleBackInputInternal;
+
+        private IUIFocusHandler _focusHandler;
+
+        /// <summary>
+        /// Optional (Phase 5 debt closed): a game that wants PC/Console focus behavior attaches
+        /// a UIFocusController here. Unset, every focus call below is a no-op - mobile-only UI
+        /// never pays for it. Same optional-dependency shape as AttachBackInputSource, for the
+        /// same reason: UIService's own asmdef isn't gated on UISYSTEM_INPUT_SYSTEM, only
+        /// UIFocusController's concrete implementation is.
+        /// </summary>
+        public void AttachFocusHandler(IUIFocusHandler handler) => this._focusHandler = handler;
+
+        public void DetachFocusHandler(IUIFocusHandler handler)
+        {
+            if (this._focusHandler == handler)
+                this._focusHandler = null;
+        }
+
+        /// <summary>
+        /// Returns true if some layer handled the press. Swallowed entirely while a transition
+        /// is in flight or input is otherwise locked (REWRITE_PLAN.md: "Khi đang transition hoặc
+        /// lock thì Back bị nuốt"). Exposed publicly too, for a game that wants to call it
+        /// directly instead of going through an IUIBackInputSource.
+        /// </summary>
+        public bool HandleBackInput() => this._backRouter.TryHandleBack(this._inputLock.IsLocked);
+
+        private void HandleBackInputInternal() => this.HandleBackInput();
+
+        private UIBackResult HandleBackForKinds(params UILayerKind[] kinds)
+        {
+            ViewInstance topmost = null;
+            foreach (KeyValuePair<string, List<ViewInstance>> pair in this._popupsByLayer)
+            {
+                if (Array.IndexOf(kinds, this._layerRoots[pair.Key].Definition.Kind) < 0)
+                    continue;
+
+                foreach (ViewInstance instance in pair.Value)
+                {
+                    if (topmost == null || instance.SortOrder > topmost.SortOrder)
+                        topmost = instance;
+                }
+            }
+
+            return topmost == null ? UIBackResult.PassThrough : this.DispatchHandleBack(topmost);
+        }
+
+        private UIBackResult HandleBackForScreenStack()
+        {
+            if (!this._screenStack.TryPeek(out ViewInstance topScreen))
+                return UIBackResult.PassThrough;
+
+            return this.DispatchHandleBack(topScreen);
+        }
+
+        private UIBackResult DispatchHandleBack(ViewInstance instance)
+        {
+            BackResult result = instance.ViewModel.HandleBack();
+            if (result == BackResult.Close)
+            {
+                this.CloseInternalAsync(instance).Forget();
+                return UIBackResult.Close;
+            }
+
+            return UIBackResult.Consume;
+        }
 
         private async UniTask PreloadAsync()
         {
@@ -128,11 +263,25 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             backdropGo.AddComponent<GraphicRaycaster>();
             backdropGo.SetActive(false);
 
+            RectTransform contentRect = rect;
+            if (definition.ApplySafeArea)
+            {
+                var safeAreaGo = new GameObject("SafeArea", typeof(RectTransform));
+                safeAreaGo.transform.SetParent(go.transform, false);
+                contentRect = (RectTransform)safeAreaGo.transform;
+                contentRect.anchorMin = Vector2.zero;
+                contentRect.anchorMax = Vector2.one;
+                contentRect.offsetMin = Vector2.zero;
+                contentRect.offsetMax = Vector2.zero;
+                safeAreaGo.AddComponent<Components.SafeAreaFitter>();
+            }
+
             return new UILayerRoot
             {
                 Definition = definition,
                 Canvas = canvas,
                 RectTransform = rect,
+                ContentRectTransform = contentRect,
                 SortOrderAllocator = new SortOrderAllocator(1, Math.Max(1, definition.SortStep)),
                 BackdropGameObject = backdropGo,
                 BackdropCanvas = backdropCanvas,
@@ -213,7 +362,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                 throw new InvalidOperationException($"IUIAssetProvider returned a null prefab for '{definition.ViewModelType.Name}'.");
 
             UILayerRoot layerRoot = this._layerRoots[definition.Layer.LayerName];
-            GameObject instance = UnityEngine.Object.Instantiate(prefab, layerRoot.RectTransform, false);
+            GameObject instance = UnityEngine.Object.Instantiate(prefab, layerRoot.ContentRectTransform, false);
             return (instance, true);
         }
 
@@ -253,6 +402,84 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
 
             instance.View.Canvas.enabled = true;
             instance.View.GraphicRaycaster.enabled = true;
+        }
+
+        /// <summary>
+        /// Re-evaluates every open HUD-preset view's UIViewDefinition.VisibleOnScreens against
+        /// the current topmost screen (REWRITE_PLAN.md 2.5: "Router bật hoặc tắt HUD theo
+        /// visibleOnScreens mỗi khi screen active thay đổi"). Toggles via ApplyShow/ApplyHide
+        /// (hideMode, no destroy) - not a transition, since this is a passive side effect of
+        /// screen navigation, not a state the HUD itself opened/closed through. Called after
+        /// every screen push/pop; a HUD with no restriction (VisibleOnScreens empty) is
+        /// unaffected either way, so this is a no-op for the common HUD.
+        /// </summary>
+        private void RefreshHudVisibility()
+        {
+            Type currentScreenType = this._screenStack.TryPeek(out ViewInstance topScreen)
+                ? topScreen.ViewModelType
+                : null;
+
+            foreach (List<ViewInstance> layerPopups in this._popupsByLayer.Values)
+            {
+                foreach (ViewInstance instance in layerPopups)
+                {
+                    if (instance.Definition.Preset != UIViewPreset.Overlay || !instance.Definition.HasVisibleOnScreensRestriction)
+                        continue;
+
+                    bool shouldBeVisible = currentScreenType != null && Contains(instance.Definition.VisibleOnScreens, currentScreenType);
+                    if (shouldBeVisible)
+                        this.ApplyShow(instance);
+                    else
+                        this.ApplyHide(instance);
+                }
+            }
+
+            static bool Contains(IEnumerable<Type> types, Type target)
+            {
+                foreach (Type type in types)
+                {
+                    if (type == target)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Plays the view's Show transition (if it has a UIMotion) and raises ParentShown for
+        /// OnParentShow children once it completes; a view with no UIMotion opens Instant
+        /// (REWRITE_PLAN.md scenario (p)). ApplyShow already made the GameObject/Canvas visible
+        /// before this runs, so the transition animates an already-visible view exactly as
+        /// UIMotion's own "Start = current value" semantics expect.
+        /// </summary>
+        private async UniTask PlayShowTransitionAsync(ViewInstance instance, CancellationToken ct)
+        {
+            UIMotion motion = instance.View.Motion;
+            if (motion != null)
+            {
+                instance.View.CanvasGroup.blocksRaycasts = false;
+                await motion.PlayShowAsync(ct);
+                if (instance.GameObject != null)
+                    instance.View.CanvasGroup.blocksRaycasts = true;
+            }
+
+            instance.View.RaiseParentShown();
+        }
+
+        /// <summary>
+        /// Plays the view's Hide transition (if it has a UIMotion) before the caller applies
+        /// ApplyHide/despawn - REWRITE_PLAN.md: "await Hide xong mới ẩn, despawn hoặc release".
+        /// A view with no UIMotion closes Instant.
+        /// </summary>
+        private async UniTask PlayHideTransitionAsync(ViewInstance instance, CancellationToken ct)
+        {
+            UIMotion motion = instance.View.Motion;
+            if (motion == null)
+                return;
+
+            instance.View.CanvasGroup.blocksRaycasts = false;
+            await motion.PlayHideAsync(ct);
         }
 
         // ---------------------------------------------------------------
@@ -316,14 +543,20 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                 if (isFresh)
                     view.OnCreated();
 
+                this._focusHandler?.Remember();
                 view.OnOpening();
 
                 if (definition.Preset == UIViewPreset.Screen && definition.ParticipatesInStack)
                 {
                     this.CloseScreenScopedPopups();
                     if (this._screenStack.TryPeek(out ViewInstance previousScreen) && definition.HidesBelow)
+                    {
                         this.ApplyHide(previousScreen);
+                        previousScreen.View.OnBlurred();
+                    }
+
                     this._screenStack.Push(instance);
+                    this.RefreshHudVisibility();
                 }
                 else
                 {
@@ -344,8 +577,20 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
 
                 this._openByType[vmType] = instance;
 
+                if (definition.Preset == UIViewPreset.Overlay && definition.HasVisibleOnScreensRestriction)
+                    this.RefreshHudVisibility();
+
+                await this.PlayShowTransitionAsync(instance, ct);
+
                 instance.StateMachine.TryCompleteShow();
                 view.OnOpened();
+
+                if (this._focusHandler != null)
+                {
+                    this._focusHandler.Restore(view.DefaultSelectable);
+                    if (definition.Modal)
+                        instance.ModalFocusScope = this._focusHandler.BeginModalScope(view.transform, view.DefaultSelectable);
+                }
 
                 return instance;
             }
@@ -372,20 +617,29 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             UILayerRoot layerRoot = this._layerRoots[instance.Definition.Layer.LayerName];
             layerRoot.BackdropGameObject.SetActive(true);
             layerRoot.BackdropCanvas.sortingOrder = instance.SortOrder - 1;
-            layerRoot.BackdropGameObject.transform.SetParent(instance.GameObject.transform.parent, false);
-            int myIndex = instance.GameObject.transform.GetSiblingIndex();
-            layerRoot.BackdropGameObject.transform.SetSiblingIndex(Math.Max(0, myIndex));
+
+            // Backdrop always parents to the raw layer root (RectTransform), not
+            // ContentRectTransform - it must cover the full screen even when the layer has a
+            // SafeAreaFitter clipping where views themselves land (UILayerRoot.ContentRectTransform).
+            layerRoot.BackdropGameObject.transform.SetParent(layerRoot.RectTransform, false);
 
             layerRoot.BackdropButton.onClick.RemoveAllListeners();
             if (instance.Definition.CloseOnBackdrop)
+                layerRoot.BackdropButton.onClick.AddListener(() => { this.DispatchHandleBack(instance); });
+        }
+
+        private bool HasAnyModalPopupOpen()
+        {
+            foreach (List<ViewInstance> layerPopups in this._popupsByLayer.Values)
             {
-                layerRoot.BackdropButton.onClick.AddListener(() =>
+                foreach (ViewInstance popup in layerPopups)
                 {
-                    BackResult result = instance.ViewModel.HandleBack();
-                    if (result == BackResult.Close)
-                        this.CloseInternalAsync(instance).Forget();
-                });
+                    if (popup.Definition.Modal)
+                        return true;
+                }
             }
+
+            return false;
         }
 
         private void HideBackdropIfNoModalRemains(string layerName)
@@ -428,10 +682,19 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
 
             CompletePendingResult(instance);
 
+            if (instance.ModalFocusScope != null)
+            {
+                instance.ModalFocusScope.Dispose();
+                instance.ModalFocusScope = null;
+            }
+
             this._inputLock.Acquire();
             try
             {
+                this._focusHandler?.Remember();
                 instance.View.OnClosing();
+
+                await this.PlayHideTransitionAsync(instance, default);
 
                 if (instance.Definition.Preset == UIViewPreset.Screen && instance.Definition.ParticipatesInStack)
                 {
@@ -440,14 +703,31 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                     {
                         this.ApplyShow(below);
                         below.View.OnFocused();
+                        await this.PlayShowTransitionAsync(below, default);
+                        this._focusHandler?.Restore(below.View.DefaultSelectable);
                     }
+
+                    this.RefreshHudVisibility();
                 }
                 else
                 {
                     List<ViewInstance> layerPopups = this._popupsByLayer[instance.Definition.Layer.LayerName];
                     layerPopups.Remove(instance);
                     if (instance.Definition.Modal)
+                    {
                         this.HideBackdropIfNoModalRemains(instance.Definition.Layer.LayerName);
+
+                        // Restore focus to the screen below only when no other modal popup on
+                        // ANY layer is still open - if one is, it already owns a ModalFocusScope
+                        // of its own that would immediately fight this restore. Determining the
+                        // true cross-layer topmost is more machinery than a "closed the last
+                        // modal" case needs.
+                        if (this._focusHandler != null && !this.HasAnyModalPopupOpen() &&
+                            this._screenStack.TryPeek(out ViewInstance topScreen))
+                        {
+                            this._focusHandler.Restore(topScreen.View.DefaultSelectable);
+                        }
+                    }
                 }
 
                 UILayerRoot layerRoot = this._layerRoots[instance.Definition.Layer.LayerName];
@@ -474,6 +754,13 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         private void ForceCloseImmediate(ViewInstance instance)
         {
             CompletePendingResult(instance);
+
+            if (instance.ModalFocusScope != null)
+            {
+                instance.ModalFocusScope.Dispose();
+                instance.ModalFocusScope = null;
+            }
+
             instance.UnbindView();
             instance.ViewModel.Dispose();
             this._openByType.Remove(instance.ViewModelType);
@@ -650,8 +937,48 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
 
         public void Dispose()
         {
+            Application.lowMemory -= this.ReleaseHiddenKeepAliveViews;
+
+            if (Current == this)
+                Current = null;
+
             if (this._rootTransform != null)
                 UnityEngine.Object.Destroy(this._rootTransform.gameObject);
+        }
+
+        /// <summary>Read-only introspection for UISystem.Editor's UI Debugger window
+        /// (REWRITE_PLAN.md mục 5 bước 8) - not part of IUINavigator.</summary>
+        public UIServiceDebugSnapshot CaptureDebugSnapshot()
+        {
+            var screenStack = new List<string>();
+            foreach (ViewInstance instance in this._screenStack.Items)
+                screenStack.Add(instance.ViewModelType.Name);
+
+            var popupsByLayer = new Dictionary<string, IReadOnlyList<string>>();
+            foreach (KeyValuePair<string, List<ViewInstance>> pair in this._popupsByLayer)
+            {
+                var names = new List<string>();
+                foreach (ViewInstance instance in pair.Value)
+                    names.Add(instance.ViewModelType.Name);
+
+                popupsByLayer[pair.Key] = names;
+            }
+
+            var queueCountByLayer = new Dictionary<string, int>();
+            var queuePausedByLayer = new Dictionary<string, bool>();
+            foreach (KeyValuePair<string, UIPopupQueue<Func<UniTask>>> pair in this._queueByLayer)
+            {
+                queueCountByLayer[pair.Key] = pair.Value.Count;
+                queuePausedByLayer[pair.Key] = pair.Value.IsPaused;
+            }
+
+            var openViewModelTypeNames = new List<string>();
+            foreach (Type vmType in this._openByType.Keys)
+                openViewModelTypeNames.Add(vmType.Name);
+
+            return new UIServiceDebugSnapshot(
+                screenStack, popupsByLayer, queueCountByLayer, queuePausedByLayer,
+                this._inputLock.Count, openViewModelTypeNames);
         }
     }
 }
