@@ -23,11 +23,17 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
 
         /// <summary>Stops ticking immediately, leaving every track at its current mid-value
         /// (no snap). Matches "play cutting play": the interrupted playback should not
-        /// jump anywhere, just freeze where it was.</summary>
+        /// jump anywhere, just freeze where it was. An in-flight AnimatorState track is
+        /// the one exception to "just stop ticking it is enough to freeze it": Unity keeps
+        /// advancing an enabled Animator on its own every frame regardless of whether this
+        /// runner still calls into it, so freezing its pose means disabling it here.</summary>
         public void Stop()
         {
             if (this.Playback.completionSource.TrySetResult(UIMotionPlaybackResult.Replaced))
+            {
                 this.Playback.removed = true;
+                UIMotionRunner.FreezeInFlightAnimatorTracks(this.Playback);
+            }
         }
 
         /// <summary>Forces every track straight to its resolved end value and completes.</summary>
@@ -64,6 +70,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             public bool finished;
             public Vector4 resolvedFrom;
             public Vector4 resolvedTo;
+
+            /// <summary>AnimatorState only: whether the once-only timeout warning has
+            /// already been logged for this track's run.</summary>
+            public bool animatorTimeoutWarned;
         }
 
         internal sealed class Playback
@@ -75,6 +85,13 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             public float elapsed;
             public float totalDuration;
             public float speed = 1f;
+
+            /// <summary>Per-track "play this track's ease backward" flag, used by a
+            /// generated Mirror Hide timeline (see UIMotion.BuildMirrorHideTimeline).
+            /// Null for an authored timeline - no per-track lookup or allocation on the
+            /// common path.</summary>
+            public bool[] mirrorEase;
+
             public UniTaskCompletionSource<UIMotionPlaybackResult> completionSource;
 
             /// <summary>Set once removed from the active list, either by the runner
@@ -85,6 +102,12 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
 
         private static readonly UIMotionRunner Instance = new UIMotionRunner();
         private static bool _registered;
+
+        /// <summary>Accessibility switch: when true, every newly-started playback jumps
+        /// straight to its resolved end values instead of interpolating, regardless of
+        /// authored durations. Applies from the next Play() call onward; does not affect
+        /// playbacks already in flight.</summary>
+        public static bool ReduceMotion { get; set; }
 
         private readonly List<Playback> _active = new List<Playback>(capacity: 16);
 
@@ -105,7 +128,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             UpdateServiceManager.RegisterUpdateHandler(Instance);
         }
 
-        public static UIMotionPlaybackHandle Play(IReadOnlyList<UIMotionTrack> tracks, Vector4[] restPoses, float speed)
+        public static UIMotionPlaybackHandle Play(
+            IReadOnlyList<UIMotionTrack> tracks, Vector4[] restPoses, float speed, bool[] mirrorEase = null)
         {
             EnsureRegistered();
 
@@ -135,6 +159,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                 restPoses = restPoses,
                 totalDuration = totalDuration,
                 speed = speed <= 0f ? 1f : speed,
+                mirrorEase = mirrorEase,
                 completionSource = new UniTaskCompletionSource<UIMotionPlaybackResult>(),
             };
 
@@ -146,6 +171,13 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             // e.g. a Show recommended-pattern track (alpha 0 -> Rest) would render fully
             // visible until its own turn, then pop to invisible and fade in.
             PreApplyPendingStartValues(playback);
+
+            // Reduce-motion: skip straight to the end instead of interpolating. Reuses
+            // the same "already past totalDuration" completion path below rather than a
+            // separate branch, so it is exercised by the exact same tested code as a
+            // zero-duration timeline.
+            if (ReduceMotion)
+                playback.elapsed = playback.totalDuration;
 
             // Sample frame 0 synchronously instead of waiting for the next Tick: the
             // UpdateServices callback runs before Update()/Start(), so a track that opens
@@ -240,44 +272,219 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                 if (state.finished || playback.elapsed < playback.startTimes[i])
                     continue;
 
+                if (track.kind == UIMotionTrackKind.Custom)
+                {
+                    TickCustomTrack(track, state, playback, i);
+                    continue;
+                }
+
+                if (track.kind == UIMotionTrackKind.AnimatorState)
+                {
+                    TickAnimatorTrack(track, state, playback, i);
+                    continue;
+                }
+
+                bool oscillating = track.kind == UIMotionTrackKind.Punch || track.kind == UIMotionTrackKind.Shake;
+
                 if (!state.started)
                 {
                     state.started = true;
-                    Float4 rest = playback.restPoses[i].ToFloat4();
-                    Float4 parentSize = UIMotionTrackEvaluator.GetParentSize(track).ToFloat4();
-                    bool multiplicative = track.kind == UIMotionTrackKind.Scale;
 
-                    Float4 currentOrFrom = track.useStartValue
-                        ? UIMotionValueResolver.Resolve(track.fromValueMode, track.from.ToFloat4(), rest, rest, parentSize, multiplicative)
-                        : UIMotionTrackEvaluator.Capture(track).ToFloat4();
-                    Float4 resolvedTo = UIMotionValueResolver
-                        .Resolve(track.toValueMode, track.to.ToFloat4(), rest, currentOrFrom, parentSize, multiplicative);
-
-                    state.resolvedFrom = currentOrFrom.ToVector4();
-                    state.resolvedTo = resolvedTo.ToVector4();
-
-                    if (track.kind == UIMotionTrackKind.Rotate)
-                        state.resolvedTo = UIMotionTrackEvaluator.UnwrapRotation(state.resolvedFrom, state.resolvedTo);
-
-                    if (track.kind == UIMotionTrackKind.SetActive)
+                    if (oscillating)
                     {
-                        // Discrete action: fires once, the instant the track starts, no
-                        // easing and no further writes for the rest of this track's window.
-                        UIMotionTrackEvaluator.Write(track, state.resolvedTo);
-                        state.finished = true;
-                        continue;
+                        // Always oscillates around whatever the target's value is right
+                        // now, regardless of useStartValue - the plan hides that toggle
+                        // entirely for these two kinds, so nothing here should depend on it.
+                        state.resolvedFrom = UIMotionTrackEvaluator.Capture(track);
+                        state.resolvedTo = state.resolvedFrom;
+                    }
+                    else
+                    {
+                        Float4 rest = playback.restPoses[i].ToFloat4();
+                        Float4 parentSize = UIMotionTrackEvaluator.GetParentSize(track).ToFloat4();
+                        bool multiplicative = track.kind == UIMotionTrackKind.Scale;
+
+                        Float4 currentOrFrom = track.useStartValue
+                            ? UIMotionValueResolver.Resolve(track.fromValueMode, track.from.ToFloat4(), rest, rest, parentSize, multiplicative)
+                            : UIMotionTrackEvaluator.Capture(track).ToFloat4();
+                        Float4 resolvedTo = UIMotionValueResolver
+                            .Resolve(track.toValueMode, track.to.ToFloat4(), rest, currentOrFrom, parentSize, multiplicative);
+
+                        state.resolvedFrom = currentOrFrom.ToVector4();
+                        state.resolvedTo = resolvedTo.ToVector4();
+
+                        if (track.kind == UIMotionTrackKind.Rotate)
+                            state.resolvedTo = UIMotionTrackEvaluator.UnwrapRotation(state.resolvedFrom, state.resolvedTo);
+
+                        if (track.kind == UIMotionTrackKind.SetActive)
+                        {
+                            // Discrete action: fires once, the instant the track starts, no
+                            // easing and no further writes for the rest of this track's window.
+                            UIMotionTrackEvaluator.Write(track, state.resolvedTo);
+                            state.finished = true;
+                            continue;
+                        }
                     }
                 }
 
                 float localT = track.duration <= 0f
                     ? 1f
                     : Mathf.Clamp01((playback.elapsed - playback.startTimes[i]) / track.duration);
-                float easedT = track.Evaluate(localT);
+
+                if (oscillating)
+                {
+                    // Amplitude rides on the otherwise-unused `to.x` field (the plan gives
+                    // Punch/Shake no field of their own beyond "chỉ có biên độ"): not an
+                    // eased lerp between two fixed endpoints like every other kind, so it
+                    // bypasses Evaluate()/mirrorEase entirely.
+                    Vector4 oscValue = UIMotionTrackEvaluator.EvaluateOscillation(track.kind, state.resolvedFrom, track.to.x, localT);
+                    UIMotionTrackEvaluator.Write(track, oscValue);
+                    if (localT >= 1f)
+                        state.finished = true;
+                    continue;
+                }
+
+                bool mirrorEase = playback.mirrorEase != null && playback.mirrorEase[i];
+                float easedT = mirrorEase ? 1f - track.Evaluate(1f - localT) : track.Evaluate(localT);
                 Vector4 value = Vector4.LerpUnclamped(state.resolvedFrom, state.resolvedTo, easedT);
                 UIMotionTrackEvaluator.Write(track, value);
 
                 if (localT >= 1f)
                     state.finished = true;
+            }
+        }
+
+        /// <summary>
+        /// Custom tracks skip the Vector4 capture/resolve/lerp pipeline entirely - the
+        /// referenced IUIMotionCustomTrack owns its own values. Still goes through the
+        /// normal schedule/duration/ease (mirrorEase included), per the interface's own
+        /// "Sample(t): t is unclamped eased progress" contract - only the resolvedFrom/To
+        /// Vector4 math is irrelevant here, not the timing.
+        /// </summary>
+        private static void TickCustomTrack(UIMotionTrack track, TrackState state, Playback playback, int i)
+        {
+            if (!UIMotionTrackEvaluator.TryGetCustomTrack(track, out IUIMotionCustomTrack custom))
+            {
+                state.finished = true;
+                return;
+            }
+
+            if (!state.started)
+            {
+                state.started = true;
+                custom.CaptureStart();
+            }
+
+            float localT = track.duration <= 0f
+                ? 1f
+                : Mathf.Clamp01((playback.elapsed - playback.startTimes[i]) / track.duration);
+            bool mirrorEase = playback.mirrorEase != null && playback.mirrorEase[i];
+            float easedT = mirrorEase ? 1f - track.Evaluate(1f - localT) : track.Evaluate(localT);
+
+            custom.Sample(easedT);
+
+            if (localT >= 1f)
+                state.finished = true;
+        }
+
+        /// <summary>
+        /// AnimatorState skips the Vector4 pipeline entirely, same as Custom - but unlike
+        /// every other kind, it does not need this runner to write anything per tick at
+        /// all: an enabled Animator advances itself every frame through Unity's own
+        /// animation update. This method only (a) starts the state once and (b) polls for
+        /// real completion (REWRITE_PLAN.md 2.7: never trust `duration`/`bakedDuration` for
+        /// completion, only `GetCurrentAnimatorStateInfo`), snapping-and-disabling on
+        /// either a genuine end or a timeout. `pastScheduledEnd` covers two different
+        /// paths through the same branch: the normal "just reached my own duration" tick,
+        /// and a forced jump (SnapToEnd putting `playback.elapsed` at `totalDuration`)
+        /// landing on a track that had not even started yet - both must end at
+        /// normalizedTime=1, not start fresh at 0.
+        /// </summary>
+        private static void TickAnimatorTrack(UIMotionTrack track, TrackState state, Playback playback, int i)
+        {
+            if (!UIMotionTrackEvaluator.TryGetAnimator(track, out Animator animator))
+            {
+                state.finished = true;
+                return;
+            }
+
+            float elapsedInTrack = playback.elapsed - playback.startTimes[i];
+            bool pastScheduledEnd = elapsedInTrack >= track.duration;
+
+            if (!state.started)
+            {
+                state.started = true;
+                animator.keepAnimatorStateOnDisable = true;
+                animator.writeDefaultValuesOnDisable = false;
+                animator.updateMode = AnimatorUpdateMode.UnscaledTime;
+                animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+                animator.speed = track.animatorSpeed <= 0f ? 1f : track.animatorSpeed;
+                animator.enabled = true;
+                animator.Play(track.animatorStateHash, track.animatorLayer, pastScheduledEnd ? 1f : 0f);
+                animator.Update(0f);
+
+                if (pastScheduledEnd)
+                {
+                    animator.enabled = false;
+                    state.finished = true;
+                    return;
+                }
+            }
+            else if (pastScheduledEnd)
+            {
+                animator.Play(track.animatorStateHash, track.animatorLayer, 1f);
+                animator.Update(0f);
+                animator.enabled = false;
+                state.finished = true;
+                return;
+            }
+
+            AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(track.animatorLayer);
+            bool reachedEnd = info.shortNameHash == track.animatorStateHash
+                && info.normalizedTime >= 1f
+                && !animator.IsInTransition(track.animatorLayer);
+
+            if (reachedEnd)
+            {
+                animator.enabled = false;
+                state.finished = true;
+                return;
+            }
+
+            float timeout = track.duration * 2f + 0.5f;
+            if (elapsedInTrack < timeout)
+                return;
+
+            if (!state.animatorTimeoutWarned)
+            {
+                state.animatorTimeoutWarned = true;
+                Debug.LogWarning(
+                    $"UIMotion: AnimatorState track on '{animator.name}' (state hash {track.animatorStateHash}) " +
+                    $"did not report completion within {timeout:0.00}s - snapping to its end pose. " +
+                    "Check that animatorStateHash/duration are baked against the right state.");
+            }
+
+            animator.Play(track.animatorStateHash, track.animatorLayer, 1f);
+            animator.Update(0f);
+            animator.enabled = false;
+            state.finished = true;
+        }
+
+        /// <summary>See UIMotionPlaybackHandle.Stop(): an interrupted playback must
+        /// explicitly disable any AnimatorState track it left mid-flight, since Unity
+        /// keeps ticking an enabled Animator regardless of whether this runner does.</summary>
+        internal static void FreezeInFlightAnimatorTracks(Playback playback)
+        {
+            for (int i = 0; i < playback.tracks.Length; i++)
+            {
+                UIMotionTrack track = playback.tracks[i];
+                TrackState state = playback.trackStates[i];
+                if (track.kind != UIMotionTrackKind.AnimatorState || !state.started || state.finished)
+                    continue;
+
+                state.finished = true;
+                if (UIMotionTrackEvaluator.TryGetAnimator(track, out Animator animator))
+                    animator.enabled = false;
             }
         }
     }
