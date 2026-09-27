@@ -1,4 +1,5 @@
 using System;
+using DracoRuan.PrebuildServices.UISystem.Components;
 using DracoRuan.PrebuildServices.UISystem.MVVM;
 using DracoRuan.PrebuildServices.UISystem.Views;
 using R3;
@@ -82,6 +83,24 @@ namespace DracoRuan.PrebuildServices.UISystem.Binding
             target.OnClickAsObservable().Subscribe(command, static (_, c) => c.Execute()).AddTo(ref this._builder);
             command.CanExecute.Subscribe(target, static (value, t) => t.interactable = value).AddTo(ref this._builder);
         }
+
+        public void Command(UIButton target, UICommand command)
+        {
+            target.Clicked.Subscribe(command, static (_, c) => c.Execute()).AddTo(ref this._builder);
+            command.CanExecute.Subscribe(target, static (value, t) => t.Interactable = value).AddTo(ref this._builder);
+        }
+
+        public void Command(UIButton target, AsyncUICommand command)
+        {
+            target.Clicked.Subscribe(command, static (_, c) => c.Execute()).AddTo(ref this._builder);
+            command.CanExecute.Subscribe(target, static (value, t) => t.Interactable = value).AddTo(ref this._builder);
+        }
+
+        /// <summary>Raw click stream for callers that don't need a full command (no
+        /// CanExecute/IsExecuting) - REWRITE_PLAN.md: "BindClick → Observable&lt;Unit&gt; vẫn
+        /// giữ, dùng cho trường hợp không cần command".</summary>
+        public void BindClick(UIButton target, Action onClick) =>
+            target.Clicked.Subscribe(onClick, static (_, a) => a()).AddTo(ref this._builder);
 
         // ---- Widget (nested, non-routed) ----
 

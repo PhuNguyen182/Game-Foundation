@@ -4,6 +4,7 @@
     "references": [
         "DracoRuan.PrebuildServices.UISystem.Logic",
         "DracoRuan.PrebuildServices.UISystem.MVVM",
+        "DracoRuan.PrebuildServices.UISystem.Motion",
         "DracoRuan.Foundation.Initializers",
         "UniTask",
         "VContainer",
@@ -13,7 +14,10 @@
         "UnityEngine.UI",
         "Unity.Addressables",
         "Unity.ResourceManager",
-        "UniTask.Addressables"
+        "UniTask.Addressables",
+        "Unity.InputSystem",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.Handlers"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -22,6 +26,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "UISYSTEM_INPUT_SYSTEM"
+        }
+    ],
     "noEngineReferences": false
 }

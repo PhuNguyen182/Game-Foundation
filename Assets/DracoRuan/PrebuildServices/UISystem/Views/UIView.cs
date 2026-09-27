@@ -18,7 +18,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Views
         private IDisposable _binding;
 
         public TVM ViewModel { get; private set; }
-        public Selectable DefaultSelectable => this.defaultSelectable;
+        public override Selectable DefaultSelectable => this.defaultSelectable;
 
         protected abstract void Bind(ref UIBinder binder, TVM viewModel);
 

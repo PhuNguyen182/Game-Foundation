@@ -15,5 +15,13 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         public GameObject BackdropGameObject;
         public Canvas BackdropCanvas;
         public Button BackdropButton;
+
+        /// <summary>
+        /// Where view instances actually parent (UIService.AcquireInstanceAsync). Equal to
+        /// RectTransform when the layer has no safe-area fitting; otherwise a child rect
+        /// carrying a SafeAreaFitter, so views land inside the safe area while the backdrop
+        /// (parented to RectTransform itself) still covers the full screen.
+        /// </summary>
+        public RectTransform ContentRectTransform;
     }
 }

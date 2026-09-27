@@ -1,3 +1,5 @@
+using System;
+using DracoRuan.PrebuildServices.UISystem.Motion;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,11 +15,13 @@ namespace DracoRuan.PrebuildServices.UISystem.Views
     [RequireComponent(typeof(Canvas))]
     [RequireComponent(typeof(GraphicRaycaster))]
     [RequireComponent(typeof(CanvasGroup))]
-    public abstract class UIViewBase : MonoBehaviour
+    public abstract class UIViewBase : MonoBehaviour, IUIMotionTriggerSource
     {
         private Canvas _canvas;
         private GraphicRaycaster _graphicRaycaster;
         private CanvasGroup _canvasGroup;
+        private UIMotion _motion;
+        private bool _motionResolved;
 
         public Canvas Canvas => this._canvas != null ? this._canvas : this._canvas = this.GetComponent<Canvas>();
 
@@ -28,6 +32,36 @@ namespace DracoRuan.PrebuildServices.UISystem.Views
         public CanvasGroup CanvasGroup => this._canvasGroup != null
             ? this._canvasGroup
             : this._canvasGroup = this.GetComponent<CanvasGroup>();
+
+        /// <summary>Optional: a view with no UIMotion on its root opens/closes Instant (see
+        /// REWRITE_PLAN.md scenario (p)). Resolved once and cached, same pattern as Canvas
+        /// above, except the cached result itself may legitimately be null (no UIMotion on
+        /// this prefab), so a separate `_motionResolved` flag - not a `!= null` check - guards
+        /// re-resolution.</summary>
+        public UIMotion Motion
+        {
+            get
+            {
+                if (!this._motionResolved)
+                {
+                    this._motion = this.GetComponent<UIMotion>();
+                    this._motionResolved = true;
+                }
+
+                return this._motion;
+            }
+        }
+
+        /// <summary>Raised right after this view becomes visible again (Show completes),
+        /// so child UIMotion components using the OnParentShow trigger can replay - see
+        /// IUIMotionTriggerSource. UIView hides via Canvas.enabled, which does not re-run a
+        /// child's OnEnable.</summary>
+        public event Action ParentShown;
+
+        /// <summary>Called by the router right after the Show transition finishes. Not
+        /// virtual: firing ParentShown is framework wiring, not a view hook (OnOpened is
+        /// the hook for that).</summary>
+        internal void RaiseParentShown() => this.ParentShown?.Invoke();
 
         /// <summary>Called once, right after Instantiate, before the first Show.</summary>
         protected internal virtual void OnCreated()
@@ -63,5 +97,11 @@ namespace DracoRuan.PrebuildServices.UISystem.Views
         protected internal virtual void OnBlurred()
         {
         }
+
+        /// <summary>The Selectable UIFocusController.Restore should fall back to for this view
+        /// when no remembered selection is valid and the last input device was keyboard/gamepad.
+        /// Non-generic so UIService (which only ever holds a UIViewBase reference) can read it
+        /// without knowing TVM; UIView&lt;TVM&gt; is the only place a concrete value is set.</summary>
+        public virtual Selectable DefaultSelectable => null;
     }
 }
