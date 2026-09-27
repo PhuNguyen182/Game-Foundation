@@ -77,6 +77,7 @@
 **Việc còn mở:**
 - User chưa duyệt plan. Đọc mục 2.0 (thay đổi so với bản 2) và mục 5 (các phase) trước khi bắt đầu phase 1.
 - Odin ở runtime: plan đề xuất bỏ.
+- **(2026-09-27) `UIRecycleList` bị hoãn vô thời hạn, theo yêu cầu user**: user sẽ tự làm phần virtualized list bằng một kỹ thuật khác (chưa nói rõ là gì), không dùng `UIRecycleList` như plan mô tả ở B5/mục 2.5/mục 5 bước 7. Đây là **nợ kỹ thuật ghi nhận, không phải đã xong**: `UIWidget<TVM>`, `ObservableList`/`ISynchronizedView`, và `UITabGroup` của phase 7 (mục 5 bước 7) **vẫn làm bình thường** — chỉ riêng component `UIRecycleList` (dọc/ngang/grid, `ScrollTo`, item pool) và `UIBinder.List(...)` (mục 2.4, nối `ObservableList` → `UIRecycleList`) là bị bỏ qua. Nếu sau này user quay lại yêu cầu, đọc lại mục 2.5 ("UIRecycleList") và mục 5 bước 7 ở dưới — phần mô tả kỹ thuật cũ vẫn còn nguyên, không xoá.
 
 ---
 
@@ -583,8 +584,8 @@ UISystem/
   Tests/Editor/  Tests/Runtime/
   Samples/      Confirm (result), Toast, Loading, 2 screen, Inventory (list + widget), Settings (two-way)
 ```
-Code cũ sẽ bị `git rm` ở phase 9, sau khi sample mới chạy được. Sau 2 vòng sửa lỗi biên dịch (session 2026-09-25), code cũ hiện nằm rải ở 2 chỗ:
-- Còn lại trong `UISystem/`: chỉ `Canvases/` (không đụng gì tới asmdef mới, không dùng namespace asmdef-less nào nên không cần dời).
+~~Code cũ sẽ bị `git rm` ở phase 9, sau khi sample mới chạy được.~~ **Đã xoá (2026-09-28)** — xem "Cập nhật 2026-09-28 (tiếp)" trong `PROGRESS.md` cho danh sách đầy đủ + 3 phụ thuộc mồ côi dọn kèm. Lịch sử (trước khi xoá): sau 2 vòng sửa lỗi biên dịch (session 2026-09-25), code cũ từng nằm rải ở 2 chỗ:
+- Trong `UISystem/`: chỉ `Canvases/` (không đụng gì tới asmdef mới, không dùng namespace asmdef-less nào nên không cần dời).
 - Đã dời sang `Assets/DracoRuan/PrebuildServices/` (sibling của `UISystem/`, rơi lại về `Assembly-CSharp`): `Popups/`, `UIManager.cs`, `Animations/`, `UIElements/`, và 4 file `Views/` cũ (`BaseUIView.cs`/`BaseUIViewWithModel.cs`/`IUIModel.cs`/`IUIView.cs`, đổi tên thư mục thành `LegacyViews/` vì `Views/` giờ chỉ còn file mới `UIView.cs`/`UIViewBase.cs`/`UIWidget.cs`).
 
 Khi viết thì dùng scratchpad + `cp` để tránh lỗi Rider hook.
@@ -629,19 +630,19 @@ Ngoài ra: asmdef mới cần thêm `Unity.Addressables`/`Unity.ResourceManager`
    - Start/Target value theo từng track: `useStartValue`, chụp giá trị lúc track bắt đầu, 4 value mode (Absolute, RelativeToRest, RelativeToStart, FractionOfParent) + Rest, Mirror theo từng track, drawer ẩn Start khi tắt toggle.
    - PlayMode test cho các kịch bản (o)–(r4) ở mục 6.
 
-   4b. **Components**:
-   - `UIButton` (punch = preset `UIMotion`), `UISlider`, `UIToggle`, `SafeAreaFitter`, `UIParticleSortingBinder`.
-   - UIView nối vào `UIMotion` (await Hide, `IUIMotionTriggerSource`).
-   - `UIAnchorPlacement` + preset Hint/Tooltip, HUD `visibleOnScreens`.
-   - PlayMode smoke test: open/close, CloseAll, queue, `timeScale = 0`, popup đã đóng không còn chặn raycast, hai view dùng chung một transition, và `hidesBelow`.
-5. **Input + Focus**: `InputSystemBackInputSource`, `BackRouter` → `vm.HandleBack()`, focus controller. PlayMode test cho Back và focus.
-6. **Addressables provider** (lease/refcount, preload, release, lowMemory) sau `USE_EXTENDED_ADDRESSABLE`.
-7. **`UIRecycleList` + collection binding + `UITabGroup`**:
-   - `UIRecycleList`: dọc/ngang/grid, item có kích thước cố định (bản đầu), `ScrollTo(index)`, bind `ObservableList` qua `ISynchronizedView` → `UIWidget<TItemVM>`.
-   - `UITabGroup`: tab là widget, tab đang chọn là state của VM, hỗ trợ điều hướng bằng gamepad (LB/RB).
-8. **Editor**: Registry window, VM type picker, validator (key, prefab ↔ VM, raycast/layout hygiene, VM không dùng `UnityEngine`) + build validator + UI Debugger.
-9. **Samples + README**: Confirm, Toast, Loading, 2 screen, Inventory, Settings. Sau đó `git rm` code cũ.
-10. (Tuỳ chọn) Badge/red-dot service (VM thuần, cây key → count), hook tutorial highlight (mask lỗ + chặn input ngoài vùng), UI scale setting.
+   4b. **Components** — xong (2026-09-27), xem `PROGRESS.md`:
+   - ~~`UIButton` (punch = preset `UIMotion`), `SafeAreaFitter`, `UIParticleSortingBinder`~~ — xong. `UISlider`/`UIToggle`: quyết định không tạo wrapper riêng, dùng thẳng `Slider`/`Toggle` gốc + `UIBinder.TwoWay`.
+   - ~~UIView nối vào `UIMotion` (await Hide, `IUIMotionTriggerSource`)~~ — xong.
+   - ~~`UIAnchorPlacement`~~ — xong. ~~HUD `visibleOnScreens`~~ — xong. Preset Hint/Tooltip asset thật — chưa làm (thuộc Data/asset setup, không phải code).
+   - PlayMode smoke test: open/close, CloseAll, queue, `timeScale = 0`, popup đã đóng không còn chặn raycast, hai view dùng chung một transition, và `hidesBelow` — **chưa làm**, cần Play Mode thật.
+5. **Input + Focus** — **xong (2026-09-27/28)**, xem `PROGRESS.md`: ~~`InputSystemBackInputSource`~~, ~~`BackRouter` → `vm.HandleBack()`~~ (3 tầng System+Tutorial/Popup/Screen), ~~focus controller (`UIFocusController`)~~ xong logic+test, ~~nối vào `UIService`~~ xong (`IUIFocusHandler`/`AttachFocusHandler`/`ViewInstance.ModalFocusScope`). PlayMode test cho Back (qua `HandleBackInput`) — xong, xem `Tests/Runtime/UIServiceTests.cs`; test riêng cho `UIFocusController` end-to-end — chưa làm.
+6. **Addressables provider** (lease/refcount, preload, release, lowMemory) sau `USE_EXTENDED_ADDRESSABLE` — **xong (2026-09-27)**, xem `PROGRESS.md` (`AddressableUIAssetProvider`/`UIPrefabLease`).
+7. **Collection binding + `UITabGroup`** (đã bỏ `UIRecycleList` khỏi phạm vi — xem "Việc còn mở"):
+   - ~~`UIRecycleList`: dọc/ngang/grid, item có kích thước cố định (bản đầu), `ScrollTo(index)`, bind `ObservableList` qua `ISynchronizedView` → `UIWidget<TItemVM>`.~~ **Hoãn vô thời hạn (2026-09-27)**: user tự làm virtualized list bằng kỹ thuật khác.
+   - ~~`UITabGroup`: tab là widget, tab đang chọn là state của VM, hỗ trợ điều hướng bằng gamepad (LB/RB)~~ — **xong (2026-09-27/28)**: `AttachGamepadNavigation`/`DetachGamepadNavigation`.
+8. **Editor** — xong (2026-09-27), xem `PROGRESS.md`: ~~Registry window, VM type picker, validator (key, prefab ↔ VM, raycast/layout hygiene, VM không dùng `UnityEngine`) + build validator + UI Debugger~~.
+9. **Samples + README** — xong (2026-09-27/28), xem `PROGRESS.md` + `Samples/README.md`: ~~Confirm, Toast, Loading, 2 screen, Inventory, Settings, TutorialDemo~~. ~~`git rm` code cũ~~ — **xong (2026-09-28)**, xem `PROGRESS.md` cho danh sách đầy đủ + 3 phụ thuộc mồ côi dọn kèm (`ExampleMono.cs`, `CanvasConfigs/*.asset`, `Temps/Resources/UIAnimation/FadeAndSlideUp/**`).
+10. (Tuỳ chọn) — bắt đầu (2026-09-27), xem `PROGRESS.md`: ~~Badge/red-dot service (VM thuần, cây key → count)~~ — xong (abstract layer `IBadgeService` + `InMemoryBadgeService` mặc định + `UIBadgeIndicator` adapter). ~~hook tutorial highlight (mask lỗ + chặn input ngoài vùng)~~ — xong (`UITutorialMask.shader` + `UITutorialMaskController` + `UITutorialStep`/`UITutorialBase` 2 chế độ scripted/data-driven), ~~sample/scene minh hoạ~~ — xong (2026-09-28): `Samples/Scripts/TutorialDemo/`, xem `PROGRESS.md`. UI scale setting — **mới ở mức đề xuất thiết kế** (`IUIScaleService` áp lên `CanvasScaler.scaleFactor` mọi layer), chưa code.
 11. (Tuỳ chọn) Benchmark `UIMotionRunner`: 1000 motion chạy cùng lúc trên thiết bị mobile tầm trung, đo bằng Profiler. Mục tiêu GC alloc/frame = 0, và ghi lại CPU/frame làm baseline.
 
 ---
@@ -661,7 +662,7 @@ Ngoài ra: asmdef mới cần thêm `Unity.Addressables`/`Unity.ResourceManager`
   - (i) view KeepAlive mở lại không bị layout rebuild toàn bộ (kiểm tra bằng Profiler marker `Canvas.BuildBatch` / `Layout`);
   - (j) focus không thoát khỏi modal;
   - (k) bấm liên tiếp nút gắn async command chỉ chạy 1 lần;
-  - (l) `ObservableList` Add/Remove/Move được phản ánh đúng vào `UIRecycleList`;
+  - (l) ~~`ObservableList` Add/Remove/Move được phản ánh đúng vào `UIRecycleList`~~ — bỏ qua, `UIRecycleList` hoãn vô thời hạn (xem "Việc còn mở");
   - (m) dispose scene `LifetimeScope` thì đóng view của scope đó, và VM được `Dispose`;
   - (n) sau Close không còn subscription nào (đếm binding bằng UI Debugger/test hook);
   - (o) cancel `UIMotion` giữa chừng thì về đúng pose cuối. Play khi đang play thì snap lần cũ rồi chạy lại;
