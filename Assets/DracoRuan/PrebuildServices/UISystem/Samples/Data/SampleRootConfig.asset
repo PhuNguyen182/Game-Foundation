@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d1cfd8ef42986049836892463026af2, type: 3}
+  m_Name: SampleRootConfig
+  m_EditorClassIdentifier: DracoRuan.PrebuildServices.UISystem::DracoRuan.PrebuildServices.UISystem.Data.UIRootConfig
+  layers:
+  - {fileID: 11400000, guid: 69a72e1caf63e9a4880b39099e8db7c1, type: 2}
+  - {fileID: 11400000, guid: 37b39d834d685a3499acbda3fd1bf917, type: 2}
+  - {fileID: 11400000, guid: bd839be063cb7a044a744c564a95d35d, type: 2}
+  - {fileID: 11400000, guid: c85a7d29edac7b34e9150756e4518342, type: 2}
+  - {fileID: 11400000, guid: 3ae6790887d15144684a631e1b28f831, type: 2}
+  renderMode: 0
+  uiCamera: {fileID: 0}
+  referenceResolution: {x: 1080, y: 1920}
+  matchWidthOrHeight: 0.5
+  planeDistance: 100
+  pixelPerfect: 0
+  minUIScale: 0.75
+  maxUIScale: 1.5

@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 227274f6996ab784084a54e5606fbc02, type: 3}
+  m_Name: SampleViewCollection
+  m_EditorClassIdentifier: DracoRuan.PrebuildServices.UISystem::DracoRuan.PrebuildServices.UISystem.Data.UIViewCollection
+  definitions:
+  - {fileID: 11400000, guid: 8cecfb307c4ab774b81318fed04fcec7, type: 2}
+  - {fileID: 11400000, guid: f49abfc61bd8e314aadb26fb2016542a, type: 2}
+  - {fileID: 11400000, guid: d62d171f29506e14193c85859e132772, type: 2}
+  - {fileID: 11400000, guid: 7af823cdcacd08142a04867436b03dff, type: 2}
+  - {fileID: 11400000, guid: 06d4c6f99553684468a161fe372bb3d0, type: 2}
+  - {fileID: 11400000, guid: 1840c541bd231584593d0d54c9470ec5, type: 2}
+  - {fileID: 11400000, guid: cfc7d19c72a1cf74d847a2df57e0432a, type: 2}
+  - {fileID: 11400000, guid: f05e7558591a7c049b0c8d07249bad75, type: 2}
