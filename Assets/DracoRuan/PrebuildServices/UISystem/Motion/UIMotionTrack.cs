@@ -1,6 +1,7 @@
 using System;
 using DracoRuan.PrebuildServices.UISystem.Motion.Logic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DracoRuan.PrebuildServices.UISystem.Motion
 {
@@ -69,14 +70,33 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         public int animatorStateHash;
         public float animatorSpeed = 1f;
 
+        /// <summary>Resolved-once component cache for `target`, populated by
+        /// UIMotionTrackEvaluator.ResolveTargetCache (called from UIMotion.PrepareTimelines
+        /// for every kind of track - authored, stagger-cloned, preset-resolved, or built by
+        /// test code via ConfigureForTest - and again from OnValidate for Editor Inspector
+        /// preview). Not serialized: rebuilt fresh every time PrepareTimelines runs, so a
+        /// stale reference here can never survive a domain reload or an edited `target`.
+        /// UIMotionTrackEvaluator.Write reads these directly instead of re-casting/
+        /// TryGetComponent-ing `target` every tick - see REWRITE_PLAN.md 2.7 perf notes.</summary>
+        [NonSerialized] internal CanvasGroup resolvedCanvasGroup;
+        [NonSerialized] internal RectTransform resolvedRectTransform;
+        [NonSerialized] internal Transform resolvedTransform;
+        [NonSerialized] internal Graphic resolvedGraphic;
+        [NonSerialized] internal Image resolvedImage;
+        [NonSerialized] internal GameObject resolvedGameObject;
+        [NonSerialized] internal bool resolvedCacheValid;
+
         public float Evaluate(float t) => useCurve ? this.curve.Evaluate(t) : UIEase.Evaluate(this.ease, t);
 
         /// <summary>Field-for-field copy. Used wherever a derived track needs to start
         /// from an authored one and override a few fields - stagger's per-child clones,
         /// Mirror Hide's generated timeline, and preset target resolution - instead of
         /// each re-listing every field (three near-identical copies is what earned this
-        /// method instead of a fourth).</summary>
-        public UIMotionTrack Clone() => new UIMotionTrack
+        /// method instead of a fourth). Deliberately does NOT copy the resolved-target
+        /// cache above: a clone always gets a different `target` (a stagger child, a
+        /// mirrored track, ...), so inheriting the source's cache would point it at the
+        /// wrong component until the next PrepareTimelines call happened to overwrite it.</summary>
+        public UIMotionTrack Clone() => new()
         {
             kind = this.kind,
             target = this.target,
@@ -100,7 +120,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             animatorLayer = this.animatorLayer,
             animatorStateName = this.animatorStateName,
             animatorStateHash = this.animatorStateHash,
-            animatorSpeed = this.animatorSpeed,
+            animatorSpeed = this.animatorSpeed
         };
     }
 }

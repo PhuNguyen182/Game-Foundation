@@ -48,6 +48,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         /// computed once (cached, per the plan's "danh sách con cho stagger cũng được
         /// cache lúc Awake") and only recomputed by EnsurePrepared/ConfigureForTest.</summary>
         private UIMotionTrack[] _showExpanded;
+
         private UIMotionTrack[] _hideExpanded;
 
         private Vector4[] _showRestPoses;
@@ -116,8 +117,21 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
 
             this._showExpanded = ExpandStagger(showResolved);
             this._hideExpanded = ExpandStagger(hideResolved);
+            ResolveTargetCaches(this._showExpanded);
+            ResolveTargetCaches(this._hideExpanded);
             this._showRestPoses = CaptureRestPoses(this._showExpanded);
             this._hideRestPoses = CaptureRestPoses(this._hideExpanded);
+        }
+
+        /// <summary>Resolves every track's UIMotionTrack.resolvedXxx component cache once,
+        /// covering every shape PrepareTimelines can produce - authored tracks (passed
+        /// through unchanged by ResolvePresetTargets), preset-path-resolved clones, and
+        /// stagger's per-child clones - so CaptureRestPoses (right below) and every later
+        /// tick already read from the cache instead of the first tick re-resolving it.</summary>
+        private static void ResolveTargetCaches(UIMotionTrack[] tracks)
+        {
+            for (int i = 0; i < tracks.Length; i++)
+                UIMotionTrackEvaluator.ResolveTargetCache(tracks[i]);
         }
 
         /// <summary>Replaces `targetPath != null` tracks' `target` with the Transform it
@@ -346,6 +360,14 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                 UIMotionTrack mirrored = source.Clone();
                 mirrored.startMode = UIMotionStartMode.AtTime;
                 mirrored.offset = showTotalDuration - (showStartTimes[i] + source.duration);
+
+                // Clone() deliberately does not carry the resolved-target cache over (see
+                // its own remarks) since a clone can point `target` somewhere new - but
+                // this one doesn't; `target` is unchanged from `source`, only the
+                // schedule/from/to move below. Still needs its own resolve rather than
+                // reading source's cache directly: TickTracks/Write index into `mirrored`
+                // (the array returned here), never back into `source`.
+                UIMotionTrackEvaluator.ResolveTargetCache(mirrored);
 
                 if (source.kind == UIMotionTrackKind.Punch || source.kind == UIMotionTrackKind.Shake
                     || source.kind == UIMotionTrackKind.Custom || source.kind == UIMotionTrackKind.AnimatorState)

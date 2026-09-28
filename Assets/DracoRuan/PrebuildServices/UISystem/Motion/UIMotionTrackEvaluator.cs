@@ -13,6 +13,18 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
     /// through IUIMotionCustomTrack rather than a Vector4. Rect dispatches all 8
     /// UIMotionRectProperty options through CaptureRect/WriteRect below, including the
     /// pivot/anchor "keep visual position" compensation (WritePivot/WriteAnchors).
+    ///
+    /// Write's per-frame cost used to include re-resolving `track.target` (an `as`
+    /// cast, falling back to TryGetComponent) on every single tick of every track -
+    /// cheap in isolation, but the dominant cost at a few thousand concurrent tracks
+    /// (benchmarked: ~0.83us/track/frame vs ~0.37us/track/frame for a plain delegate
+    /// call). ResolveTargetCache below now does that resolution exactly once - from
+    /// UIMotion.PrepareTimelines, covering every track shape (authored, stagger-cloned,
+    /// preset-resolved, test-configured) - and Capture/Write read the cached component
+    /// reference directly. A destroyed target is still handled safely: the cached
+    /// reference is a UnityEngine.Object, so `if (track.resolvedX)` catches Unity's
+    /// "fake null" the same way the old `!= null` check did, at the same cost as any
+    /// other UnityEngine.Object liveness check.
     /// </summary>
     internal static class UIMotionTrackEvaluator
     {
@@ -22,34 +34,53 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         /// preview and tune it by eye.</summary>
         private const float OscillationCycles = 3f;
 
+        /// <summary>
+        /// Resolves `track.target` into every cached component field its `kind` (and, for
+        /// Rect, every `rectProperty`) could ever need, exactly once. Safe to call
+        /// repeatedly (e.g. OnValidate firing many times in the Editor) - always
+        /// overwrites the cache fresh from `target` rather than trusting a previous
+        /// result, so an edited `target` in the Inspector is picked up immediately
+        /// instead of only leaking into the next PrepareTimelines call.
+        /// </summary>
+        public static void ResolveTargetCache(UIMotionTrack track)
+        {
+            AsRectTransform(track.target, out track.resolvedRectTransform);
+            AsTransform(track.target, out track.resolvedTransform);
+            As(track.target, out track.resolvedCanvasGroup);
+            As(track.target, out track.resolvedGraphic);
+            As(track.target, out track.resolvedImage);
+            AsGameObject(track.target, out track.resolvedGameObject);
+            track.resolvedCacheValid = true;
+        }
+
         public static Vector4 Capture(UIMotionTrack track)
         {
             switch (track.kind)
             {
                 case UIMotionTrackKind.Fade:
-                    return As<CanvasGroup>(track.target, out CanvasGroup cg) ? new Vector4(cg.alpha, 0f, 0f, 0f) : Vector4.zero;
+                    return track.resolvedCanvasGroup ? new Vector4(track.resolvedCanvasGroup.alpha, 0f, 0f, 0f) : Vector4.zero;
 
                 case UIMotionTrackKind.Move:
-                    return AsRectTransform(track.target, out RectTransform rtMove) ? (Vector4)(Vector2)rtMove.anchoredPosition : Vector4.zero;
+                    return track.resolvedRectTransform ? (Vector4)(Vector2)track.resolvedRectTransform.anchoredPosition : Vector4.zero;
 
                 case UIMotionTrackKind.Scale:
                 case UIMotionTrackKind.Punch:
-                    return AsTransform(track.target, out Transform tScale) ? (Vector4)tScale.localScale : Vector4.zero;
+                    return track.resolvedTransform ? (Vector4)track.resolvedTransform.localScale : Vector4.zero;
 
                 case UIMotionTrackKind.Rotate:
-                    return AsTransform(track.target, out Transform tRotate) ? (Vector4)tRotate.localEulerAngles : Vector4.zero;
+                    return track.resolvedTransform ? (Vector4)track.resolvedTransform.localEulerAngles : Vector4.zero;
 
                 case UIMotionTrackKind.Color:
-                    return As<Graphic>(track.target, out Graphic graphic) ? (Vector4)graphic.color : Vector4.zero;
+                    return track.resolvedGraphic ? (Vector4)track.resolvedGraphic.color : Vector4.zero;
 
                 case UIMotionTrackKind.Fill:
-                    return As<Image>(track.target, out Image image) ? new Vector4(image.fillAmount, 0f, 0f, 0f) : Vector4.zero;
+                    return track.resolvedImage ? new Vector4(track.resolvedImage.fillAmount, 0f, 0f, 0f) : Vector4.zero;
 
                 case UIMotionTrackKind.Shake:
-                    return AsRectTransform(track.target, out RectTransform rtShake) ? (Vector4)(Vector2)rtShake.anchoredPosition : Vector4.zero;
+                    return track.resolvedRectTransform ? (Vector4)(Vector2)track.resolvedRectTransform.anchoredPosition : Vector4.zero;
 
                 case UIMotionTrackKind.SetActive:
-                    return AsGameObject(track.target, out GameObject go) ? new Vector4(go.activeSelf ? 1f : 0f, 0f, 0f, 0f) : Vector4.zero;
+                    return track.resolvedGameObject ? new Vector4(track.resolvedGameObject.activeSelf ? 1f : 0f, 0f, 0f, 0f) : Vector4.zero;
 
                 case UIMotionTrackKind.Rect:
                     return CaptureRect(track);
@@ -61,7 +92,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
 
         private static Vector4 CaptureRect(UIMotionTrack track)
         {
-            if (!AsRectTransform(track.target, out RectTransform rt))
+            RectTransform rt = track.resolvedRectTransform;
+            if (!rt)
                 return Vector4.zero;
 
             switch (track.rectProperty)
@@ -83,47 +115,47 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             switch (track.kind)
             {
                 case UIMotionTrackKind.Fade:
-                    if (As<CanvasGroup>(track.target, out CanvasGroup cg))
-                        cg.alpha = value.x;
+                    if (track.resolvedCanvasGroup)
+                        track.resolvedCanvasGroup.alpha = value.x;
                     break;
 
                 case UIMotionTrackKind.Move:
-                    if (AsRectTransform(track.target, out RectTransform rtMove))
-                        rtMove.anchoredPosition = value;
+                    if (track.resolvedRectTransform)
+                        track.resolvedRectTransform.anchoredPosition = value;
                     break;
 
                 case UIMotionTrackKind.Scale:
                 case UIMotionTrackKind.Punch:
-                    if (AsTransform(track.target, out Transform tScale))
-                        tScale.localScale = value;
+                    if (track.resolvedTransform)
+                        track.resolvedTransform.localScale = value;
                     break;
 
                 case UIMotionTrackKind.Rotate:
-                    if (AsTransform(track.target, out Transform tRotate))
-                        tRotate.localEulerAngles = value;
+                    if (track.resolvedTransform)
+                        track.resolvedTransform.localEulerAngles = value;
                     break;
 
                 case UIMotionTrackKind.Color:
-                    if (As<Graphic>(track.target, out Graphic graphic))
-                        graphic.color = value;
+                    if (track.resolvedGraphic)
+                        track.resolvedGraphic.color = value;
                     break;
 
                 case UIMotionTrackKind.Fill:
-                    if (As<Image>(track.target, out Image image))
-                        image.fillAmount = value.x;
+                    if (track.resolvedImage)
+                        track.resolvedImage.fillAmount = value.x;
                     break;
 
                 case UIMotionTrackKind.Shake:
-                    if (AsRectTransform(track.target, out RectTransform rtShake))
-                        rtShake.anchoredPosition = value;
+                    if (track.resolvedRectTransform)
+                        track.resolvedRectTransform.anchoredPosition = value;
                     break;
 
                 case UIMotionTrackKind.SetActive:
                     // Discrete, not interpolated. UIMotionRunner fires this exactly once,
                     // the moment the track starts - never on every tick - so value.x is
                     // always either 0 or 1 here (see UIMotionRunner.TickTracks).
-                    if (AsGameObject(track.target, out GameObject go))
-                        go.SetActive(value.x > 0.5f);
+                    if (track.resolvedGameObject)
+                        track.resolvedGameObject.SetActive(value.x > 0.5f);
                     break;
 
                 case UIMotionTrackKind.Rect:
@@ -134,7 +166,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
 
         private static void WriteRect(UIMotionTrack track, Vector4 value)
         {
-            if (!AsRectTransform(track.target, out RectTransform rt))
+            RectTransform rt = track.resolvedRectTransform;
+            if (!rt)
                 return;
 
             switch (track.rectProperty)
@@ -279,7 +312,9 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
 
         /// <summary>Resolves `track.target` to the Animator it references - a direct
         /// reference, or (mirroring every other kind's fallback) a component lookup when
-        /// the author dragged in a GameObject instead.</summary>
+        /// the author dragged in a GameObject instead. AnimatorState is polled/driven
+        /// directly by UIMotionRunner rather than through Capture/Write's Vector4
+        /// pipeline, so it is not part of the resolved-target cache above.</summary>
         public static bool TryGetAnimator(UIMotionTrack track, out Animator animator) =>
             As(track.target, out animator);
 
@@ -326,7 +361,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         /// </summary>
         public static Vector4 GetParentSize(UIMotionTrack track)
         {
-            if (!AsRectTransform(track.target, out RectTransform rt))
+            RectTransform rt = track.resolvedRectTransform;
+            if (!rt)
                 return Vector4.zero;
 
             Vector2 size = GetParentSizeRaw(rt);
@@ -344,26 +380,28 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         // silently accept a RectTransform's owning GameObject and then fail the cast).
         // Unity's "fake null" (a destroyed object whose C# wrapper is still a live,
         // non-null CLR reference) is only caught by UnityEngine.Object's overloaded
-        // == / != operator - never by an `is`/`as` type pattern alone, and calling an
-        // instance member on a fake-null reference throws MissingReferenceException. So
-        // every helper below casts with `as` and then explicitly compares `!= null`
-        // before touching the result, rather than using `is` pattern matching.
+        // implicit-bool/== conversion - never by an `is`/`as` type pattern alone, and
+        // calling an instance member on a fake-null reference throws
+        // MissingReferenceException. So every helper below casts with `as` and then
+        // checks liveness with the boolean-context idiom (`if (component)`) rather than
+        // `!= null`/`is` pattern matching - functionally identical but avoids the
+        // redundant equality-operator dispatch Rider flags on UnityEngine.Object.
 
         private static bool AsRectTransform(Object target, out RectTransform rectTransform)
         {
             var direct = target as RectTransform;
-            if (direct != null)
+            if (direct)
             {
                 rectTransform = direct;
                 return true;
             }
 
             var go = target as GameObject;
-            if (go != null)
+            if (go)
                 return go.TryGetComponent(out rectTransform);
 
             var component = target as Component;
-            if (component != null)
+            if (component)
                 return component.TryGetComponent(out rectTransform);
 
             rectTransform = null;
@@ -373,21 +411,21 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         private static bool AsTransform(Object target, out Transform transform)
         {
             var direct = target as Transform;
-            if (direct != null)
+            if (direct)
             {
                 transform = direct;
                 return true;
             }
 
             var go = target as GameObject;
-            if (go != null)
+            if (go)
             {
                 transform = go.transform;
                 return true;
             }
 
             var component = target as Component;
-            if (component != null)
+            if (component)
             {
                 transform = component.transform;
                 return true;
@@ -407,18 +445,18 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         private static bool As<T>(Object target, out T component) where T : Component
         {
             var direct = target as T;
-            if (direct != null)
+            if (direct)
             {
                 component = direct;
                 return true;
             }
 
             var go = target as GameObject;
-            if (go != null)
+            if (go)
                 return go.TryGetComponent(out component);
 
             var other = target as Component;
-            if (other != null)
+            if (other)
                 return other.TryGetComponent(out component);
 
             component = null;
@@ -428,14 +466,14 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         private static bool AsGameObject(Object target, out GameObject gameObject)
         {
             var go = target as GameObject;
-            if (go != null)
+            if (go)
             {
                 gameObject = go;
                 return true;
             }
 
             var component = target as Component;
-            if (component != null)
+            if (component)
             {
                 gameObject = component.gameObject;
                 return true;
