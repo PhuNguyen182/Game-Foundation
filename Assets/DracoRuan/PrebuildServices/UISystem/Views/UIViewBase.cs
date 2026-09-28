@@ -1,6 +1,7 @@
 using System;
 using DracoRuan.PrebuildServices.UISystem.Motion;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DracoRuan.PrebuildServices.UISystem.Views
@@ -17,21 +18,22 @@ namespace DracoRuan.PrebuildServices.UISystem.Views
     [RequireComponent(typeof(CanvasGroup))]
     public abstract class UIViewBase : MonoBehaviour, IUIMotionTriggerSource
     {
-        private Canvas _canvas;
-        private GraphicRaycaster _graphicRaycaster;
-        private CanvasGroup _canvasGroup;
+        [SerializeField] private Canvas canvas;
+        [SerializeField] private GraphicRaycaster graphicRaycaster;
+        [SerializeField] private CanvasGroup canvasGroup;
+        
         private UIMotion _motion;
         private bool _motionResolved;
 
-        public Canvas Canvas => this._canvas != null ? this._canvas : this._canvas = this.GetComponent<Canvas>();
+        public Canvas Canvas => this.canvas ? this.canvas : this.canvas = this.GetComponent<Canvas>();
 
-        public GraphicRaycaster GraphicRaycaster => this._graphicRaycaster != null
-            ? this._graphicRaycaster
-            : this._graphicRaycaster = this.GetComponent<GraphicRaycaster>();
+        public GraphicRaycaster GraphicRaycaster => this.graphicRaycaster
+            ? this.graphicRaycaster
+            : this.graphicRaycaster = this.GetComponent<GraphicRaycaster>();
 
-        public CanvasGroup CanvasGroup => this._canvasGroup != null
-            ? this._canvasGroup
-            : this._canvasGroup = this.GetComponent<CanvasGroup>();
+        public CanvasGroup CanvasGroup => this.canvasGroup
+            ? this.canvasGroup
+            : this.canvasGroup = this.GetComponent<CanvasGroup>();
 
         /// <summary>Optional: a view with no UIMotion on its root opens/closes Instant (see
         /// REWRITE_PLAN.md scenario (p)). Resolved once and cached, same pattern as Canvas
@@ -103,5 +105,19 @@ namespace DracoRuan.PrebuildServices.UISystem.Views
         /// Non-generic so UIService (which only ever holds a UIViewBase reference) can read it
         /// without knowing TVM; UIView&lt;TVM&gt; is the only place a concrete value is set.</summary>
         public virtual Selectable DefaultSelectable => null;
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (!this.canvas)
+                this.canvas = this.GetComponent<Canvas>();
+            
+            if (!this.canvasGroup)
+                this.canvasGroup = this.GetComponent<CanvasGroup>();
+            
+            if (!this.graphicRaycaster)
+                this.graphicRaycaster = this.GetComponent<GraphicRaycaster>();
+        }
+#endif
     }
 }

@@ -30,17 +30,17 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         private readonly UIRootConfig _rootConfig;
         private readonly IUIAssetProvider _assetProvider;
         private readonly Transform _rootTransform;
-        private readonly InputLockCounter _inputLock = new InputLockCounter();
-        private readonly BackRouter _backRouter = new BackRouter();
+        private readonly InputLockCounter _inputLock = new();
+        private readonly BackRouter _backRouter = new();
         private bool _isInitialized;
 
-        private readonly Dictionary<string, UILayerRoot> _layerRoots = new Dictionary<string, UILayerRoot>();
-        private readonly UIStack<ViewInstance> _screenStack = new UIStack<ViewInstance>();
-        private readonly Dictionary<string, List<ViewInstance>> _popupsByLayer = new Dictionary<string, List<ViewInstance>>();
-        private readonly Dictionary<string, UIPopupQueue<Func<UniTask>>> _queueByLayer = new Dictionary<string, UIPopupQueue<Func<UniTask>>>();
-        private readonly Dictionary<Type, ViewInstance> _openByType = new Dictionary<Type, ViewInstance>();
-        private readonly Dictionary<Type, GameObject> _keepAliveCache = new Dictionary<Type, GameObject>();
-        private readonly List<UIScope> _scopes = new List<UIScope>();
+        private readonly Dictionary<string, UILayerRoot> _layerRoots = new();
+        private readonly UIStack<ViewInstance> _screenStack = new();
+        private readonly Dictionary<string, List<ViewInstance>> _popupsByLayer = new();
+        private readonly Dictionary<string, UIPopupQueue<Func<UniTask>>> _queueByLayer = new();
+        private readonly Dictionary<Type, ViewInstance> _openByType = new();
+        private readonly Dictionary<Type, GameObject> _keepAliveCache = new();
+        private readonly List<UIScope> _scopes = new();
 
         private readonly UIRegistry _rootRegistry;
         private readonly IObjectResolver _rootResolver;
@@ -55,7 +55,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         /// </summary>
         public static UIService Current { get; private set; }
 
-        public UIService(UIRootConfig rootConfig, UIRegistry rootRegistry, IObjectResolver rootResolver, IUIAssetProvider assetProvider)
+        public UIService(UIRootConfig rootConfig, UIRegistry rootRegistry, IObjectResolver rootResolver,
+            IUIAssetProvider assetProvider)
         {
             this._rootConfig = rootConfig;
             this._rootRegistry = rootRegistry;
@@ -106,7 +107,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             var toRelease = new List<Type>(this._keepAliveCache.Keys);
             foreach (Type vmType in toRelease)
             {
-                if (!this.TryResolve(vmType, out UIRegistry _, out IObjectResolver _, out UIViewDefinition definition, out UIScope _))
+                if (!this.TryResolve(vmType, out UIRegistry _, out IObjectResolver _, out UIViewDefinition definition,
+                        out UIScope _))
                     continue;
 
                 GameObject cached = this._keepAliveCache[vmType];
@@ -130,9 +132,11 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         /// default (REWRITE_PLAN.md 2.5) when UISYSTEM_INPUT_SYSTEM is defined; the game can
         /// supply any other IUIBackInputSource instead. Call at most once per source instance.
         /// </summary>
-        public void AttachBackInputSource(IUIBackInputSource source) => source.BackRequested += this.HandleBackInputInternal;
+        public void AttachBackInputSource(IUIBackInputSource source) =>
+            source.BackRequested += this.HandleBackInputInternal;
 
-        public void DetachBackInputSource(IUIBackInputSource source) => source.BackRequested -= this.HandleBackInputInternal;
+        public void DetachBackInputSource(IUIBackInputSource source) =>
+            source.BackRequested -= this.HandleBackInputInternal;
 
         private IUIFocusHandler _focusHandler;
 
@@ -222,7 +226,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
 
         private UILayerRoot BuildLayerRoot(UILayerDefinition definition)
         {
-            var go = new GameObject($"Layer_{definition.LayerName}", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            var go = new GameObject($"Layer_{definition.LayerName}", typeof(RectTransform), typeof(Canvas),
+                typeof(CanvasScaler), typeof(GraphicRaycaster));
             go.transform.SetParent(this._rootTransform, false);
 
             var rect = (RectTransform)go.transform;
@@ -316,7 +321,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                 this.ForceCloseImmediate(instance);
         }
 
-        private bool TryResolve(Type viewModelType, out UIRegistry registry, out IObjectResolver resolver, out UIViewDefinition definition, out UIScope owningScope)
+        private bool TryResolve(Type viewModelType, out UIRegistry registry, out IObjectResolver resolver,
+            out UIViewDefinition definition, out UIScope owningScope)
         {
             for (int i = this._scopes.Count - 1; i >= 0; i--)
             {
@@ -348,18 +354,19 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         // Instance acquisition (Direct load, KeepAlive cache)
         // ---------------------------------------------------------------
 
-        private async UniTask<(GameObject GameObject, bool IsFreshInstance)> AcquireInstanceAsync(UIViewDefinition definition, CancellationToken ct)
+        private async UniTask<(GameObject GameObject, bool IsFreshInstance)> AcquireInstanceAsync(
+            UIViewDefinition definition, CancellationToken ct)
         {
             if (definition.CachePolicy == UICachePolicy.KeepAlive &&
-                this._keepAliveCache.TryGetValue(definition.ViewModelType, out GameObject cached))
+                this._keepAliveCache.Remove(definition.ViewModelType, out GameObject cached))
             {
-                this._keepAliveCache.Remove(definition.ViewModelType);
                 return (cached, false);
             }
 
             GameObject prefab = await this._assetProvider.LoadPrefabAsync(definition, ct);
-            if (prefab == null)
-                throw new InvalidOperationException($"IUIAssetProvider returned a null prefab for '{definition.ViewModelType.Name}'.");
+            if (!prefab)
+                throw new InvalidOperationException(
+                    $"IUIAssetProvider returned a null prefab for '{definition.ViewModelType.Name}'.");
 
             UILayerRoot layerRoot = this._layerRoots[definition.Layer.LayerName];
             GameObject instance = UnityEngine.Object.Instantiate(prefab, layerRoot.ContentRectTransform, false);
@@ -380,7 +387,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             }
         }
 
-        private void ApplyHide(ViewInstance instance) => ApplyHide(instance.Definition, instance.View, instance.GameObject);
+        private void ApplyHide(ViewInstance instance) =>
+            ApplyHide(instance.Definition, instance.View, instance.GameObject);
 
         private static void ApplyHide(UIViewDefinition definition, UIViewBase view, GameObject gameObject)
         {
@@ -423,16 +431,20 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             {
                 foreach (ViewInstance instance in layerPopups)
                 {
-                    if (instance.Definition.Preset != UIViewPreset.Overlay || !instance.Definition.HasVisibleOnScreensRestriction)
+                    if (instance.Definition.Preset != UIViewPreset.Overlay ||
+                        !instance.Definition.HasVisibleOnScreensRestriction)
                         continue;
 
-                    bool shouldBeVisible = currentScreenType != null && Contains(instance.Definition.VisibleOnScreens, currentScreenType);
+                    bool shouldBeVisible = currentScreenType != null &&
+                                           Contains(instance.Definition.VisibleOnScreens, currentScreenType);
                     if (shouldBeVisible)
                         this.ApplyShow(instance);
                     else
                         this.ApplyHide(instance);
                 }
             }
+
+            return;
 
             static bool Contains(IEnumerable<Type> types, Type target)
             {
@@ -456,11 +468,11 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         private async UniTask PlayShowTransitionAsync(ViewInstance instance, CancellationToken ct)
         {
             UIMotion motion = instance.View.Motion;
-            if (motion != null)
+            if (motion)
             {
                 instance.View.CanvasGroup.blocksRaycasts = false;
                 await motion.PlayShowAsync(ct);
-                if (instance.GameObject != null)
+                if (instance.GameObject)
                     instance.View.CanvasGroup.blocksRaycasts = true;
             }
 
@@ -475,7 +487,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         private async UniTask PlayHideTransitionAsync(ViewInstance instance, CancellationToken ct)
         {
             UIMotion motion = instance.View.Motion;
-            if (motion == null)
+            if (!motion)
                 return;
 
             instance.View.CanvasGroup.blocksRaycasts = false;
@@ -486,13 +498,16 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         // Open (screens/popups share this core)
         // ---------------------------------------------------------------
 
-        private async UniTask<ViewInstance> OpenCoreAsync<TVM>(Action<TVM> configureBeforeActivate, CancellationToken ct)
-            where TVM : UIViewModel
+        private async UniTask<ViewInstance> OpenCoreAsync<TViewModel>(Action<TViewModel> configureBeforeActivate,
+            CancellationToken ct)
+            where TViewModel : UIViewModel
         {
-            Type vmType = typeof(TVM);
+            Type vmType = typeof(TViewModel);
 
-            if (!this.TryResolve(vmType, out UIRegistry _, out IObjectResolver resolver, out UIViewDefinition definition, out UIScope owningScope))
-                throw new InvalidOperationException($"No UIViewDefinition registered for view model type '{vmType.Name}'.");
+            if (!this.TryResolve(vmType, out UIRegistry _, out IObjectResolver resolver,
+                    out UIViewDefinition definition, out UIScope owningScope))
+                throw new InvalidOperationException(
+                    $"No UIViewDefinition registered for view model type '{vmType.Name}'.");
 
             if (this._openByType.TryGetValue(vmType, out ViewInstance existing))
             {
@@ -513,8 +528,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             {
                 (GameObject go, bool isFresh) = await this.AcquireInstanceAsync(definition, ct);
 
-                var view = go.GetComponent<UIView<TVM>>();
-                if (view == null)
+                var view = go.GetComponent<UIView<TViewModel>>();
+                if (!view)
                 {
                     // go was either freshly instantiated or pulled from the KeepAlive cache
                     // above; either way it's not registered anywhere yet, so it would otherwise
@@ -524,7 +539,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                         $"Prefab for '{vmType.Name}' has no UIView<{vmType.Name}> component on its root.");
                 }
 
-                var viewModel = (TVM)resolver.Resolve(vmType);
+                var viewModel = (TViewModel)resolver.Resolve(vmType);
                 configureBeforeActivate?.Invoke(viewModel);
                 viewModel.Activate();
 
@@ -589,7 +604,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                 {
                     this._focusHandler.Restore(view.DefaultSelectable);
                     if (definition.Modal)
-                        instance.ModalFocusScope = this._focusHandler.BeginModalScope(view.transform, view.DefaultSelectable);
+                        instance.ModalFocusScope =
+                            this._focusHandler.BeginModalScope(view.transform, view.DefaultSelectable);
                 }
 
                 return instance;
@@ -766,7 +782,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             this._openByType.Remove(instance.ViewModelType);
 
             if (instance.Definition.Preset == UIViewPreset.Screen && instance.Definition.ParticipatesInStack)
-                this._screenStack.Remove(instance); // not necessarily topmost: any screen in the stack may belong to the disposed scope
+                this._screenStack
+                    .Remove(instance); // not necessarily topmost: any screen in the stack may belong to the disposed scope
             else
                 this._popupsByLayer[instance.Definition.Layer.LayerName].Remove(instance);
 
@@ -816,19 +833,23 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             await this.OpenCoreAsync<TViewModel>(vm => vm.SetArgs(args), ct).AsTask();
         }
 
-        public async ValueTask<TResult> OpenForResultAsync<TViewModel, TArgs, TResult>(TArgs args, CancellationToken ct = default)
+        public async ValueTask<TResult> OpenForResultAsync<TViewModel, TArgs, TResult>(TArgs args,
+            CancellationToken ct = default)
             where TViewModel : UIViewModel<TArgs>, IResultViewModel<TResult>
         {
             ViewInstance instance = await this.OpenCoreAsync<TViewModel>(vm => vm.SetArgs(args), ct).AsTask();
             return await new ValueTask<TResult>(GetOrCreateResultTask<TResult>(instance));
         }
 
-        public async ValueTask<TResult> EnqueueAsync<TViewModel, TArgs, TResult>(TArgs args, int priority = 0, CancellationToken ct = default)
+        public async ValueTask<TResult> EnqueueAsync<TViewModel, TArgs, TResult>(TArgs args, int priority = 0,
+            CancellationToken ct = default)
             where TViewModel : UIViewModel<TArgs>, IResultViewModel<TResult>
         {
             Type vmType = typeof(TViewModel);
-            if (!this.TryResolve(vmType, out UIRegistry _, out IObjectResolver _, out UIViewDefinition definition, out UIScope _))
-                throw new InvalidOperationException($"No UIViewDefinition registered for view model type '{vmType.Name}'.");
+            if (!this.TryResolve(vmType, out UIRegistry _, out IObjectResolver _, out UIViewDefinition definition,
+                    out UIScope _))
+                throw new InvalidOperationException(
+                    $"No UIViewDefinition registered for view model type '{vmType.Name}'.");
 
             // If it's already open (BringToFront/Ignore), reuse its pending result task instead
             // of racing a fresh one that would never be completed.
@@ -896,7 +917,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
 
         public async ValueTask CloseAsync(UIViewModel viewModel)
         {
-            if (!this._openByType.TryGetValue(viewModel.GetType(), out ViewInstance instance) || instance.ViewModel != viewModel)
+            if (!this._openByType.TryGetValue(viewModel.GetType(), out ViewInstance instance) ||
+                instance.ViewModel != viewModel)
                 return;
 
             await this.CloseInternalAsync(instance).AsTask();
@@ -942,7 +964,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             if (Current == this)
                 Current = null;
 
-            if (this._rootTransform != null)
+            if (this._rootTransform)
                 UnityEngine.Object.Destroy(this._rootTransform.gameObject);
         }
 

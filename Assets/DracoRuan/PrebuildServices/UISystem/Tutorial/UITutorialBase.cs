@@ -25,18 +25,19 @@ namespace DracoRuan.PrebuildServices.UISystem.Tutorial
     [RequireComponent(typeof(UITutorialMaskController))]
     public class UITutorialBase : MonoBehaviour
     {
-        [SerializeField] private List<UITutorialStep> steps = new List<UITutorialStep>();
+        [SerializeField] private List<UITutorialStep> steps = new();
         [SerializeField] private Transform resolveRoot;
+        [SerializeField] private UITutorialMaskController mask;
 
-        private UITutorialMaskController _mask;
         private UniTaskCompletionSource _externalAdvanceSignal;
 
-        protected UITutorialMaskController Mask => this._mask != null ? this._mask : this._mask = this.GetComponent<UITutorialMaskController>();
+        protected UITutorialMaskController Mask =>
+            this.mask ? this.mask : this.mask = this.GetComponent<UITutorialMaskController>();
 
         /// <summary>Root that UITutorialStep.targetPath resolves against - defaults to this
         /// component's own Transform, same convention as UIMotionTrack.targetPath resolving
         /// against the applying UIMotion's Transform.</summary>
-        protected Transform ResolveRoot => this.resolveRoot != null ? this.resolveRoot : this.transform;
+        protected Transform ResolveRoot => this.resolveRoot ? this.resolveRoot : this.transform;
 
         /// <summary>Set before RunAsync() when a tutorial needs to highlight elements on
         /// whatever screen/view happens to be open (the common case - a tutorial almost never
@@ -132,5 +133,13 @@ namespace DracoRuan.PrebuildServices.UISystem.Tutorial
         /// <summary>Call from a click handler (or any external gameplay signal) to unblock the
         /// step currently waiting on it. A no-op if no step is currently waiting.</summary>
         public void AdvanceCurrentStep() => this._externalAdvanceSignal?.TrySetResult();
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (!this.mask)
+                this.mask = this.GetComponent<UITutorialMaskController>();
+        }
+#endif
     }
 }

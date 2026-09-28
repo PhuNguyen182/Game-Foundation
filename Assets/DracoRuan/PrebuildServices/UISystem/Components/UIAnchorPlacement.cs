@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,11 +15,14 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
     public sealed class UIAnchorPlacement : MonoBehaviour
     {
         [SerializeField] private RectTransform target;
-        [SerializeField] private UIAnchorSide[] sidePriority = { UIAnchorSide.Above, UIAnchorSide.Below, UIAnchorSide.Right, UIAnchorSide.Left };
+
+        [SerializeField] private UIAnchorSide[] sidePriority =
+            { UIAnchorSide.Above, UIAnchorSide.Below, UIAnchorSide.Right, UIAnchorSide.Left };
+
         [SerializeField] private float spacing = 8f;
         [SerializeField] private bool followTarget;
+        [SerializeField] private RectTransform rectTransform;
 
-        private RectTransform _rectTransform;
         private Canvas _canvas;
 
         public RectTransform Target
@@ -27,11 +31,11 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
             set => this.target = value;
         }
 
-        private RectTransform RectTransform => this._rectTransform != null
-            ? this._rectTransform
-            : this._rectTransform = (RectTransform)this.transform;
+        private RectTransform RectTransform => this.rectTransform
+            ? this.rectTransform
+            : this.rectTransform = (RectTransform)this.transform;
 
-        private Canvas Canvas => this._canvas != null ? this._canvas : this._canvas = this.GetComponentInParent<Canvas>();
+        private Canvas Canvas => this._canvas ? this._canvas : this._canvas = this.GetComponentInParent<Canvas>();
 
         private void OnEnable() => this.Reposition();
 
@@ -45,7 +49,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
         /// unset (nothing to anchor against yet).</summary>
         public void Reposition()
         {
-            if (this.target == null)
+            if (!this.target)
                 return;
 
             RectTransform self = this.RectTransform;
@@ -63,9 +67,11 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
             Rect targetScreenRect = WorldCornersToScreenRect(this.target, targetCamera);
             Rect safeAreaScreenRect = Screen.safeArea;
 
-            ChooseSide(this.sidePriority, targetScreenRect, selfSize, this.spacing, safeAreaScreenRect, out Vector2 chosenScreenPos);
+            ChooseSide(this.sidePriority, targetScreenRect, selfSize, this.spacing, safeAreaScreenRect,
+                out Vector2 chosenScreenPos);
 
-            if (RectTransformUtility.ScreenPointToWorldPointInRectangle(self.parent as RectTransform, chosenScreenPos, myCamera, out Vector3 worldPoint))
+            if (RectTransformUtility.ScreenPointToWorldPointInRectangle(self.parent as RectTransform, chosenScreenPos,
+                    myCamera, out Vector3 worldPoint))
             {
                 self.position = worldPoint;
             }
@@ -73,7 +79,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
 
         private static Camera CanvasCamera(Canvas canvas)
         {
-            if (canvas == null)
+            if (!canvas)
                 return null;
 
             return canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
@@ -96,7 +102,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
             return new Rect(min, max - min);
         }
 
-        private static Vector2 ComputeCandidateScreenPosition(UIAnchorSide side, Rect targetScreenRect, Vector2 selfSize, float spacing)
+        private static Vector2 ComputeCandidateScreenPosition(UIAnchorSide side, Rect targetScreenRect,
+            Vector2 selfSize, float spacing)
         {
             Vector2 center = targetScreenRect.center;
             return side switch
@@ -116,8 +123,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
         private static Vector2 ClampIntoRect(Vector2 center, Vector2 size, Rect bounds)
         {
             Vector2 half = size * 0.5f;
-            float x = Mathf.Clamp(center.x, bounds.xMin + half.x, Mathf.Max(bounds.xMin + half.x, bounds.xMax - half.x));
-            float y = Mathf.Clamp(center.y, bounds.yMin + half.y, Mathf.Max(bounds.yMin + half.y, bounds.yMax - half.y));
+            float x = Mathf.Clamp(center.x, bounds.xMin + half.x,
+                Mathf.Max(bounds.xMin + half.x, bounds.xMax - half.x));
+            float y = Mathf.Clamp(center.y, bounds.yMin + half.y,
+                Mathf.Max(bounds.yMin + half.y, bounds.yMax - half.y));
             return new Vector2(x, y);
         }
 
@@ -125,7 +134,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
         /// Canvas/Camera dependency) so Reposition and tests share one implementation - see
         /// AssemblyInfo.cs InternalsVisibleTo for test access.</summary>
         internal static UIAnchorSide ChooseSide(
-            IReadOnlyList<UIAnchorSide> priority, Rect targetScreenRect, Vector2 selfSize, float spacing, Rect boundsScreenRect,
+            IReadOnlyList<UIAnchorSide> priority, Rect targetScreenRect, Vector2 selfSize, float spacing,
+            Rect boundsScreenRect,
             out Vector2 screenPosition)
         {
             // Ruling (plan doesn't say what happens when no side fits): fall back to the
@@ -150,5 +160,13 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
             screenPosition = ClampIntoRect(chosenPos, selfSize, boundsScreenRect);
             return chosen;
         }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (!this.rectTransform)
+                this.rectTransform = (RectTransform)this.transform;
+        }
+#endif
     }
 }

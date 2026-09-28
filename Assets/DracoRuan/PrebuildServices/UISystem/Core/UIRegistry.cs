@@ -11,13 +11,13 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
     /// </summary>
     public sealed class UIRegistry
     {
-        private readonly Dictionary<Type, UIViewDefinition> _definitions = new Dictionary<Type, UIViewDefinition>();
+        private readonly Dictionary<Type, UIViewDefinition> _definitions = new();
 
         public UIRegistry(IEnumerable<UIViewDefinition> definitions)
         {
             foreach (UIViewDefinition definition in definitions)
             {
-                if (definition == null)
+                if (!definition)
                     throw new InvalidOperationException("UIRegistry received a null UIViewDefinition entry.");
 
                 Type vmType = definition.ViewModelType;
@@ -27,10 +27,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                         $"UIViewDefinition '{definition.name}' has an unresolvable ViewModelType (stale or empty type reference).");
                 }
 
-                if (definition.Prefab == null)
+                if (!definition.Prefab)
                     throw new InvalidOperationException($"UIViewDefinition '{definition.name}' (VM: {vmType.Name}) has no prefab assigned.");
 
-                if (definition.Layer == null)
+                if (!definition.Layer)
                     throw new InvalidOperationException($"UIViewDefinition '{definition.name}' (VM: {vmType.Name}) has no layer assigned.");
 
                 if (!this._definitions.TryAdd(vmType, definition))

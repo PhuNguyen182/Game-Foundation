@@ -39,16 +39,17 @@ namespace DracoRuan.PrebuildServices.UISystem.Tutorial
         private static readonly int MaskTexId = Shader.PropertyToID("_MaskTex");
         private static readonly int MaskRectId = Shader.PropertyToID("_MaskRect");
 
-        private RectTransform RectTransform => this.screenRect != null ? this.screenRect : this.screenRect = (RectTransform)this.transform;
+        private RectTransform RectTransform => this.screenRect ? this.screenRect : this.screenRect = (RectTransform)this.transform;
 
         private void Awake()
         {
-            if (this.maskImage == null)
+            if (!this.maskImage)
                 this.maskImage = this.GetComponent<Image>();
 
-            Shader shader = this.maskImage.material != null && this.maskImage.material.shader.name == "DracoRuan/UISystem/TutorialMask"
+            Shader shader = this.maskImage.material && string.CompareOrdinal(this.maskImage.material.shader.name, "DracoRuan/UISystem/TutorialMask") == 0
                 ? this.maskImage.material.shader
                 : Shader.Find("DracoRuan/UISystem/TutorialMask");
+            
             this._materialInstance = new Material(shader);
             this.maskImage.material = this._materialInstance;
             this.maskImage.raycastTarget = false; // the 4 blockers below do the actual gating
@@ -59,12 +60,12 @@ namespace DracoRuan.PrebuildServices.UISystem.Tutorial
             this.EnsureBlocker(ref this.blockerRight, "BlockerRight");
         }
 
-        private void EnsureBlocker(ref RectTransform blocker, string name)
+        private void EnsureBlocker(ref RectTransform blocker, string objName)
         {
-            if (blocker != null)
+            if (blocker)
                 return;
 
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            var go = new GameObject(objName, typeof(RectTransform), typeof(Image));
             go.transform.SetParent(this.RectTransform, false);
             var image = go.GetComponent<Image>();
             image.color = Color.clear;
@@ -74,7 +75,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tutorial
 
         private void OnDestroy()
         {
-            if (this._materialInstance != null)
+            if (this._materialInstance)
                 Destroy(this._materialInstance);
         }
 
@@ -99,16 +100,16 @@ namespace DracoRuan.PrebuildServices.UISystem.Tutorial
 
         private void ApplySprite(Sprite sprite)
         {
-            Sprite resolved = sprite != null ? sprite : this.defaultMaskSprite;
-            if (resolved != null)
+            Sprite resolved = sprite ? sprite : this.defaultMaskSprite;
+            if (resolved)
                 this._materialInstance.SetTexture(MaskTexId, resolved.texture);
         }
 
         void IUIMotionCustomTrack.CaptureStart()
         {
-            Vector4 current = (Vector4)this._materialInstance.GetVector(MaskRectId);
+            Vector4 current = this._materialInstance.GetVector(MaskRectId);
             this._fromRect = current;
-            this._toRect = this._toTarget != null ? ComputeMaskRect(this._toTarget, this.RectTransform) : current;
+            this._toRect = this._toTarget ? ComputeMaskRect(this._toTarget, this.RectTransform) : current;
         }
 
         void IUIMotionCustomTrack.Sample(float t)

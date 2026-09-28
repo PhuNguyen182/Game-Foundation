@@ -28,7 +28,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
         [SerializeField] private Tab[] tabs = Array.Empty<Tab>();
         [SerializeField] private int initialIndex;
 
-        private readonly ReactiveProperty<int> _selectedIndex = new ReactiveProperty<int>(-1);
+        private readonly ReactiveProperty<int> _selectedIndex = new(-1);
         private DisposableBag _clickSubscriptions;
         private bool _prepared;
 
@@ -92,7 +92,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
             for (int i = 0; i < this.tabs.Length; i++)
             {
                 GameObject content = this.tabs[i].content;
-                if (content != null)
+                if (content)
                     content.SetActive(i == index);
             }
         }

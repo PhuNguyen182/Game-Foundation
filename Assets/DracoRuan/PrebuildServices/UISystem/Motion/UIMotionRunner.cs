@@ -100,8 +100,113 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             public bool removed;
         }
 
+        /// <summary>One in-flight UIMotionRunner.Tween(...) call. Unlike Playback (a whole
+        /// authored timeline of UIMotionTrack), this is a single ad-hoc value tween with no
+        /// track/schedule/rest-pose concept - just from/to/duration/lerp/setter, for binding
+        /// code that wants a tweened value without authoring a UIMotion component. Deliberately
+        /// a separate list/type from Playback rather than shoehorned into UIMotionTrack: the
+        /// two have almost nothing in common (no target Object, no ease-in-track, no
+        /// mirror/stagger) and forcing this through the track pipeline would mean fabricating
+        /// a fake UnityEngine.Object target for a caller that only has a plain setter.</summary>
+        internal abstract class ValueTween
+        {
+            public float elapsed;
+            public float duration;
+            public Func<float, float> ease;
+            public bool removed;
+
+            public abstract void Apply(float t);
+        }
+
+        internal sealed class ValueTween<T> : ValueTween
+        {
+            public T from;
+            public T to;
+            public Func<T, T, float, T> lerp;
+            public Action<T> setter;
+
+            /// <summary>Whether this instance is currently in _activeValueTweens. A pooled
+            /// handle's Retarget can be called while the previous tween already finished
+            /// (removed = true, but the runner's Tick has not yet swept it out of the
+            /// list) or while it is genuinely still running - this distinguishes "already
+            /// in the list, just update it in place" from "need to Add it back".</summary>
+            public bool inActiveList;
+
+            public override void Apply(float t) => this.setter(this.lerp(this.from, this.to, t));
+        }
+
+        private sealed class ValueTweenHandle : IDisposable
+        {
+            private ValueTween _tween;
+
+            public ValueTweenHandle(ValueTween tween) => this._tween = tween;
+
+            public void Dispose()
+            {
+                if (this._tween == null)
+                    return;
+
+                this._tween.removed = true;
+                this._tween = null;
+            }
+        }
+
+        /// <summary>
+        /// A reusable handle for UIMotionRunner.CreateTween: unlike the one-shot Tween(...)
+        /// below (which allocates a fresh ValueTween&lt;T&gt; and ValueTweenHandle on every
+        /// call), this is meant to be allocated ONCE per binding and then re-targeted on
+        /// every new value - e.g. a ReactiveProperty&lt;T&gt; that can change many times per
+        /// frame in real gameplay (rapid damage ticks, a currency counting up fast). Every
+        /// Retarget call reuses this same ValueTween&lt;T&gt; instance instead of allocating
+        /// a new one, so a value changing repeatedly costs zero additional GC allocation
+        /// past the first Retarget.
+        /// </summary>
+        public sealed class UIValueTweenHandle<T> : IDisposable
+        {
+            private readonly ValueTween<T> _tween;
+            private bool _disposed;
+
+            internal UIValueTweenHandle(ValueTween<T> tween) => this._tween = tween;
+
+            /// <summary>Cuts off wherever the current tween is (no snap - the next Apply
+            /// picks up from `from`) and starts tweening toward `to` instead. Safe to call
+            /// every frame; each call reuses this handle's own ValueTween&lt;T&gt; rather than
+            /// allocating one.</summary>
+            public void Retarget(T from, T to)
+            {
+                if (this._disposed)
+                    throw new ObjectDisposedException(nameof(UIValueTweenHandle<T>));
+
+                this._tween.from = from;
+                this._tween.to = to;
+                this._tween.elapsed = 0f;
+                this._tween.removed = false;
+
+                // Frame-0 synchronous sample, same reason as every other Tween/Play path
+                // in this file: without it the new target wouldn't visibly apply until
+                // next frame.
+                TickValueTweenSafe(this._tween);
+
+                if (!this._tween.removed && !this._tween.inActiveList)
+                {
+                    this._tween.inActiveList = true;
+                    Instance._activeValueTweens.Add(this._tween);
+                }
+            }
+
+            public void Dispose()
+            {
+                if (this._disposed)
+                    return;
+
+                this._disposed = true;
+                this._tween.removed = true;
+            }
+        }
+
         private static readonly UIMotionRunner Instance = new UIMotionRunner();
         private static bool _registered;
+        private readonly List<ValueTween> _activeValueTweens = new List<ValueTween>(capacity: 16);
 
         /// <summary>Accessibility switch: when true, every newly-started playback jumps
         /// straight to its resolved end values instead of interpolating, regardless of
@@ -142,7 +247,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
 
             var scheduleInputs = new UIMotionScheduleInput[trackArray.Length];
             for (int i = 0; i < trackArray.Length; i++)
-                scheduleInputs[i] = new UIMotionScheduleInput(trackArray[i].startMode, trackArray[i].offset, trackArray[i].duration);
+                scheduleInputs[i] = new UIMotionScheduleInput(trackArray[i].startMode, trackArray[i].offset,
+                    trackArray[i].duration);
 
             float[] startTimes = UIMotionScheduler.ComputeStartTimes(scheduleInputs);
             float totalDuration = UIMotionScheduler.ComputeTotalDuration(scheduleInputs, startTimes);
@@ -224,6 +330,113 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                     this._active.RemoveAt(i);
                 }
             }
+
+            for (int i = this._activeValueTweens.Count - 1; i >= 0; i--)
+            {
+                ValueTween tween = this._activeValueTweens[i];
+                if (tween.removed)
+                {
+                    this._activeValueTweens.RemoveAt(i);
+                    continue;
+                }
+
+                tween.elapsed += deltaTime;
+                TickValueTweenSafe(tween);
+
+                if (tween.removed)
+                    this._activeValueTweens.RemoveAt(i);
+            }
+        }
+
+        /// <summary>
+        /// Starts a standalone tween of a single value from `from` to `to`, driven by this
+        /// same runner (same PlayerLoop tick, same unscaled-time rule as every UIMotion
+        /// track). No target Object, no schedule, no rest pose - just the value itself.
+        /// Meant for binding code (REWRITE_PLAN.md 2.7's "b.CountUp" idea, generalized):
+        /// `Bind()` subscribes an Observable and calls this on every new value, disposing
+        /// the previous call's handle first so a new value cuts the old tween off in
+        /// place rather than fighting it. `duration &lt;= 0` (or ReduceMotion) applies the
+        /// end value once, synchronously, and returns an already-inert handle - the same
+        /// "instant" convention every other kind in this file follows.
+        /// </summary>
+        public static IDisposable Tween<T>(T from, T to, float duration, Func<float, float> ease,
+            Func<T, T, float, T> lerp, Action<T> setter)
+        {
+            EnsureRegistered();
+
+            ease ??= static t => t;
+
+            var tween = new ValueTween<T>
+            {
+                from = from,
+                to = to,
+                duration = duration <= 0f || ReduceMotion ? 0f : duration,
+                ease = ease,
+                lerp = lerp,
+                setter = setter,
+            };
+
+            // Sample t=0 (or, for duration<=0/ReduceMotion, t=1 since tween.duration was
+            // forced to 0 above) synchronously for the same reason Play() does: the
+            // UpdateServices callback runs before this frame's Update(), so without this
+            // the caller's setter would not run until next frame, showing a stale value
+            // for one frame - or, for the instant case, would apply the end value one
+            // frame later than every non-tweened bind in this file does.
+            // Isolated the same way Play()'s own TickTracksSafe isolates a bad track: one
+            // caller's throwing setter must not stop Tween() from returning a handle.
+            TickValueTweenSafe(tween);
+            if (tween.removed)
+                return new ValueTweenHandle(null);
+
+            tween.inActiveList = true;
+            Instance._activeValueTweens.Add(tween);
+            return new ValueTweenHandle(tween);
+        }
+
+        /// <summary>
+        /// Like Tween(...) above, but returns a reusable UIValueTweenHandle&lt;T&gt; instead of
+        /// a one-shot IDisposable: meant to be allocated once per binding and then have
+        /// Retarget called on it repeatedly (see UIValueTweenHandle&lt;T&gt;'s remarks) so a
+        /// value that changes many times per frame in real gameplay doesn't allocate a new
+        /// ValueTween&lt;T&gt; on every change. `duration`/`ease` are fixed for the handle's
+        /// whole lifetime (only `from`/`to` change per Retarget call) - a binding's tween
+        /// timing doesn't usually change between values, only the values themselves do.
+        /// </summary>
+        public static UIValueTweenHandle<T> CreateTween<T>(
+            float duration, Func<float, float> ease, Func<T, T, float, T> lerp, Action<T> setter)
+        {
+            EnsureRegistered();
+
+            Func<float, float> resolvedEase = ease ?? DefaultLinearEase;
+
+            var tween = new ValueTween<T>
+            {
+                duration = duration <= 0f || ReduceMotion ? 0f : duration,
+                ease = resolvedEase,
+                lerp = lerp,
+                setter = setter,
+                removed = true, // not yet targeted anywhere; Retarget's first call adds it
+            };
+
+            return new UIValueTweenHandle<T>(tween);
+        }
+
+        private static float DefaultLinearEase(float t) => t;
+
+        private static void TickValueTweenSafe(ValueTween tween)
+        {
+            try
+            {
+                float t = tween.duration <= 0f ? 1f : Mathf.Clamp01(tween.elapsed / tween.duration);
+                tween.Apply(tween.ease(t));
+                if (t >= 1f)
+                    tween.removed = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                tween.removed = true;
+            }
         }
 
         /// <summary>
@@ -258,7 +471,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                 Float4 rest = playback.restPoses[i].ToFloat4();
                 Float4 parentSize = UIMotionTrackEvaluator.GetParentSize(track).ToFloat4();
                 bool multiplicative = track.kind == UIMotionTrackKind.Scale;
-                Float4 from = UIMotionValueResolver.Resolve(track.fromValueMode, track.from.ToFloat4(), rest, rest, parentSize, multiplicative);
+                Float4 from = UIMotionValueResolver.Resolve(track.fromValueMode, track.from.ToFloat4(), rest, rest,
+                    parentSize, multiplicative);
                 UIMotionTrackEvaluator.Write(track, from.ToVector4());
             }
         }
@@ -305,16 +519,19 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                         bool multiplicative = track.kind == UIMotionTrackKind.Scale;
 
                         Float4 currentOrFrom = track.useStartValue
-                            ? UIMotionValueResolver.Resolve(track.fromValueMode, track.from.ToFloat4(), rest, rest, parentSize, multiplicative)
+                            ? UIMotionValueResolver.Resolve(track.fromValueMode, track.from.ToFloat4(), rest, rest,
+                                parentSize, multiplicative)
                             : UIMotionTrackEvaluator.Capture(track).ToFloat4();
                         Float4 resolvedTo = UIMotionValueResolver
-                            .Resolve(track.toValueMode, track.to.ToFloat4(), rest, currentOrFrom, parentSize, multiplicative);
+                            .Resolve(track.toValueMode, track.to.ToFloat4(), rest, currentOrFrom, parentSize,
+                                multiplicative);
 
                         state.resolvedFrom = currentOrFrom.ToVector4();
                         state.resolvedTo = resolvedTo.ToVector4();
 
                         if (track.kind == UIMotionTrackKind.Rotate)
-                            state.resolvedTo = UIMotionTrackEvaluator.UnwrapRotation(state.resolvedFrom, state.resolvedTo);
+                            state.resolvedTo =
+                                UIMotionTrackEvaluator.UnwrapRotation(state.resolvedFrom, state.resolvedTo);
 
                         if (track.kind == UIMotionTrackKind.SetActive)
                         {
@@ -337,7 +554,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                     // Punch/Shake no field of their own beyond "chỉ có biên độ"): not an
                     // eased lerp between two fixed endpoints like every other kind, so it
                     // bypasses Evaluate()/mirrorEase entirely.
-                    Vector4 oscValue = UIMotionTrackEvaluator.EvaluateOscillation(track.kind, state.resolvedFrom, track.to.x, localT);
+                    Vector4 oscValue =
+                        UIMotionTrackEvaluator.EvaluateOscillation(track.kind, state.resolvedFrom, track.to.x, localT);
                     UIMotionTrackEvaluator.Write(track, oscValue);
                     if (localT >= 1f)
                         state.finished = true;
@@ -441,8 +659,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
 
             AnimatorStateInfo info = animator.GetCurrentAnimatorStateInfo(track.animatorLayer);
             bool reachedEnd = info.shortNameHash == track.animatorStateHash
-                && info.normalizedTime >= 1f
-                && !animator.IsInTransition(track.animatorLayer);
+                              && info.normalizedTime >= 1f
+                              && !animator.IsInTransition(track.animatorLayer);
 
             if (reachedEnd)
             {

@@ -11,18 +11,18 @@ namespace DracoRuan.PrebuildServices.UISystem.Views
     /// service Activates the view model, then calls BindViewModel; on close it calls
     /// UnbindViewModel first, then Deactivates the view model.
     /// </summary>
-    public abstract class UIView<TVM> : UIViewBase where TVM : UIViewModel
+    public abstract class UIView<TViewModel> : UIViewBase where TViewModel : UIViewModel
     {
         [UnityEngine.SerializeField] private Selectable defaultSelectable;
 
         private IDisposable _binding;
 
-        public TVM ViewModel { get; private set; }
+        public TViewModel ViewModel { get; private set; }
         public override Selectable DefaultSelectable => this.defaultSelectable;
 
-        protected abstract void Bind(ref UIBinder binder, TVM viewModel);
+        protected abstract void Bind(ref UIBinder binder, TViewModel viewModel);
 
-        internal void BindViewModel(TVM viewModel)
+        internal void BindViewModel(TViewModel viewModel)
         {
             this.ViewModel = viewModel;
             UIBinder binder = new UIBinder();

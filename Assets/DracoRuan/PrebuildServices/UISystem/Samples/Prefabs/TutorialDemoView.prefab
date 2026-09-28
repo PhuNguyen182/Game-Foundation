@@ -356,7 +356,7 @@ MonoBehaviour:
   m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 55
 --- !u!225 &6640101315120521360
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -381,6 +381,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71c2c8770a216294a8b9e9d046e720b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DracoRuan.PrebuildServices.UISystem.Samples::DracoRuan.PrebuildServices.UISystem.Samples.TutorialDemo.TutorialDemoView
+  canvas: {fileID: 1948584958397119854}
+  graphicRaycaster: {fileID: 8289683927685936681}
+  canvasGroup: {fileID: 6640101315120521360}
   defaultSelectable: {fileID: 0}
   runner: {fileID: 2412032269265431566}
   nextButton: {fileID: 473634966858702655}

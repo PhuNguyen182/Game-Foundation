@@ -21,6 +21,11 @@ namespace DracoRuan.PrebuildServices.UISystem.Binding
 
         public IDisposable Build() => this._builder.Build();
 
+        /// <summary>Registers a disposable to run on Unbind. Exposed so extension methods
+        /// outside this file (e.g. UIBinderTweenExtensions) can participate in the same
+        /// per-Bind() disposal without reaching into the private _builder field.</summary>
+        public void Add(IDisposable disposable) => disposable.AddTo(ref this._builder);
+
         // ---- One-way ----
 
         public void Text(TMP_Text target, Observable<string> source) =>
@@ -104,7 +109,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Binding
 
         // ---- Widget (nested, non-routed) ----
 
-        public void Widget<TChildVM>(UIWidget<TChildVM> widget, TChildVM viewModel) where TChildVM : class
+        public void Widget<TChildViewModel>(UIWidget<TChildViewModel> widget, TChildViewModel viewModel)
+            where TChildViewModel : class
         {
             widget.BindViewModel(viewModel);
             Disposable.Create(widget, static w => w.UnbindViewModel()).AddTo(ref this._builder);

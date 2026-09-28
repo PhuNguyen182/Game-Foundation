@@ -1,3 +1,4 @@
+using System;
 using Cysharp.Threading.Tasks;
 using DracoRuan.PrebuildServices.UISystem.Motion;
 using R3;
@@ -23,9 +24,9 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
 
         /// <summary>Optional: plays on an accepted click. Typically the ButtonPunch preset.</summary>
         [SerializeField] private UIMotion punchMotion;
+        [SerializeField] private Button button;
 
-        private Button _button;
-        private readonly Subject<Unit> _clicked = new Subject<Unit>();
+        private readonly Subject<Unit> _clicked = new();
         private IUIClickFeedback[] _feedbackHooks;
         private bool _externallyInteractable = true;
         private float _cooldownUntilUnscaledTime = -1f;
@@ -40,7 +41,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
             }
         }
 
-        public Button Button => this._button != null ? this._button : this._button = this.GetComponent<Button>();
+        public Button Button => this.button ? this.button : this.button = this.GetComponent<Button>();
 
         /// <summary>External interactable flag, independent of the cooldown lock (both must
         /// be true for the wrapped Button to actually accept clicks).</summary>
@@ -75,8 +76,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
 
         private void OnDestroy()
         {
-            if (this._button != null)
-                this._button.onClick.RemoveListener(this.HandleClick);
+            if (this.button)
+                this.button.onClick.RemoveListener(this.HandleClick);
             this._clicked.Dispose();
         }
 
@@ -91,7 +92,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
                 this.ApplyInteractable();
             }
 
-            if (this.punchMotion != null)
+            if (this.punchMotion)
                 this.punchMotion.PlayShowAsync().Forget();
 
             foreach (IUIClickFeedback hook in this._feedbackHooks)
@@ -118,5 +119,13 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
             this.cooldownSeconds = cooldownSeconds;
             this.EnsurePrepared();
         }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (!this.button)
+                this.button = this.GetComponent<Button>();
+        }
+#endif
     }
 }

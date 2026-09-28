@@ -768,7 +768,7 @@ MonoBehaviour:
   m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 55
 --- !u!225 &921660752258529554
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -793,6 +793,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd73774ec8f158d45bd544867e20b187, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DracoRuan.PrebuildServices.UISystem.Samples::DracoRuan.PrebuildServices.UISystem.Samples.Settings.SettingsScreenView
+  canvas: {fileID: 8868488765419265846}
+  graphicRaycaster: {fileID: 5888713770299526310}
+  canvasGroup: {fileID: 921660752258529554}
   defaultSelectable: {fileID: 0}
   musicToggle: {fileID: 5454936109873657460}
   volumeSlider: {fileID: 928000822440719003}

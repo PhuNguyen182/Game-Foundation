@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace DracoRuan.PrebuildServices.UISystem.Components
@@ -12,13 +13,14 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
     [RequireComponent(typeof(RectTransform))]
     public sealed class SafeAreaFitter : MonoBehaviour
     {
-        private RectTransform _rectTransform;
-        private Rect _lastSafeArea;
+        [SerializeField] private RectTransform rectTransform;
+        
         private ScreenOrientation _lastOrientation;
+        private Rect _lastSafeArea;
 
-        private RectTransform RectTransform => this._rectTransform != null
-            ? this._rectTransform
-            : this._rectTransform = (RectTransform)this.transform;
+        private RectTransform RectTransform => this.rectTransform
+            ? this.rectTransform
+            : this.rectTransform = (RectTransform)this.transform;
 
         private void OnEnable() => this.Apply(force: true);
 
@@ -53,5 +55,13 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
         /// <summary>Test-only hook (see AssemblyInfo.cs InternalsVisibleTo): runs Apply
         /// synchronously without depending on OnEnable/Update timing.</summary>
         internal void ApplyForTest() => this.Apply(force: true);
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (!this.rectTransform)
+                this.rectTransform = (RectTransform)this.transform;
+        }
+#endif
     }
 }

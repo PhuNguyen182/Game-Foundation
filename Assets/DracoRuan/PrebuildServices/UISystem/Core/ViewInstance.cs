@@ -18,7 +18,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         public GameObject GameObject;
         public UIViewBase View;
         public UIViewModel ViewModel;
-        public UIViewStateMachine StateMachine = new UIViewStateMachine();
+        public readonly UIViewStateMachine StateMachine = new();
         public int SortOrder;
         public UIScope OwningScope;
         public Action UnbindView;

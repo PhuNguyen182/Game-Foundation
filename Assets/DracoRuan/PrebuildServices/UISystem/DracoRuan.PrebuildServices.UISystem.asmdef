@@ -5,6 +5,7 @@
         "DracoRuan.PrebuildServices.UISystem.Logic",
         "DracoRuan.PrebuildServices.UISystem.MVVM",
         "DracoRuan.PrebuildServices.UISystem.Motion",
+        "DracoRuan.PrebuildServices.UISystem.Motion.Logic",
         "DracoRuan.Foundation.Initializers",
         "UniTask",
         "VContainer",

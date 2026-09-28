@@ -12,7 +12,7 @@ namespace DracoRuan.PrebuildServices.UISystem.MVVM
     /// </summary>
     public abstract class UIViewModel : IDisposable
     {
-        private static readonly CancellationToken CancelledActivationToken = new CancellationToken(true);
+        private static readonly CancellationToken CancelledActivationToken = new(true);
 
         private IDisposable _activation = Disposable.Empty;
         private DisposableBag _late;

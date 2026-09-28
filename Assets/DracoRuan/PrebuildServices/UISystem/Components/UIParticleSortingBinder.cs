@@ -28,7 +28,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
 
         private void Apply()
         {
-            if (this.canvas == null || this.particleRenderer == null)
+            if (!this.canvas || !this.particleRenderer)
                 return;
 
             this.particleRenderer.sortingOrder = this.canvas.sortingOrder + this.offset;

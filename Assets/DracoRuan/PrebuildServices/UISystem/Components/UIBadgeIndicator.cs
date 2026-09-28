@@ -61,18 +61,18 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
             int count = this._service.GetCount(this._key);
             bool visible = count > 0;
 
-            if (this.dot != null)
+            if (this.dot)
                 this.dot.SetActive(visible);
 
             string text = count > this.maxDisplayCount ? $"{this.maxDisplayCount}+" : count.ToString();
 
-            if (this.countLabel != null)
+            if (this.countLabel)
             {
                 this.countLabel.SetText(text);
                 this.countLabel.gameObject.SetActive(visible);
             }
 
-            if (this.countLabelLegacy != null)
+            if (this.countLabelLegacy)
             {
                 this.countLabelLegacy.text = text;
                 this.countLabelLegacy.gameObject.SetActive(visible);

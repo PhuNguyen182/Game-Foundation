@@ -9,15 +9,15 @@ namespace DracoRuan.PrebuildServices.UISystem.Views
     /// UIViewModel — widgets bind directly to whatever plain observable model their owner
     /// passes in.
     /// </summary>
-    public abstract class UIWidget<TVM> : UnityEngine.MonoBehaviour where TVM : class
+    public abstract class UIWidget<TViewModel> : UnityEngine.MonoBehaviour where TViewModel : class
     {
         private IDisposable _binding;
 
-        public TVM ViewModel { get; private set; }
+        public TViewModel ViewModel { get; private set; }
 
-        protected abstract void Bind(ref UIBinder binder, TVM viewModel);
+        protected abstract void Bind(ref UIBinder binder, TViewModel viewModel);
 
-        public void BindViewModel(TVM viewModel)
+        public void BindViewModel(TViewModel viewModel)
         {
             this.UnbindViewModel();
 
