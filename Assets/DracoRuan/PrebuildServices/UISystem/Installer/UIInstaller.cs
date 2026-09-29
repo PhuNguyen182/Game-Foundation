@@ -11,9 +11,9 @@ namespace DracoRuan.PrebuildServices.UISystem.Installer
     public sealed class UIInstaller : ScriptableObject, IInstaller
     {
         [SerializeField] private UIRootConfig rootConfig;
-        [SerializeField] private UIViewCollection viewCollection;
+        [SerializeField] private UIViewCollection[] viewCollections = System.Array.Empty<UIViewCollection>();
 
         public void Install(IContainerBuilder builder) =>
-            builder.AddUIService(this.rootConfig, this.viewCollection);
+            builder.AddUIService(this.rootConfig, this.viewCollections);
     }
 }

@@ -49,8 +49,11 @@ Dependencies: UniTask, VContainer, R3 (+ `R3.Unity`), Addressables (qua `USE_EXT
 - Đăng ký service trong `LifetimeScope`:
 
 ```csharp
-builder.AddUIService(rootConfig, registry);
+builder.AddUIService(rootConfig, collectionA, collectionB); // một hoặc nhiều UIViewCollection, gộp thành một registry
+builder.AddUIScope(sceneCollection);                        // tương tự cho scope theo scene
 ```
+
+Một definition xuất hiện ở nhiều collection chỉ được đăng ký một lần; hai definition khác nhau cùng ViewModel type vẫn báo lỗi khi khởi tạo.
 
 - Cấu hình view mới qua **UI Registry Window** (`Tools/DracoRuan/UISystem/Registry Window`), chọn ViewModel type qua type picker, gán prefab và preset (Screen/Popup/HUD/...).
 - Debug lúc Play mode qua **UI Debugger** (`Tools/DracoRuan/UISystem/UI Debugger`): xem stack, queue, input lock, VM đang mở.
