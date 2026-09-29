@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: DracoRuan.PrebuildServices.UISystem::DracoRuan.PrebuildServices.UISystem.Data.UIViewDefinition
   viewModelType:
     assemblyQualifiedName: DracoRuan.PrebuildServices.UISystem.Samples.Settings.SettingsScreenViewModel,
-      DracoRuan.PrebuildServices.UISystem.Samples
+      DracoRuan.PrebuildServices.UISystem.Samples, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
   layer: {fileID: 11400000, guid: 69a72e1caf63e9a4880b39099e8db7c1, type: 2}
   preset: 0
   prefab: {fileID: 8384435113888808242, guid: 4b46c98e484d8a340bef8ad3fcb56a75, type: 3}

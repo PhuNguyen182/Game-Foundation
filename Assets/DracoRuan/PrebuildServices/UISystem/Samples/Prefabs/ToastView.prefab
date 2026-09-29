@@ -79,7 +79,7 @@ MonoBehaviour:
   m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 55
 --- !u!225 &5297375707045983045
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -104,6 +104,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 717cd77eea4867e4599fc8c954dbaa08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DracoRuan.PrebuildServices.UISystem.Samples::DracoRuan.PrebuildServices.UISystem.Samples.Toast.ToastView
+  canvas: {fileID: 110616332796847792}
+  graphicRaycaster: {fileID: 5121868089804006773}
+  canvasGroup: {fileID: 5297375707045983045}
   defaultSelectable: {fileID: 0}
   messageText: {fileID: 251888838011665603}
 --- !u!1 &2741413729435743029

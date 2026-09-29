@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: DracoRuan.PrebuildServices.UISystem::DracoRuan.PrebuildServices.UISystem.Data.UIViewDefinition
   viewModelType:
     assemblyQualifiedName: DracoRuan.PrebuildServices.UISystem.Samples.TutorialDemo.TutorialDemoViewModel,
-      DracoRuan.PrebuildServices.UISystem.Samples
+      DracoRuan.PrebuildServices.UISystem.Samples, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
   layer: {fileID: 11400000, guid: 3ae6790887d15144684a631e1b28f831, type: 2}
   preset: 6
   prefab: {fileID: 5332193124669766399, guid: 61e8077318d9ab34287235b069ad0da3, type: 3}
