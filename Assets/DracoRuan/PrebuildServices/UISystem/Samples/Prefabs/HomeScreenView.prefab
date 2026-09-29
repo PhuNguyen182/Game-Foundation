@@ -219,7 +219,7 @@ MonoBehaviour:
   m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 55
 --- !u!225 &2569986993654736865
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -244,6 +244,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 932a37e8a3b255f4889c1602ef27e3aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: DracoRuan.PrebuildServices.UISystem.Samples::DracoRuan.PrebuildServices.UISystem.Samples.Home.HomeScreenView
+  canvas: {fileID: 4634350798261843742}
+  graphicRaycaster: {fileID: 5756392742688483197}
+  canvasGroup: {fileID: 2569986993654736865}
   defaultSelectable: {fileID: 0}
   openShopButton: {fileID: 7286947135310709795}
 --- !u!222 &1099140719583348111
@@ -557,3 +560,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: DracoRuan.PrebuildServices.UISystem::DracoRuan.PrebuildServices.UISystem.Components.UIButton
   cooldownSeconds: 0
   punchMotion: {fileID: 0}
+  button: {fileID: 6162874902241504278}

@@ -1,6 +1,9 @@
+using System;
+
 namespace DracoRuan.PrebuildServices.UISystem.Motion
 {
     // Numbered explicitly and append-only: values are serialized on UIMotionTrack.
+    [Serializable]
     public enum UIMotionTrackKind
     {
         Fade = 0,
