@@ -238,6 +238,40 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         {
             EnsureRegistered();
 
+            Playback playback = CreatePlayback(tracks, restPoses, speed, mirrorEase);
+            var handle = new UIMotionPlaybackHandle { Playback = playback };
+
+            // Reduce-motion: skip straight to the end instead of interpolating. Reuses
+            // the same "already past totalDuration" completion path below rather than a
+            // separate branch, so it is exercised by the exact same tested code as a
+            // zero-duration timeline.
+            if (ReduceMotion)
+                playback.elapsed = playback.totalDuration;
+
+            // Sample frame 0 synchronously instead of waiting for the next Tick: the
+            // UpdateServices callback runs before Update()/Start(), so a track that opens
+            // this same frame (e.g. OnEnable -> Restart -> PlayShowAsync from a button
+            // click) would otherwise render one full frame at the rest pose first.
+            TickTracksSafe(playback);
+
+            if (playback.elapsed >= playback.totalDuration)
+            {
+                playback.removed = true;
+                playback.completionSource.TrySetResult(UIMotionPlaybackResult.Completed);
+                return handle;
+            }
+
+            Instance._active.Add(playback);
+            return handle;
+        }
+
+        /// <summary>Builds a Playback (schedule, per-track state, pre-applied Start values)
+        /// without registering it with the runner or ticking it. Shared by Play and the
+        /// Editor's scrubbable Edit-mode preview (UIMotion.Preview.cs), which drives
+        /// `elapsed` itself.</summary>
+        internal static Playback CreatePlayback(
+            IReadOnlyList<UIMotionTrack> tracks, Vector4[] restPoses, float speed, bool[] mirrorEase)
+        {
             // Snapshot into an array: the caller's List<UIMotionTrack> is a live,
             // editor-editable field. Adding a track mid-playback must not let
             // trackStates/startTimes go out of sync with tracks.Count.
@@ -269,8 +303,6 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                 completionSource = new UniTaskCompletionSource<UIMotionPlaybackResult>(),
             };
 
-            var handle = new UIMotionPlaybackHandle { Playback = playback };
-
             // Pre-apply every useStartValue-on track's resolved Start value immediately,
             // even for tracks that won't actually start until later (AfterPrevious
             // chains). Otherwise a not-yet-started track still shows its rest pose -
@@ -278,28 +310,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             // visible until its own turn, then pop to invisible and fade in.
             PreApplyPendingStartValues(playback);
 
-            // Reduce-motion: skip straight to the end instead of interpolating. Reuses
-            // the same "already past totalDuration" completion path below rather than a
-            // separate branch, so it is exercised by the exact same tested code as a
-            // zero-duration timeline.
-            if (ReduceMotion)
-                playback.elapsed = playback.totalDuration;
-
-            // Sample frame 0 synchronously instead of waiting for the next Tick: the
-            // UpdateServices callback runs before Update()/Start(), so a track that opens
-            // this same frame (e.g. OnEnable -> Restart -> PlayShowAsync from a button
-            // click) would otherwise render one full frame at the rest pose first.
-            TickTracksSafe(playback);
-
-            if (playback.elapsed >= playback.totalDuration)
-            {
-                playback.removed = true;
-                playback.completionSource.TrySetResult(UIMotionPlaybackResult.Completed);
-                return handle;
-            }
-
-            Instance._active.Add(playback);
-            return handle;
+            return playback;
         }
 
         void IUpdateHandler.Tick(float _)
@@ -460,7 +471,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             }
         }
 
-        private static void PreApplyPendingStartValues(Playback playback)
+        internal static void PreApplyPendingStartValues(Playback playback)
         {
             for (int i = 0; i < playback.tracks.Length; i++)
             {

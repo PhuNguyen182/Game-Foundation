@@ -61,5 +61,5 @@ Một definition xuất hiện ở nhiều collection chỉ được đăng ký 
 ## Nợ kỹ thuật đang ghi nhận
 
 - **`UIRecycleList`** (virtualized list) hoãn vô thời hạn theo yêu cầu — không dùng cho collection binding, xem `REWRITE_PLAN.md` mục "Việc còn mở".
-- Editor tooling của `UIMotion` (Inspector timeline, preview `AnimationMode`, bộ preset mặc định) chưa hoàn thiện.
+- Editor tooling của `UIMotion` (Inspector, preview `AnimationMode` trong Edit mode) đang được làm.
 - Nhiều phần runtime (router, focus, Addressables load thật) mới xác minh bằng EditMode/PlayMode test tự động, chưa qua kiểm thử thủ công đầy đủ trên thiết bị thật. Xem mục 3 của `PROGRESS.md` trước khi dùng cho production.

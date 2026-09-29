@@ -35,8 +35,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tutorial
             this.mask ? this.mask : this.mask = this.GetComponent<UITutorialMaskController>();
 
         /// <summary>Root that UITutorialStep.targetPath resolves against - defaults to this
-        /// component's own Transform, same convention as UIMotionTrack.targetPath resolving
-        /// against the applying UIMotion's Transform.</summary>
+        /// component's own Transform.</summary>
         protected Transform ResolveRoot => this.resolveRoot ? this.resolveRoot : this.transform;
 
         /// <summary>Set before RunAsync() when a tutorial needs to highlight elements on

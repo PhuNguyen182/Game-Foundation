@@ -5,8 +5,10 @@
         "DracoRuan.PrebuildServices.UISystem.Logic",
         "DracoRuan.PrebuildServices.UISystem.MVVM",
         "DracoRuan.PrebuildServices.UISystem.Motion",
+        "DracoRuan.PrebuildServices.UISystem.Motion.Logic",
         "DracoRuan.PrebuildServices.UISystem",
-        "UniTask"
+        "UniTask",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [
         "Editor"

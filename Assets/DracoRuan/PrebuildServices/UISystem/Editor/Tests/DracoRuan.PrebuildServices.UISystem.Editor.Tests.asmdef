@@ -3,9 +3,12 @@
     "rootNamespace": "DracoRuan.PrebuildServices.UISystem.Editor.Tests",
     "references": [
         "DracoRuan.PrebuildServices.UISystem.MVVM",
+        "DracoRuan.PrebuildServices.UISystem.Motion",
+        "DracoRuan.PrebuildServices.UISystem.Motion.Logic",
         "DracoRuan.PrebuildServices.UISystem.Testing",
         "DracoRuan.PrebuildServices.UISystem",
         "DracoRuan.PrebuildServices.UISystem.Editor",
+        "Unity.TextMeshPro",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

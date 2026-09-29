@@ -10,10 +10,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Tutorial
     /// scripting"). A UITutorialBase in data-driven mode plays a List&lt;UITutorialStep&gt; in
     /// order; a scripted-scenario subclass doesn't use this type at all (see UITutorialBase).
     ///
-    /// `targetPath` mirrors UIMotionTrack.targetPath's convention (empty = the tutorial root
-    /// itself, non-empty = Transform.Find relative to it) rather than holding a direct scene
-    /// reference, because a tutorial step commonly needs to point at something on whatever
-    /// screen is active when the step runs - a direct reference can't survive that.
+    /// `targetPath` is a Transform.Find path relative to the tutorial root rather than a
+    /// direct scene reference, because a tutorial step commonly needs to point at something
+    /// on whatever screen is active when the step runs - a direct reference can't survive
+    /// that.
     /// </summary>
     [Serializable]
     public sealed class UITutorialStep

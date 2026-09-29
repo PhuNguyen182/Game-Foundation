@@ -6,6 +6,7 @@
         "DracoRuan.PrebuildServices.UISystem.Motion.Logic",
         "DracoRuan.PrebuildServices.UISystem.Motion",
         "UniTask",
+        "Unity.TextMeshPro",
         "DracoRuan.PrebuildServices.UISystem.MVVM",
         "DracoRuan.PrebuildServices.UISystem.Testing",
         "DracoRuan.PrebuildServices.UISystem",

@@ -14,14 +14,12 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
     /// OnEnable/OnParentShow/Manual triggers, Mirror Hide, cancellation-token
     /// snap-to-end, HideAndDeactivateAsync/SetActiveAnimated, reduce-motion
     /// (UIMotionRunner.ReduceMotion), stagger (one authored track fans out into one
-    /// clone per direct child of `target`, see ExpandStagger), and referencing a shared
-    /// UIMotionPreset (see `preset` field/PrepareTimelines) instead of authoring tracks
-    /// inline. All 12 UIMotionTrackKind values have an evaluator (see
-    /// UIMotionTrackEvaluator/UIMotionRunner). NOT yet implemented: the default preset
-    /// asset bundle, "Apply preset" (copy into inline tracks), and all Editor tooling
-    /// (Inspector timeline, AnimationMode preview, validators).
+    /// clone per direct child of `target`, see ExpandStagger). Every UIMotion owns its own
+    /// inline tracks - there is no shared preset asset. All 12 UIMotionTrackKind values
+    /// have an evaluator (see UIMotionTrackEvaluator/UIMotionRunner). NOT yet implemented:
+    /// validators.
     /// </summary>
-    public class UIMotion : MonoBehaviour
+    public partial class UIMotion : MonoBehaviour
     {
         [SerializeField] private List<UIMotionTrack> showTracks = new List<UIMotionTrack>();
         [SerializeField] private List<UIMotionTrack> hideTracks = new List<UIMotionTrack>();
@@ -33,14 +31,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         /// BuildMirrorHideTimeline for the exact per-track rule.</summary>
         [SerializeField] private bool mirrorHide;
 
-        /// <summary>When set, replaces showTracks/hideTracks/mirrorHide above entirely -
-        /// "tham chiếu preset (dùng chung)" (REWRITE_PLAN.md 2.7). The two are not
-        /// combined; "Apply preset" (copying it into this component's own inline tracks
-        /// instead of referencing it live) is an Editor-tooling operation, not built yet.</summary>
-        [SerializeField] private UIMotionPreset preset;
-
         private bool _prepared;
-        private bool _effectiveMirrorHide;
 
         /// <summary>Authored showTracks/hideTracks with every `stagger` track expanded
         /// into one concrete clone per direct child of its target (ExpandStagger). This,
@@ -103,60 +94,50 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             this.PrepareTimelines();
         }
 
-        /// <summary>Resolves a preset's Self/path tracks (if referenced) against this
-        /// Transform, expands stagger tracks, and captures rest poses against the result.
+        /// <summary>Expands stagger tracks and captures rest poses against the result.
         /// Shared by EnsurePrepared and ConfigureForTest so the two never drift.</summary>
         private void PrepareTimelines()
         {
-            List<UIMotionTrack> showSource = this.preset != null ? this.preset.ShowTracks : this.showTracks;
-            List<UIMotionTrack> hideSource = this.preset != null ? this.preset.HideTracks : this.hideTracks;
-            this._effectiveMirrorHide = this.preset != null ? this.preset.MirrorHide : this.mirrorHide;
-
-            List<UIMotionTrack> showResolved = ResolvePresetTargets(showSource, this.transform);
-            List<UIMotionTrack> hideResolved = ResolvePresetTargets(hideSource, this.transform);
-
-            this._showExpanded = ExpandStagger(showResolved);
-            this._hideExpanded = ExpandStagger(hideResolved);
+            this._showExpanded = ExpandStagger(this.WithSelfTargets(this.showTracks));
+            this._hideExpanded = ExpandStagger(this.WithSelfTargets(this.hideTracks));
             ResolveTargetCaches(this._showExpanded);
             ResolveTargetCaches(this._hideExpanded);
             this._showRestPoses = CaptureRestPoses(this._showExpanded);
             this._hideRestPoses = CaptureRestPoses(this._hideExpanded);
         }
 
-        /// <summary>Resolves every track's UIMotionTrack.resolvedXxx component cache once,
+        /// <summary>A track whose `target` was left empty animates this UIMotion's own GameObject,
+        /// so the common "animate myself" case needs no drag-and-drop. Returns `tracks` itself when
+        /// nothing needs replacing; otherwise a copy where each empty-target track is a Clone
+        /// pointing at this GameObject (the authored track is never modified).</summary>
+        private List<UIMotionTrack> WithSelfTargets(List<UIMotionTrack> tracks)
+        {
+            List<UIMotionTrack> resolved = null;
+            for (int i = 0; i < tracks.Count; i++)
+            {
+                // ReferenceEquals: only a truly unset field. A reference to a since-destroyed
+                // object must stay inert instead of silently retargeting to this object.
+                if (!ReferenceEquals(tracks[i].target, null))
+                    continue;
+
+                resolved ??= new List<UIMotionTrack>(tracks);
+                UIMotionTrack self = tracks[i].Clone();
+                self.target = this.gameObject;
+                resolved[i] = self;
+            }
+
+            return resolved ?? tracks;
+        }
+
+        /// <summary>Resolves every track's UIMotionTrack.ResolvedXxx component cache once,
         /// covering every shape PrepareTimelines can produce - authored tracks (passed
-        /// through unchanged by ResolvePresetTargets), preset-path-resolved clones, and
-        /// stagger's per-child clones - so CaptureRestPoses (right below) and every later
-        /// tick already read from the cache instead of the first tick re-resolving it.</summary>
+        /// through unchanged by ExpandStagger) and stagger's per-child clones - so
+        /// CaptureRestPoses (right below) and every later tick already read from the cache
+        /// instead of the first tick re-resolving it.</summary>
         private static void ResolveTargetCaches(UIMotionTrack[] tracks)
         {
             for (int i = 0; i < tracks.Length; i++)
                 UIMotionTrackEvaluator.ResolveTargetCache(tracks[i]);
-        }
-
-        /// <summary>Replaces `targetPath != null` tracks' `target` with the Transform it
-        /// resolves to against `root` ("" = Self, else Transform.Find) - see
-        /// UIMotionTrack.targetPath. A track with `targetPath == null` (every authored
-        /// live track so far) passes through untouched. A path that doesn't resolve under
-        /// this particular hierarchy leaves `target` null, same as any other misconfigured
-        /// track: inert, not a crash.</summary>
-        private static List<UIMotionTrack> ResolvePresetTargets(List<UIMotionTrack> tracks, Transform root)
-        {
-            var result = new List<UIMotionTrack>(tracks.Count);
-            foreach (UIMotionTrack source in tracks)
-            {
-                if (source.targetPath == null)
-                {
-                    result.Add(source);
-                    continue;
-                }
-
-                UIMotionTrack resolved = source.Clone();
-                resolved.target = source.targetPath.Length == 0 ? root : root.Find(source.targetPath);
-                result.Add(resolved);
-            }
-
-            return result;
         }
 
         /// <summary>Snaps every track (both timelines) back to its rest pose, then plays Show.</summary>
@@ -179,7 +160,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         {
             this.EnsurePrepared();
 
-            if (this._effectiveMirrorHide)
+            if (this.mirrorHide)
             {
                 (UIMotionTrack[] tracks, bool[] mirrorEase) = this.BuildMirrorHideTimeline();
                 return this.PlayCore(tracks, this._showRestPoses, mirrorEase, ct, isShowTimeline: false);
@@ -229,7 +210,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             this.EnsurePrepared();
             this.StopCurrent();
 
-            if (this._effectiveMirrorHide)
+            if (this.mirrorHide)
             {
                 (UIMotionTrack[] tracks, _) = this.BuildMirrorHideTimeline();
                 SnapToEndValues(tracks, this._showRestPoses);
@@ -247,15 +228,13 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         /// captured rest pose.</summary>
         internal void ConfigureForTest(
             IEnumerable<UIMotionTrack> show, IEnumerable<UIMotionTrack> hide,
-            bool mirrorHide = false, float speedOverride = 1f, UIMotionTrigger trigger = UIMotionTrigger.Manual,
-            UIMotionPreset preset = null)
+            bool mirrorHide = false, float speedOverride = 1f, UIMotionTrigger trigger = UIMotionTrigger.Manual)
         {
             this.showTracks = new List<UIMotionTrack>(show);
             this.hideTracks = new List<UIMotionTrack>(hide);
             this.mirrorHide = mirrorHide;
             this.speedOverride = speedOverride;
             this.trigger = trigger;
-            this.preset = preset;
 
             this._prepared = true;
             UIMotionRunner.EnsureRegistered();
@@ -370,7 +349,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                 UIMotionTrackEvaluator.ResolveTargetCache(mirrored);
 
                 if (source.kind == UIMotionTrackKind.Punch || source.kind == UIMotionTrackKind.Shake
-                    || source.kind == UIMotionTrackKind.Custom || source.kind == UIMotionTrackKind.AnimatorState)
+                                                           || source.kind == UIMotionTrackKind.Custom ||
+                                                           source.kind == UIMotionTrackKind.AnimatorState)
                 {
                     // Self-mirroring: Punch/Shake oscillate around "wherever it happens to
                     // be" with no direction to reverse, Custom owns its own from/to through
@@ -394,8 +374,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                 else
                 {
                     bool started = lastShow != null
-                        && i < lastShow.trackStates.Length
-                        && lastShow.trackStates[i].started;
+                                   && i < lastShow.trackStates.Length
+                                   && lastShow.trackStates[i].started;
                     Vector4 snapshot = started ? lastShow.trackStates[i].resolvedFrom : rest;
 
                     mirrored.useStartValue = false;
@@ -420,9 +400,11 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             bool multiplicative = track.kind == UIMotionTrackKind.Scale;
 
             Float4 from = track.useStartValue
-                ? UIMotionValueResolver.Resolve(track.fromValueMode, track.from.ToFloat4(), restF, restF, parentSize, multiplicative)
+                ? UIMotionValueResolver.Resolve(track.fromValueMode, track.from.ToFloat4(), restF, restF, parentSize,
+                    multiplicative)
                 : restF;
-            Float4 to = UIMotionValueResolver.Resolve(track.toValueMode, track.to.ToFloat4(), restF, from, parentSize, multiplicative);
+            Float4 to = UIMotionValueResolver.Resolve(track.toValueMode, track.to.ToFloat4(), restF, from, parentSize,
+                multiplicative);
 
             return (from.ToVector4(), to.ToVector4());
         }
@@ -443,7 +425,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         {
             var scheduleInputs = new UIMotionScheduleInput[authored.Count];
             for (int i = 0; i < authored.Count; i++)
-                scheduleInputs[i] = new UIMotionScheduleInput(authored[i].startMode, authored[i].offset, authored[i].duration);
+                scheduleInputs[i] =
+                    new UIMotionScheduleInput(authored[i].startMode, authored[i].offset, authored[i].duration);
             float[] baseStartTimes = UIMotionScheduler.ComputeStartTimes(scheduleInputs);
 
             var result = new List<UIMotionTrack>(authored.Count);
@@ -548,9 +531,11 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                 bool multiplicative = track.kind == UIMotionTrackKind.Scale;
 
                 Float4 start = track.useStartValue
-                    ? UIMotionValueResolver.Resolve(track.fromValueMode, track.from.ToFloat4(), rest, rest, parentSize, multiplicative)
+                    ? UIMotionValueResolver.Resolve(track.fromValueMode, track.from.ToFloat4(), rest, rest, parentSize,
+                        multiplicative)
                     : rest;
-                Float4 end = UIMotionValueResolver.Resolve(track.toValueMode, track.to.ToFloat4(), rest, start, parentSize, multiplicative);
+                Float4 end = UIMotionValueResolver.Resolve(track.toValueMode, track.to.ToFloat4(), rest, start,
+                    parentSize, multiplicative);
 
                 Vector4 endVector = end.ToVector4();
                 if (track.kind == UIMotionTrackKind.Rotate)

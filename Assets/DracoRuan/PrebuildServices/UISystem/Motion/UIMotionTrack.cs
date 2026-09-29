@@ -13,18 +13,13 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
     [Serializable]
     public class UIMotionTrack
     {
-        public UIMotionTrackKind kind = UIMotionTrackKind.Fade;
-        public UnityEngine.Object target;
+        [SerializeField] public UIMotionTrackKind kind = UIMotionTrackKind.Fade;
 
-        /// <summary>Alternative to a direct `target` reference: null means "use `target`
-        /// as-is, ignore this field" (every authored track so far); "" means "resolve to
-        /// the applying UIMotion's own Transform (Self)"; a non-empty string is a
-        /// `Transform.Find` path relative to it. This is what lets a UIMotionPreset asset
-        /// - which cannot hold a scene reference - describe "Self" or "a named child" and
-        /// have it resolved fresh against whichever GameObject the preset gets applied to
-        /// (REWRITE_PLAN.md 2.7: "Track trong preset trỏ tới Self hoặc tới đường dẫn con").
-        /// Resolved once in UIMotion.PrepareTimelines, not re-resolved per tick.</summary>
-        public string targetPath;
+        /// <summary>What this track animates. Left empty it means the owning UIMotion's own GameObject
+        /// (UIMotion.WithSelfTargets); a GameObject or any component on it is resolved to the component
+        /// the `kind` needs, so the target must actually have one (Fade: a CanvasGroup, or a Graphic such as
+        /// Image / TextMeshPro; Move: a RectTransform; ...).</summary>
+        [SerializeField] public UnityEngine.Object target;
 
         /// <summary>Only meaningful when kind == Rect: which RectTransform property this
         /// track animates.</summary>
@@ -51,7 +46,6 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         public UIMotionValueMode toValueMode = UIMotionValueMode.Absolute;
         public Vector4 to;
 
-        public int loops = 1;
         public bool stagger;
         public float staggerDelay = 0.05f;
 
@@ -66,33 +60,38 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         /// schedules AfterPrevious chains for this kind; actual completion is always
         /// polled live (see UIMotionRunner.TickAnimatorTrack), never assumed from it.</summary>
         public int animatorLayer;
+
         public string animatorStateName = "";
         public int animatorStateHash;
         public float animatorSpeed = 1f;
 
         /// <summary>Resolved-once component cache for `target`, populated by
         /// UIMotionTrackEvaluator.ResolveTargetCache (called from UIMotion.PrepareTimelines
-        /// for every kind of track - authored, stagger-cloned, preset-resolved, or built by
-        /// test code via ConfigureForTest - and again from OnValidate for Editor Inspector
-        /// preview). Not serialized: rebuilt fresh every time PrepareTimelines runs, so a
+        /// for every kind of track - authored, stagger-cloned, or built by test code via
+        /// ConfigureForTest). Not serialized: rebuilt fresh every time PrepareTimelines runs, so a
         /// stale reference here can never survive a domain reload or an edited `target`.
         /// UIMotionTrackEvaluator.Write reads these directly instead of re-casting/
         /// TryGetComponent-ing `target` every tick - see REWRITE_PLAN.md 2.7 perf notes.</summary>
-        [NonSerialized] internal CanvasGroup resolvedCanvasGroup;
-        [NonSerialized] internal RectTransform resolvedRectTransform;
-        [NonSerialized] internal Transform resolvedTransform;
-        [NonSerialized] internal Graphic resolvedGraphic;
-        [NonSerialized] internal Image resolvedImage;
-        [NonSerialized] internal GameObject resolvedGameObject;
-        [NonSerialized] internal bool resolvedCacheValid;
+        [NonSerialized] internal CanvasGroup ResolvedCanvasGroup;
+
+        [NonSerialized] internal RectTransform ResolvedRectTransform;
+        [NonSerialized] internal Transform ResolvedTransform;
+        [NonSerialized] internal Graphic ResolvedGraphic;
+
+        /// <summary>Fade only: the Graphic whose alpha Fade drives instead of a CanvasGroup (see
+        /// UIMotionTrackEvaluator.ResolveTargetCache); null means Fade uses the CanvasGroup.</summary>
+        [NonSerialized] internal Graphic ResolvedFadeGraphic;
+
+        [NonSerialized] internal Image ResolvedImage;
+        [NonSerialized] internal GameObject ResolvedGameObject;
+        [NonSerialized] internal bool ResolvedCacheValid;
 
         public float Evaluate(float t) => useCurve ? this.curve.Evaluate(t) : UIEase.Evaluate(this.ease, t);
 
         /// <summary>Field-for-field copy. Used wherever a derived track needs to start
         /// from an authored one and override a few fields - stagger's per-child clones,
-        /// Mirror Hide's generated timeline, and preset target resolution - instead of
-        /// each re-listing every field (three near-identical copies is what earned this
-        /// method instead of a fourth). Deliberately does NOT copy the resolved-target
+        /// and Mirror Hide's generated timeline - instead of each re-listing every field
+        /// (near-identical copies is what earned this method). Deliberately does NOT copy the resolved-target
         /// cache above: a clone always gets a different `target` (a stagger child, a
         /// mirrored track, ...), so inheriting the source's cache would point it at the
         /// wrong component until the next PrepareTimelines call happened to overwrite it.</summary>
@@ -100,7 +99,6 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         {
             kind = this.kind,
             target = this.target,
-            targetPath = this.targetPath,
             rectProperty = this.rectProperty,
             preserveVisualPosition = this.preserveVisualPosition,
             startMode = this.startMode,
@@ -114,7 +112,6 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             from = this.from,
             toValueMode = this.toValueMode,
             to = this.to,
-            loops = this.loops,
             stagger = this.stagger,
             staggerDelay = this.staggerDelay,
             animatorLayer = this.animatorLayer,

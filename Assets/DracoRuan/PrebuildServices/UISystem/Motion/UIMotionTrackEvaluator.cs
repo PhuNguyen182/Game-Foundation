@@ -20,7 +20,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
     /// (benchmarked: ~0.83us/track/frame vs ~0.37us/track/frame for a plain delegate
     /// call). ResolveTargetCache below now does that resolution exactly once - from
     /// UIMotion.PrepareTimelines, covering every track shape (authored, stagger-cloned,
-    /// preset-resolved, test-configured) - and Capture/Write read the cached component
+    /// test-configured) - and Capture/Write read the cached component
     /// reference directly. A destroyed target is still handled safely: the cached
     /// reference is a UnityEngine.Object, so `if (track.resolvedX)` catches Unity's
     /// "fake null" the same way the old `!= null` check did, at the same cost as any
@@ -34,6 +34,14 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         /// preview and tune it by eye.</summary>
         private const float OscillationCycles = 3f;
 
+#if UNITY_EDITOR
+        /// <summary>Edit-mode preview hook: invoked with the track just before Write touches
+        /// its target, so the Inspector's AnimationMode recorder can register the property
+        /// (and let Unity restore it) before the first change. Null - and compiled out of
+        /// player builds - whenever no preview is running.</summary>
+        internal static System.Action<UIMotionTrack> PreWrite;
+#endif
+
         /// <summary>
         /// Resolves `track.target` into every cached component field its `kind` (and, for
         /// Rect, every `rectProperty`) could ever need, exactly once. Safe to call
@@ -44,13 +52,21 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         /// </summary>
         public static void ResolveTargetCache(UIMotionTrack track)
         {
-            AsRectTransform(track.target, out track.resolvedRectTransform);
-            AsTransform(track.target, out track.resolvedTransform);
-            As(track.target, out track.resolvedCanvasGroup);
-            As(track.target, out track.resolvedGraphic);
-            As(track.target, out track.resolvedImage);
-            AsGameObject(track.target, out track.resolvedGameObject);
-            track.resolvedCacheValid = true;
+            AsRectTransform(track.target, out track.ResolvedRectTransform);
+            AsTransform(track.target, out track.ResolvedTransform);
+            As(track.target, out track.ResolvedCanvasGroup);
+            As(track.target, out track.ResolvedGraphic);
+            As(track.target, out track.ResolvedImage);
+            AsGameObject(track.target, out track.ResolvedGameObject);
+
+            // Fade drives one of two things. A Graphic assigned directly (Image, TextMeshPro,
+            // RawImage...) fades that graphic's own color alpha; otherwise a CanvasGroup on the
+            // target wins (it also fades every child), and a Graphic on the target is the
+            // fallback when there is no CanvasGroup - so Fade works without adding a CanvasGroup.
+            track.ResolvedFadeGraphic = track.target is Graphic || !track.ResolvedCanvasGroup
+                ? track.ResolvedGraphic
+                : null;
+            track.ResolvedCacheValid = true;
         }
 
         public static Vector4 Capture(UIMotionTrack track)
@@ -58,29 +74,40 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             switch (track.kind)
             {
                 case UIMotionTrackKind.Fade:
-                    return track.resolvedCanvasGroup ? new Vector4(track.resolvedCanvasGroup.alpha, 0f, 0f, 0f) : Vector4.zero;
+                    if (track.ResolvedFadeGraphic)
+                        return new Vector4(track.ResolvedFadeGraphic.color.a, 0f, 0f, 0f);
+
+                    return track.ResolvedCanvasGroup
+                        ? new Vector4(track.ResolvedCanvasGroup.alpha, 0f, 0f, 0f)
+                        : Vector4.zero;
 
                 case UIMotionTrackKind.Move:
-                    return track.resolvedRectTransform ? (Vector4)(Vector2)track.resolvedRectTransform.anchoredPosition : Vector4.zero;
+                    return track.ResolvedRectTransform
+                        ? (Vector4)(Vector2)track.ResolvedRectTransform.anchoredPosition
+                        : Vector4.zero;
 
                 case UIMotionTrackKind.Scale:
                 case UIMotionTrackKind.Punch:
-                    return track.resolvedTransform ? (Vector4)track.resolvedTransform.localScale : Vector4.zero;
+                    return track.ResolvedTransform ? (Vector4)track.ResolvedTransform.localScale : Vector4.zero;
 
                 case UIMotionTrackKind.Rotate:
-                    return track.resolvedTransform ? (Vector4)track.resolvedTransform.localEulerAngles : Vector4.zero;
+                    return track.ResolvedTransform ? (Vector4)track.ResolvedTransform.localEulerAngles : Vector4.zero;
 
                 case UIMotionTrackKind.Color:
-                    return track.resolvedGraphic ? (Vector4)track.resolvedGraphic.color : Vector4.zero;
+                    return track.ResolvedGraphic ? (Vector4)track.ResolvedGraphic.color : Vector4.zero;
 
                 case UIMotionTrackKind.Fill:
-                    return track.resolvedImage ? new Vector4(track.resolvedImage.fillAmount, 0f, 0f, 0f) : Vector4.zero;
+                    return track.ResolvedImage ? new Vector4(track.ResolvedImage.fillAmount, 0f, 0f, 0f) : Vector4.zero;
 
                 case UIMotionTrackKind.Shake:
-                    return track.resolvedRectTransform ? (Vector4)(Vector2)track.resolvedRectTransform.anchoredPosition : Vector4.zero;
+                    return track.ResolvedRectTransform
+                        ? (Vector4)(Vector2)track.ResolvedRectTransform.anchoredPosition
+                        : Vector4.zero;
 
                 case UIMotionTrackKind.SetActive:
-                    return track.resolvedGameObject ? new Vector4(track.resolvedGameObject.activeSelf ? 1f : 0f, 0f, 0f, 0f) : Vector4.zero;
+                    return track.ResolvedGameObject
+                        ? new Vector4(track.ResolvedGameObject.activeSelf ? 1f : 0f, 0f, 0f, 0f)
+                        : Vector4.zero;
 
                 case UIMotionTrackKind.Rect:
                     return CaptureRect(track);
@@ -92,7 +119,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
 
         private static Vector4 CaptureRect(UIMotionTrack track)
         {
-            RectTransform rt = track.resolvedRectTransform;
+            RectTransform rt = track.ResolvedRectTransform;
             if (!rt)
                 return Vector4.zero;
 
@@ -101,7 +128,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                 case UIMotionRectProperty.AnchoredPosition: return (Vector4)(Vector2)rt.anchoredPosition;
                 case UIMotionRectProperty.AnchorMin: return (Vector4)(Vector2)rt.anchorMin;
                 case UIMotionRectProperty.AnchorMax: return (Vector4)(Vector2)rt.anchorMax;
-                case UIMotionRectProperty.Anchors: return new Vector4(rt.anchorMin.x, rt.anchorMin.y, rt.anchorMax.x, rt.anchorMax.y);
+                case UIMotionRectProperty.Anchors:
+                    return new Vector4(rt.anchorMin.x, rt.anchorMin.y, rt.anchorMax.x, rt.anchorMax.y);
                 case UIMotionRectProperty.Pivot: return (Vector4)(Vector2)rt.pivot;
                 case UIMotionRectProperty.SizeDelta: return (Vector4)(Vector2)rt.sizeDelta;
                 case UIMotionRectProperty.OffsetMin: return (Vector4)(Vector2)rt.offsetMin;
@@ -112,50 +140,62 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
 
         public static void Write(UIMotionTrack track, Vector4 value)
         {
+#if UNITY_EDITOR
+            PreWrite?.Invoke(track);
+#endif
             switch (track.kind)
             {
                 case UIMotionTrackKind.Fade:
-                    if (track.resolvedCanvasGroup)
-                        track.resolvedCanvasGroup.alpha = value.x;
+                    if (track.ResolvedFadeGraphic)
+                    {
+                        Color faded = track.ResolvedFadeGraphic.color;
+                        faded.a = value.x;
+                        track.ResolvedFadeGraphic.color = faded;
+                    }
+                    else if (track.ResolvedCanvasGroup)
+                    {
+                        track.ResolvedCanvasGroup.alpha = value.x;
+                    }
+
                     break;
 
                 case UIMotionTrackKind.Move:
-                    if (track.resolvedRectTransform)
-                        track.resolvedRectTransform.anchoredPosition = value;
+                    if (track.ResolvedRectTransform)
+                        track.ResolvedRectTransform.anchoredPosition = value;
                     break;
 
                 case UIMotionTrackKind.Scale:
                 case UIMotionTrackKind.Punch:
-                    if (track.resolvedTransform)
-                        track.resolvedTransform.localScale = value;
+                    if (track.ResolvedTransform)
+                        track.ResolvedTransform.localScale = value;
                     break;
 
                 case UIMotionTrackKind.Rotate:
-                    if (track.resolvedTransform)
-                        track.resolvedTransform.localEulerAngles = value;
+                    if (track.ResolvedTransform)
+                        track.ResolvedTransform.localEulerAngles = value;
                     break;
 
                 case UIMotionTrackKind.Color:
-                    if (track.resolvedGraphic)
-                        track.resolvedGraphic.color = value;
+                    if (track.ResolvedGraphic)
+                        track.ResolvedGraphic.color = value;
                     break;
 
                 case UIMotionTrackKind.Fill:
-                    if (track.resolvedImage)
-                        track.resolvedImage.fillAmount = value.x;
+                    if (track.ResolvedImage)
+                        track.ResolvedImage.fillAmount = value.x;
                     break;
 
                 case UIMotionTrackKind.Shake:
-                    if (track.resolvedRectTransform)
-                        track.resolvedRectTransform.anchoredPosition = value;
+                    if (track.ResolvedRectTransform)
+                        track.ResolvedRectTransform.anchoredPosition = value;
                     break;
 
                 case UIMotionTrackKind.SetActive:
                     // Discrete, not interpolated. UIMotionRunner fires this exactly once,
                     // the moment the track starts - never on every tick - so value.x is
                     // always either 0 or 1 here (see UIMotionRunner.TickTracks).
-                    if (track.resolvedGameObject)
-                        track.resolvedGameObject.SetActive(value.x > 0.5f);
+                    if (track.ResolvedGameObject)
+                        track.ResolvedGameObject.SetActive(value.x > 0.5f);
                     break;
 
                 case UIMotionTrackKind.Rect:
@@ -166,7 +206,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
 
         private static void WriteRect(UIMotionTrack track, Vector4 value)
         {
-            RectTransform rt = track.resolvedRectTransform;
+            RectTransform rt = track.ResolvedRectTransform;
             if (!rt)
                 return;
 
@@ -201,7 +241,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                     break;
 
                 case UIMotionRectProperty.Anchors:
-                    WriteAnchors(rt, new Vector2(value.x, value.y), new Vector2(value.z, value.w), track.preserveVisualPosition);
+                    WriteAnchors(rt, new Vector2(value.x, value.y), new Vector2(value.z, value.w),
+                        track.preserveVisualPosition);
                     break;
             }
         }
@@ -234,7 +275,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         /// chaining writes across many ticks preserves the on-screen edges throughout the
         /// whole track, not just at its endpoints.
         /// </summary>
-        private static void WriteAnchors(RectTransform rt, Vector2 newAnchorMin, Vector2 newAnchorMax, bool preserveVisualPosition)
+        private static void WriteAnchors(RectTransform rt, Vector2 newAnchorMin, Vector2 newAnchorMax,
+            bool preserveVisualPosition)
         {
             if (!preserveVisualPosition)
             {
@@ -257,8 +299,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             rt.anchorMin = newAnchorMin;
             rt.anchorMax = newAnchorMax;
 
-            rt.offsetMin = new Vector2(leftEdge - newAnchorMin.x * parentSize.x, bottomEdge - newAnchorMin.y * parentSize.y);
-            rt.offsetMax = new Vector2(rightEdge - newAnchorMax.x * parentSize.x, topEdge - newAnchorMax.y * parentSize.y);
+            rt.offsetMin = new Vector2(leftEdge - newAnchorMin.x * parentSize.x,
+                bottomEdge - newAnchorMin.y * parentSize.y);
+            rt.offsetMax = new Vector2(rightEdge - newAnchorMax.x * parentSize.x,
+                topEdge - newAnchorMax.y * parentSize.y);
         }
 
         /// <summary>
@@ -361,7 +405,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         /// </summary>
         public static Vector4 GetParentSize(UIMotionTrack track)
         {
-            RectTransform rt = track.resolvedRectTransform;
+            RectTransform rt = track.ResolvedRectTransform;
             if (!rt)
                 return Vector4.zero;
 

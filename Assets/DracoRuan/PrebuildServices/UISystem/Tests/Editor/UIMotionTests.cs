@@ -41,7 +41,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         /// animatorStateHash should be set to.</summary>
         private Animator NewAnimatorWithState(GameObject go, string stateName, float clipLength)
         {
-            var controller = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPath(TempControllerPath);
+            var controller =
+                UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPath(TempControllerPath);
             var clip = new AnimationClip();
             clip.SetCurve("", typeof(Transform), "localPosition.x", AnimationCurve.Linear(0f, 0f, clipLength, 1f));
             UnityEditor.AssetDatabase.AddObjectToAsset(clip, controller);
@@ -328,8 +329,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         {
             var basePose = new Vector4(2f, 2f, 2f, 0f);
 
-            Assert.That(UIMotionTrackEvaluator.EvaluateOscillation(UIMotionTrackKind.Punch, basePose, 0.5f, 0f), Is.EqualTo(basePose));
-            Assert.That(UIMotionTrackEvaluator.EvaluateOscillation(UIMotionTrackKind.Punch, basePose, 0.5f, 1f), Is.EqualTo(basePose));
+            Assert.That(UIMotionTrackEvaluator.EvaluateOscillation(UIMotionTrackKind.Punch, basePose, 0.5f, 0f),
+                Is.EqualTo(basePose));
+            Assert.That(UIMotionTrackEvaluator.EvaluateOscillation(UIMotionTrackKind.Punch, basePose, 0.5f, 1f),
+                Is.EqualTo(basePose));
         }
 
         [Test]
@@ -347,8 +350,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         {
             var basePose = new Vector4(10f, 5f, 0f, 0f);
 
-            Assert.That(UIMotionTrackEvaluator.EvaluateOscillation(UIMotionTrackKind.Shake, basePose, 3f, 0f), Is.EqualTo(basePose));
-            Assert.That(UIMotionTrackEvaluator.EvaluateOscillation(UIMotionTrackKind.Shake, basePose, 3f, 1f), Is.EqualTo(basePose));
+            Assert.That(UIMotionTrackEvaluator.EvaluateOscillation(UIMotionTrackKind.Shake, basePose, 3f, 0f),
+                Is.EqualTo(basePose));
+            Assert.That(UIMotionTrackEvaluator.EvaluateOscillation(UIMotionTrackKind.Shake, basePose, 3f, 1f),
+                Is.EqualTo(basePose));
         }
 
         [Test]
@@ -437,7 +442,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
             Assert.That(fake.CaptureStartCalls, Is.EqualTo(1));
         }
 
-        private RectTransform NewPointAnchoredRect(string name, Transform parent, Vector2 sizeDelta, Vector2 anchoredPosition)
+        private RectTransform NewPointAnchoredRect(string name, Transform parent, Vector2 sizeDelta,
+            Vector2 anchoredPosition)
         {
             GameObject go = this.NewGameObject(name);
             go.transform.SetParent(parent, worldPositionStays: false);
@@ -469,7 +475,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         {
             UIMotion motion = this.NewMotion(out GameObject motionGo);
             RectTransform parentRt = NewPointAnchoredRect("Parent", null, new Vector2(200f, 100f), Vector2.zero);
-            RectTransform childRt = this.NewPointAnchoredRect("Child", parentRt, new Vector2(50f, 50f), new Vector2(20f, 10f));
+            RectTransform childRt =
+                this.NewPointAnchoredRect("Child", parentRt, new Vector2(50f, 50f), new Vector2(20f, 10f));
 
             var before = new Vector3[4];
             childRt.GetWorldCorners(before);
@@ -502,7 +509,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         {
             UIMotion motion = this.NewMotion(out GameObject motionGo);
             RectTransform parentRt = NewPointAnchoredRect("Parent", null, new Vector2(200f, 100f), Vector2.zero);
-            RectTransform childRt = this.NewPointAnchoredRect("Child", parentRt, new Vector2(50f, 50f), new Vector2(20f, 10f));
+            RectTransform childRt =
+                this.NewPointAnchoredRect("Child", parentRt, new Vector2(50f, 50f), new Vector2(20f, 10f));
 
             var before = new Vector3[4];
             childRt.GetWorldCorners(before);
@@ -534,7 +542,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         {
             UIMotion motion = this.NewMotion(out GameObject motionGo);
             RectTransform parentRt = NewPointAnchoredRect("Parent", null, new Vector2(200f, 100f), Vector2.zero);
-            RectTransform childRt = this.NewPointAnchoredRect("Child", parentRt, new Vector2(50f, 50f), new Vector2(20f, 10f));
+            RectTransform childRt =
+                this.NewPointAnchoredRect("Child", parentRt, new Vector2(50f, 50f), new Vector2(20f, 10f));
             childRt.pivot = new Vector2(0.5f, 0.5f);
 
             var before = new Vector3[4];
@@ -568,7 +577,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         {
             UIMotion motion = this.NewMotion(out GameObject motionGo);
             RectTransform parentRt = NewPointAnchoredRect("Parent", null, new Vector2(200f, 100f), Vector2.zero);
-            RectTransform childRt = this.NewPointAnchoredRect("Child", parentRt, new Vector2(50f, 50f), new Vector2(20f, 10f));
+            RectTransform childRt =
+                this.NewPointAnchoredRect("Child", parentRt, new Vector2(50f, 50f), new Vector2(20f, 10f));
             childRt.pivot = new Vector2(0.5f, 0.5f);
 
             var before = new Vector3[4];
@@ -601,7 +611,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         {
             UIMotion motion = this.NewMotion(out GameObject motionGo);
             RectTransform parentRt = NewPointAnchoredRect("Parent", null, new Vector2(200f, 100f), Vector2.zero);
-            RectTransform childRt = this.NewPointAnchoredRect("Child", parentRt, new Vector2(50f, 50f), new Vector2(0f, 0f));
+            RectTransform childRt =
+                this.NewPointAnchoredRect("Child", parentRt, new Vector2(50f, 50f), new Vector2(0f, 0f));
 
             var showPos = new UIMotionTrack
             {
@@ -736,124 +747,138 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
             Assert.That(info.normalizedTime, Is.LessThan(1f));
         }
 
+        private static UIMotionTrack FadeTo(Object target, float alpha) => new UIMotionTrack
+        {
+            kind = UIMotionTrackKind.Fade,
+            target = target,
+            useStartValue = true,
+            from = new Vector4(1f, 0, 0, 0),
+            to = new Vector4(alpha, 0, 0, 0),
+            duration = 0f,
+        };
+
         [Test]
-        public void Preset_SelfPath_ResolvesToTheApplyingMotionsOwnTransform()
+        public void Fade_OnAnImageWithoutACanvasGroup_FadesTheImagesOwnAlpha()
+        {
+            UIMotion motion = this.NewMotion(out GameObject go);
+            var image = go.AddComponent<UnityEngine.UI.Image>();
+            image.color = new Color(1f, 0.5f, 0.25f, 1f);
+            motion.ConfigureForTest(new[] { FadeTo(go, 0.2f) }, new UIMotionTrack[0]);
+
+            motion.PlayShowAsync().GetAwaiter().GetResult();
+
+            Assert.That(image.color.a, Is.EqualTo(0.2f).Within(0.0001f));
+            Assert.That(image.color.r, Is.EqualTo(1f));
+            Assert.That(image.color.g, Is.EqualTo(0.5f));
+            Assert.That(image.color.b, Is.EqualTo(0.25f));
+        }
+
+        [Test]
+        public void Fade_OnTextMeshPro_FadesTheTextsOwnAlpha()
+        {
+            UIMotion motion = this.NewMotion(out GameObject go);
+            var text = go.AddComponent<TMPro.TextMeshProUGUI>();
+            text.color = new Color(0.1f, 0.2f, 0.3f, 1f);
+            motion.ConfigureForTest(new[] { FadeTo(text, 0.2f) }, new UIMotionTrack[0]);
+
+            motion.PlayShowAsync().GetAwaiter().GetResult();
+
+            Assert.That(text.color.a, Is.EqualTo(0.2f).Within(0.0001f));
+            Assert.That(text.color.r, Is.EqualTo(0.1f).Within(0.0001f));
+        }
+
+        [Test]
+        public void Fade_WhenTheTargetHasACanvasGroupAndAGraphic_PrefersTheCanvasGroup()
         {
             UIMotion motion = this.NewMotion(out GameObject go);
             CanvasGroup cg = go.AddComponent<CanvasGroup>();
-            cg.alpha = 0f;
+            var image = go.AddComponent<UnityEngine.UI.Image>();
+            motion.ConfigureForTest(new[] { FadeTo(go, 0.2f) }, new UIMotionTrack[0]);
 
-            var preset = ScriptableObject.CreateInstance<UIMotionPreset>();
+            motion.PlayShowAsync().GetAwaiter().GetResult();
+
+            Assert.That(cg.alpha, Is.EqualTo(0.2f).Within(0.0001f));
+            Assert.That(image.color.a, Is.EqualTo(1f));
+        }
+
+        [Test]
+        public void Fade_WhenTheGraphicItselfIsTheTarget_FadesThatGraphicEvenWithACanvasGroupPresent()
+        {
+            UIMotion motion = this.NewMotion(out GameObject go);
+            CanvasGroup cg = go.AddComponent<CanvasGroup>();
+            var image = go.AddComponent<UnityEngine.UI.Image>();
+            motion.ConfigureForTest(new[] { FadeTo(image, 0.2f) }, new UIMotionTrack[0]);
+
+            motion.PlayShowAsync().GetAwaiter().GetResult();
+
+            Assert.That(image.color.a, Is.EqualTo(0.2f).Within(0.0001f));
+            Assert.That(cg.alpha, Is.EqualTo(1f));
+        }
+
+        [Test]
+        public void Fade_MirrorHide_ReturnsAGraphicFadeToItsStart()
+        {
+            UIMotion motion = this.NewMotion(out GameObject go);
+            var image = go.AddComponent<UnityEngine.UI.Image>();
+            motion.ConfigureForTest(new[] { FadeTo(go, 0.2f) }, new UIMotionTrack[0], mirrorHide: true);
+
+            motion.PlayShowAsync().GetAwaiter().GetResult();
+            Assert.That(image.color.a, Is.EqualTo(0.2f).Within(0.0001f));
+
+            motion.PlayHideAsync().GetAwaiter().GetResult();
+
+            Assert.That(image.color.a, Is.EqualTo(1f).Within(0.0001f));
+        }
+
+        [Test]
+        public void EmptyTarget_AnimatesTheMotionsOwnGameObject_WithoutTouchingTheAuthoredTrack()
+        {
+            UIMotion motion = this.NewMotion(out GameObject go);
+            CanvasGroup cg = go.AddComponent<CanvasGroup>();
+            cg.alpha = 0.3f;
+
             var show = new UIMotionTrack
             {
                 kind = UIMotionTrackKind.Fade,
-                targetPath = "", // Self
+                target = null,
                 useStartValue = true,
                 from = new Vector4(0f, 0, 0, 0),
                 to = new Vector4(1f, 0, 0, 0),
                 duration = 0f,
             };
-            preset.ConfigureForTest(new[] { show }, new UIMotionTrack[0]);
-            motion.ConfigureForTest(new UIMotionTrack[0], new UIMotionTrack[0], preset: preset);
+            motion.ConfigureForTest(new[] { show }, new UIMotionTrack[0]);
 
             motion.PlayShowAsync().GetAwaiter().GetResult();
 
             Assert.That(cg.alpha, Is.EqualTo(1f));
-            Object.DestroyImmediate(preset);
+            Assert.That(show.target == null, Is.True, "the authored track must stay unset");
         }
 
         [Test]
-        public void Preset_ChildPath_ResolvesToTheNamedChildUnderTheApplyingMotion()
-        {
-            UIMotion motion = this.NewMotion(out GameObject go);
-            GameObject child = this.NewGameObject("Icon");
-            child.transform.SetParent(go.transform);
-            CanvasGroup childCg = child.AddComponent<CanvasGroup>();
-            childCg.alpha = 0f;
-
-            var preset = ScriptableObject.CreateInstance<UIMotionPreset>();
-            var show = new UIMotionTrack
-            {
-                kind = UIMotionTrackKind.Fade,
-                targetPath = "Icon",
-                useStartValue = true,
-                from = new Vector4(0f, 0, 0, 0),
-                to = new Vector4(1f, 0, 0, 0),
-                duration = 0f,
-            };
-            preset.ConfigureForTest(new[] { show }, new UIMotionTrack[0]);
-            motion.ConfigureForTest(new UIMotionTrack[0], new UIMotionTrack[0], preset: preset);
-
-            motion.PlayShowAsync().GetAwaiter().GetResult();
-
-            Assert.That(childCg.alpha, Is.EqualTo(1f));
-            Object.DestroyImmediate(preset);
-        }
-
-        [Test]
-        public void Preset_MirrorHideFlag_IsRespected()
+        public void DestroyedTarget_StaysInert_InsteadOfRetargetingToTheMotionsOwnGameObject()
         {
             UIMotion motion = this.NewMotion(out GameObject go);
             CanvasGroup cg = go.AddComponent<CanvasGroup>();
-            cg.alpha = 1f;
+            cg.alpha = 0.3f;
 
-            var preset = ScriptableObject.CreateInstance<UIMotionPreset>();
+            GameObject other = this.NewGameObject("Other");
+            CanvasGroup otherCg = other.AddComponent<CanvasGroup>();
+            Object.DestroyImmediate(otherCg);
+
             var show = new UIMotionTrack
             {
                 kind = UIMotionTrackKind.Fade,
-                targetPath = "",
+                target = otherCg,
                 useStartValue = true,
                 from = new Vector4(0f, 0, 0, 0),
                 to = new Vector4(1f, 0, 0, 0),
                 duration = 0f,
             };
-            preset.ConfigureForTest(new[] { show }, new UIMotionTrack[0], mirrorHide: true);
-            motion.ConfigureForTest(new UIMotionTrack[0], new UIMotionTrack[0], preset: preset);
-
-            // Mirror Hide of a useStartValue track ends at its authored Start (0),
-            // proving the preset's own mirrorHide=true took effect (the component's own
-            // inline `mirrorHide` field, left at its default false, is ignored while a
-            // preset is referenced).
-            motion.PlayHideAsync().GetAwaiter().GetResult();
-
-            Assert.That(cg.alpha, Is.EqualTo(0f));
-            Object.DestroyImmediate(preset);
-        }
-
-        [Test]
-        public void Preset_WhenSet_InlineTracksAreIgnored()
-        {
-            UIMotion motion = this.NewMotion(out GameObject go);
-            CanvasGroup cg = go.AddComponent<CanvasGroup>();
-            cg.alpha = 0f;
-
-            var inlineShow = new UIMotionTrack
-            {
-                kind = UIMotionTrackKind.Fade,
-                target = cg,
-                useStartValue = true,
-                from = new Vector4(0f, 0, 0, 0),
-                to = new Vector4(0.3f, 0, 0, 0), // distinct from the preset's target, to tell them apart
-                duration = 0f,
-            };
-
-            var preset = ScriptableObject.CreateInstance<UIMotionPreset>();
-            var presetShow = new UIMotionTrack
-            {
-                kind = UIMotionTrackKind.Fade,
-                targetPath = "",
-                useStartValue = true,
-                from = new Vector4(0f, 0, 0, 0),
-                to = new Vector4(1f, 0, 0, 0),
-                duration = 0f,
-            };
-            preset.ConfigureForTest(new[] { presetShow }, new UIMotionTrack[0]);
-            motion.ConfigureForTest(new[] { inlineShow }, new UIMotionTrack[0], preset: preset);
+            motion.ConfigureForTest(new[] { show }, new UIMotionTrack[0]);
 
             motion.PlayShowAsync().GetAwaiter().GetResult();
 
-            Assert.That(cg.alpha, Is.EqualTo(1f), "should have played the preset's track, not the inline one");
-            Object.DestroyImmediate(preset);
+            Assert.That(cg.alpha, Is.EqualTo(0.3f));
         }
 
         private sealed class FakeCustomTrack : MonoBehaviour, IUIMotionCustomTrack

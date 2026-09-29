@@ -164,7 +164,7 @@ Bản 2 gọi là MVVM nhưng thực chất là **view-first/MVP**. API `OpenAsy
 | B10 | **UI Debugger** (Editor window ở Play mode): stack, queue, input lock, VM đang active, binding count | Debug navigation phức tạp |
 | B11 | **UI scale** runtime (hệ số nhân `CanvasScaler`) cho tuỳ chọn cỡ UI trên PC/Console | Yêu cầu accessibility phổ biến trên PC/Console |
 | B12 | Extension point **`IUITextLocalizer`** + binder `b.Localized(text, key, args)`. Adapter tới `ILocalizationService` đặt ở phía game. `PrebuildServices/Localization` chưa có asmdef nên UISystem chưa reference được | Text tĩnh vẫn dùng `LocalizableTextMeshPro`, text động thì bind qua VM |
-| B13 | **`UIMotion`** (mục 2.7): component animation độc lập. Timeline trong Inspector, preview trong Edit mode, có Show/Hide và preset SO. Runtime tự sample, không phụ thuộc thư viện tween. Có track Animator State | Một asset/component thay cho 4–5 SO. Chỉnh trực quan, dùng được cho mọi object. Không khoá vào thư viện nào |
+| B13 | **`UIMotion`** (mục 2.7): component animation độc lập. Timeline trong Inspector, preview trong Edit mode, có Show/Hide, mỗi component tự giữ track của nó (không có preset SO). Runtime tự sample, không phụ thuộc thư viện tween. Có track Animator State | Một asset/component thay cho 4–5 SO. Chỉnh trực quan, dùng được cho mọi object. Không khoá vào thư viện nào |
 | B14 | **View preset** (mục 2.2) + **Hint/Tooltip** (`UIAnchorPlacement`) + **HUD** (`visibleOnScreens`) + `UITabGroup` được đưa lên phase chính | Một primitive duy nhất cho router, còn hành vi do cờ quyết định. Tooltip và tab là nhu cầu phổ biến của mid-core |
 
 **Loại bỏ / đơn giản hoá:**
@@ -182,7 +182,7 @@ Bản 2 gọi là MVVM nhưng thực chất là **view-first/MVP**. API `OpenAsy
 | `…UISystem.Logic` | `Logic/` | Không | `UIStack`, `UIPopupQueue` (priority + FIFO), `SortOrderAllocator`, `UIViewStateMachine` (Hidden→Showing→Shown→Hiding, chống re-entrance), `InputLockCounter`, `BackRouter` |
 | `…UISystem.MVVM` | `MVVM/` | Không | `UIViewModel`, `UIViewModel<TArgs>`, `IResultViewModel<TResult>`, `BackResult`, `UICommand` / `AsyncUICommand`, `IUINavigator`. Chỉ reference R3 core + ObservableCollections (+ `.R3`) |
 | `…UISystem.Testing` | `Testing/` | Không | `FakeUINavigator` (ghi lại các lệnh open/close, trả result giả) để game test VM |
-| `…UISystem.Motion` | `Motion/` | Có | `UIMotion`, `UIMotionTrack`, `UIEase`, `UIMotionRunner`, `UIMotionPreset` SO, `IUIMotionTriggerSource`, `IUIMotionCustomTrack`. **Không reference UISystem runtime.** Chỉ phụ thuộc UniTask + `PlayerLoopSystem.UpdateServices` |
+| `…UISystem.Motion` | `Motion/` | Có | `UIMotion`, `UIMotionTrack`, `UIEase`, `UIMotionRunner`, `IUIMotionTriggerSource`, `IUIMotionCustomTrack`. **Không reference UISystem runtime.** Chỉ phụ thuộc UniTask + `PlayerLoopSystem.UpdateServices` |
 | `…UISystem.Motion.Editor` | `Motion/Editor/` | Editor | Inspector timeline, preview/scrub bằng `AnimationMode`, bake Animator track, validator |
 | `…UISystem` | `Data/ Core/ Core/Loading/ Views/ Binding/ Components/ Focus/ Input/ Installer/` | Có | Runtime uGUI trực tiếp: `IUIService : IUINavigator`, registry, router, VM factory/scope, layer root, `UIView<TVM>`, `UIWidget<TVM>`, `UIBinder`, components, focus, back input, installer. Reference `Motion` (chiều ngược lại thì không) |
 | `…UISystem.Editor` | `Editor/` | Editor | Registry window, VM type picker, validator + build validator, UI Debugger |
@@ -358,9 +358,9 @@ protected override void Bind(ref UIBinder b, ShopViewModel vm) {
   Mỗi layer chỉ có một hint: mở hint mới thì hint cũ bị thay. Bấm ra ngoài thì đóng. Trên PC/Console, hint mở khi hover hoặc khi đích được focus (gamepad).
 - **Loading**: `IUIAssetProvider` có 2 cách load là Direct và Addressables. Addressables dùng lease + refcount, theo mẫu `AudioSystem/Core/Loading/AudioClipLibrary.cs` + `AudioClipLease.cs`. Instantiate thẳng vào parent với `worldPositionStays = false` (sửa A5). Preload chạy trong `IAsyncInitializable` của service. `Application.lowMemory` → release view KeepAlive đang ẩn.
 - **Components**:
-  - `UIButton` là class concrete, không kế thừa view. Cooldown tuỳ chọn (mặc định 0), dùng unscaled time. Trạng thái `interactable` tách khỏi cooldown lock (AND hai cờ). Có hook `IUIClickFeedback` để game cắm AudioSystem/MobileVibration. Click punch là preset `ButtonPunch` của `UIMotion`.
+  - `UIButton` là class concrete, không kế thừa view. Cooldown tuỳ chọn (mặc định 0), dùng unscaled time. Trạng thái `interactable` tách khỏi cooldown lock (AND hai cờ). Có hook `IUIClickFeedback` để game cắm AudioSystem/MobileVibration. Click punch là một `UIMotion` riêng trên nút (track Punch).
   - `UISlider`, `UIToggle`, `UITabGroup`.
-  - `SafeAreaFitter`, `UIBackdrop`, `UIParticleSortingBinder`, `UIAnchorPlacement`. Effect idle (pulse/shake) dùng `UIMotion` có loop.
+  - `SafeAreaFitter`, `UIBackdrop`, `UIParticleSortingBinder`, `UIAnchorPlacement`. Effect idle lặp vô hạn (pulse/shake) hiện chưa hỗ trợ: field `loops` của track đã bị bỏ.
   - `UIRecycleList`.
 - **Events**: `Observable<UIViewEvent>` (Opened / Closed / Focused / BackAtRoot, kèm VM type) cho analytics và tutorial.
 - **Installer**: `UIInstaller` (SO, `[AutoInstall]`) + `builder.AddUIService(rootConfig, registry)` + `builder.AddUIScope(registry)`, theo mẫu `AudioSystem/Installer/`. Installer tự `Register` VM trong registry với lifetime Transient.
@@ -398,7 +398,7 @@ protected override void Bind(ref UIBinder b, ShopViewModel vm) {
 **Công nghệ sử dụng** (không có thư viện bên thứ ba):
 | Phần | Công nghệ |
 |---|---|
-| Lưu dữ liệu | `MonoBehaviour` + `ScriptableObject` (preset), serialization **thường** của Unity |
+| Lưu dữ liệu | `MonoBehaviour` + `ScriptableObject` (definition/registry), serialization **thường** của Unity |
 | Nội suy | Toán tự viết (`LerpUnclamped`), bộ ease Penner (khoảng 30 hàm tĩnh, cùng công thức DOTween/PrimeTween dùng), `AnimationCurve.Evaluate` |
 | Vòng lặp runtime | Một `UIMotionRunner` trên PlayerLoop, dùng lại `PlayerLoopSystem/UpdateServices` (`IUpdateHandler`), lấy `Time.unscaledDeltaTime` |
 | Await | UniTask, completion source có pool |
@@ -413,7 +413,6 @@ protected override void Bind(ref UIBinder b, ShopViewModel vm) {
   - `startMode` + `offset`, `duration`;
   - `UIEase` hoặc `AnimationCurve`;
   - `bool useStartValue` + `Vector4 from` (start value) + `Vector4 to` (target value). Kiểu `Vector4` đủ cho float/Vector2/Vector3/Color. Xem mục "Start / Target value" bên dưới;
-  - `loops` (−1 = vô hạn, chỉ dành cho effect idle);
   - `stagger` + `staggerDelay` (áp dụng lần lượt cho các con);
   - các field riêng của Animator (xem bên dưới).
   
@@ -440,12 +439,11 @@ protected override void Bind(ref UIBinder b, ShopViewModel vm) {
   
   Cả Start lẫn Target đều chọn được **"Rest"**, nghĩa là dùng đúng giá trị lúc rest (vị trí thiết kế).
 - **Stagger**: mỗi object con tự chụp giá trị hiện tại của riêng nó.
-- **Loop**: start value chụp **một lần** khi track bắt đầu, và mọi vòng lặp dùng lại giá trị đó (không trôi dần sau mỗi vòng).
 - **Kind không áp dụng**:
   - `AnimatorState` và `SetActive` ẩn cả Start lẫn Target.
   - `Punch` và `Shake` luôn dao động quanh giá trị hiện tại rồi trả về đúng giá trị đó, nên ẩn toggle và chỉ có biên độ.
   - `Custom` nhận callback `CaptureStart()` khi track bắt đầu.
-- **Cách dùng khuyến nghị** (các preset mặc định làm theo, Inspector có gợi ý):
+- **Cách dùng khuyến nghị** (Inspector có gợi ý):
   - **Show**: bật `useStartValue` (ví dụ alpha 0, scale 0.8), với Target = Rest. Lần mở đầu tiên, component đang ở pose thiết kế. Nếu Show tắt start value thì sẽ chạy từ 1 tới 1, tức không có chuyển động. Validator **cảnh báo** trường hợp Show có track tắt start value mà Target trùng giá trị rest.
   - **Hide**: tắt `useStartValue` (đi từ chỗ hiện tại tới alpha 0 / scale 0.8). Nhờ vậy khi Hide cắt ngang Show đang chạy dở, chuyển động nối tiếp **mượt**, không bị giật về đầu.
 - **Mirror Show xử lý theo từng track**:
@@ -479,7 +477,7 @@ protected override void Bind(ref UIBinder b, ShopViewModel vm) {
   - **Cảnh báo** khi có 2 track cùng ghi một thuộc tính của cùng RectTransform trong khoảng thời gian chồng nhau. Ví dụ `Move` và `Rect/AnchoredPosition`, hoặc `Anchors` và `AnchorMin`.
 - **Preview** (`AnimationMode`): đăng ký property path `m_AnchoredPosition`, `m_AnchorMin`, `m_AnchorMax`, `m_Pivot`, `m_SizeDelta`, nên Unity khôi phục đủ khi tắt preview.
 - **Mở rộng**: kind `Custom` tham chiếu tới một component implement `IUIMotionCustomTrack` (`Capture` / `Sample(t)` / `Snap`). Đây là tham chiếu Unity bình thường nên không có rủi ro serialization.
-- **Preset**: `UIMotionPreset` (SO) chứa timeline dùng chung, ví dụ PopupIn, SlideFromBottom, ScreenPush, ToastDrop, Pulse, ButtonPunch. Track trong preset trỏ tới `Self` hoặc tới đường dẫn con. Có thể "Apply preset" (copy vào component) hoặc tham chiếu preset (dùng chung). Foundation kèm sẵn một bộ preset.
+- **Không có preset**: mỗi `UIMotion` là một component riêng giữ track của chính nó. Đã bỏ `UIMotionPreset` và `UIMotionTrack.targetPath` (xem PROGRESS.md): target luôn là tham chiếu kéo thả.
 
 **Hành vi**
 - **Trigger**:
@@ -501,7 +499,7 @@ protected override void Bind(ref UIBinder b, ShopViewModel vm) {
 - **Cancel qua `CancellationToken` mà không có lần play mới** thì snap về pose cuối của timeline đang chạy, để UI không bao giờ kẹt ở trạng thái mờ dở.
 - Luôn dùng **unscaled time**. Có `speed` (UIView có `speedOverride`) và "reduce motion" (tất cả thành Instant).
 - Code API nhỏ `UIMotionRunner.Tween(from, to, duration, ease, state, setter)`, dạng struct state, không closure, cho các effect viết bằng code. Binder `b.CountUp` dùng API này.
-- `UIButton` punch và pulse chỉ là **preset** của `UIMotion`. Không có `UILoopEffect` riêng.
+- `UIButton` punch là một `UIMotion` riêng trên nút. Không có `UILoopEffect` riêng.
 
 **Runtime performance (mọi platform)**
 - **Một** `UIMotionRunner` tick mọi motion đang chạy trong một callback PlayerLoop.
@@ -537,11 +535,12 @@ Ba yêu cầu của user: test được trong Editor, runtime tốt trên mọi 
   - **Mirror Show không áp dụng được** cho Animator track (Animator không phát ngược được nếu không có tham số speed). Timeline Show có Animator track mà Hide chọn Mirror thì validator báo lỗi và yêu cầu chỉ định state Hide riêng. Animator track không có Start/Target value: pose do clip quyết định.
 
 **Test trong Editor (mọi loại track)**
-- Inspector của `UIMotion` và `UIMotionPreset` có:
+- Inspector của `UIMotion` có:
   - timeline vẽ trực tiếp (mỗi track là một thanh theo thời điểm bắt đầu và duration đã tính, màu theo `kind`);
   - nút "Add Track" (liệt kê giá trị enum);
   - kéo thả target;
-  - Play Show / Play Hide / scrub / loop.
+  - mỗi track có foldout (thu/mở, có Expand all / Collapse all) và chỉ hiện các field liên quan tới `kind`;
+  - Play Show / Play Hide / Pause / Stop / scrub ngay trong Edit mode (không loop).
 - **Preview dùng `AnimationMode`** cho mọi track: mọi lệnh ghi giá trị đi qua một helper duy nhất, helper này đăng ký `AddPropertyModification` trước khi ghi. Nhờ vậy khi tắt preview, Unity tự khôi phục. **Preview không bao giờ ghi vào scene hay prefab.**
 - Tự dừng preview khi:
   - đổi selection;
@@ -552,13 +551,12 @@ Ba yêu cầu của user: test được trong Editor, runtime tốt trên mọi 
 
 **Ổn định dữ liệu**
 - Serialization thường nên không cần `[MovedFrom]`, `[Preserve]` hay `link.xml` cho track. Thêm giá trị enum mới thì chỉ **append** vào cuối và ghi giá trị số tường minh, không bao giờ đánh lại số.
-- Có `dataVersion` trên `UIMotion` và `UIMotionPreset`. Khi format thay đổi thì migration chạy trong `OnValidate`/`ISerializationCallbackReceiver` (chỉ trong Editor).
+- Có `dataVersion` trên `UIMotion`. Khi format thay đổi thì migration chạy trong `OnValidate`/`ISerializationCallbackReceiver` (chỉ trong Editor).
 - Validator bắt các lỗi:
   - `target` sai kiểu so với `kind` (ví dụ Fade nhưng target không phải `CanvasGroup`);
   - target null;
   - target nằm ngoài hierarchy của motion (tham chiếu chéo prefab);
-  - `duration ≤ 0`;
-  - loop vô hạn trong timeline Hide (Hide sẽ không bao giờ xong).
+  - `duration ≤ 0`.
 - Runtime chịu được target bị destroy giữa chừng: dùng Unity null-check, bỏ qua track đó và vẫn hoàn thành motion. Motion bị destroy thì tự huỷ đăng ký khỏi runner và hoàn thành task, không treo `await`.
 
 **Đánh giá độ ổn định (nói thẳng)**
@@ -577,7 +575,7 @@ UISystem/
   Logic/        Navigation/ Queue/ Layers/ Lifecycle/ Input/                 (.Logic, no engine)
   MVVM/         ViewModels/ Commands/ Navigation/                            (.MVVM, no engine)
   Testing/                                                                  (.Testing, no engine)
-  Motion/       Runtime/ Tracks/ Easing/ Presets/ Editor/                     (.Motion + .Motion.Editor, độc lập với UIView)
+  Motion/       Runtime/ Tracks/ Easing/ Editor/                     (.Motion + .Motion.Editor, độc lập với UIView)
   Data/ Core/ Core/Loading/ Views/ Binding/
   Components/ Focus/ Input/ Installer/                                       (runtime asmdef ở root UISystem)
   Editor/       Windows/ Drawers/ Validation/ Debugger/                      (.Editor)
@@ -623,7 +621,7 @@ Ngoài ra: asmdef mới cần thêm `Unity.Addressables`/`Unity.ResourceManager`
 4a. **Motion** (mục 2.7). Asmdef `Motion` + `Motion.Editor`, không phụ thuộc UIView, có thể làm song song với phase 1–3:
    - `UIEase` + test đối chiếu giá trị tham chiếu. Schedule + test `startMode` → thời điểm bắt đầu.
    - `UIMotionRunner`, `UIMotionTrack` + các evaluator tĩnh (Fade/Move/Scale/Rotate/Color/Fill/Punch/Shake/SetActive/Custom).
-   - Show/Hide/Mirror, trigger, `UIMotionPreset` + bộ preset mặc định.
+   - Show/Hide/Mirror, trigger.
    - `AnimatorState` track + bake + validator. **Xác minh sớm** `keepAnimatorStateOnDisable` / `writeDefaultValuesOnDisable` trên 6000.3.
    - Inspector timeline + preview bằng `AnimationMode` (dừng preview khi save, đổi selection, vào Play mode, reload assembly).
    - Track `Rect` (6 thuộc tính, bù pivot/anchor) + validator LayoutGroup và trùng thuộc tính.
@@ -667,9 +665,9 @@ Ngoài ra: asmdef mới cần thêm `Unity.Addressables`/`Unity.ResourceManager`
   - (n) sau Close không còn subscription nào (đếm binding bằng UI Debugger/test hook);
   - (o) cancel `UIMotion` giữa chừng thì về đúng pose cuối. Play khi đang play thì snap lần cũ rồi chạy lại;
   - (p) tắt/bật lại object thì motion chạy lại từ frame 0. View không có `UIMotion` thì mở/đóng Instant;
-  - (q) Hide được await xong mới despawn. Hide có loop vô hạn thì validator báo lỗi;
+  - (q) Hide được await xong mới despawn;
   - (r) track `AnimatorState` kết thúc đúng lúc với `timeScale = 0`, snap khi cancel, timeout khi state sai, và Animator bị tắt sau khi track xong;
-  - (r2) target bị destroy giữa chừng không làm treo `await`, và motion loop (pulse/punch) dừng sạch khi hide hoặc destroy;
+  - (r2) target bị destroy giữa chừng không làm treo `await`, và motion đang chạy dừng sạch khi hide hoặc destroy;
   - (r3) track `Rect`:
     - đổi Pivot và Anchors khi bật "giữ nguyên vị trí hiển thị" thì world corners không đổi (sai số < 0.01);
     - Reset/Snap khôi phục đủ 5 thuộc tính RectTransform;
@@ -678,7 +676,6 @@ Ngoài ra: asmdef mới cần thêm `Unity.Addressables`/`Unity.ResourceManager`
     - track tắt `useStartValue` chụp giá trị hiện tại **lúc track bắt đầu** (sau offset và sau track trước);
     - hai track nối tiếp trên cùng thuộc tính chạy liền mạch;
     - timeline trộn track bật và tắt chạy đúng;
-    - loop không trôi giá trị sau mỗi vòng;
     - Hide cắt ngang Show giữa chừng thì chuyển tiếp mượt (không giật);
     - Mirror của track tắt start value trả về đúng snapshot;
     - tắt toggle rồi bật lại vẫn giữ Start value đã nhập;
