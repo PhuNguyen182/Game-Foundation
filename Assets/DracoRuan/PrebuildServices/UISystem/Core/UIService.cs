@@ -39,7 +39,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         private readonly Dictionary<string, List<ViewInstance>> _popupsByLayer = new();
         private readonly Dictionary<string, UIPopupQueue<Func<UniTask>>> _queueByLayer = new();
         private readonly Dictionary<Type, ViewInstance> _openByType = new();
-        private readonly Dictionary<Type, GameObject> _keepAliveCache = new();
+        private readonly Dictionary<Type, UIViewBase> _keepAliveCache = new();
         private readonly List<UIScope> _scopes = new();
 
         private readonly UIRegistry _rootRegistry;
@@ -111,10 +111,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                         out UIScope _))
                     continue;
 
-                GameObject cached = this._keepAliveCache[vmType];
+                UIViewBase cached = this._keepAliveCache[vmType];
                 this._keepAliveCache.Remove(vmType);
                 this._assetProvider.ReleasePrefab(definition, definition.Prefab);
-                UnityEngine.Object.Destroy(cached);
+                UnityEngine.Object.Destroy(cached.gameObject);
             }
         }
 
@@ -210,11 +210,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                 if (!definition.Preload || definition.CachePolicy != UICachePolicy.KeepAlive)
                     continue;
 
-                (GameObject go, bool _) = await this.AcquireInstanceAsync(definition, CancellationToken.None);
-                var view = go.GetComponent<UIViewBase>();
+                (UIViewBase view, bool _) = await this.AcquireInstanceAsync(definition, CancellationToken.None);
                 view.OnCreated(); // preload bypasses OpenCoreAsync, so this is the only place it can fire
-                ApplyHide(definition, view, go);
-                this._keepAliveCache[definition.ViewModelType] = go;
+                ApplyHide(definition, view, view.gameObject);
+                this._keepAliveCache[definition.ViewModelType] = view;
             }
 
             this._isInitialized = true;
@@ -354,22 +353,22 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         // Instance acquisition (Direct load, KeepAlive cache)
         // ---------------------------------------------------------------
 
-        private async UniTask<(GameObject GameObject, bool IsFreshInstance)> AcquireInstanceAsync(
+        private async UniTask<(UIViewBase View, bool IsFreshInstance)> AcquireInstanceAsync(
             UIViewDefinition definition, CancellationToken ct)
         {
             if (definition.CachePolicy == UICachePolicy.KeepAlive &&
-                this._keepAliveCache.Remove(definition.ViewModelType, out GameObject cached))
+                this._keepAliveCache.Remove(definition.ViewModelType, out UIViewBase cached))
             {
                 return (cached, false);
             }
 
-            GameObject prefab = await this._assetProvider.LoadPrefabAsync(definition, ct);
+            UIViewBase prefab = await this._assetProvider.LoadPrefabAsync(definition, ct);
             if (!prefab)
                 throw new InvalidOperationException(
                     $"IUIAssetProvider returned a null prefab for '{definition.ViewModelType.Name}'.");
 
             UILayerRoot layerRoot = this._layerRoots[definition.Layer.LayerName];
-            GameObject instance = UnityEngine.Object.Instantiate(prefab, layerRoot.ContentRectTransform, false);
+            UIViewBase instance = UnityEngine.Object.Instantiate(prefab, layerRoot.ContentRectTransform, false);
             return (instance, true);
         }
 
@@ -378,7 +377,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             if (instance.Definition.CachePolicy == UICachePolicy.KeepAlive)
             {
                 this.ApplyHide(instance);
-                this._keepAliveCache[instance.ViewModelType] = instance.GameObject;
+                this._keepAliveCache[instance.ViewModelType] = instance.View;
             }
             else
             {
@@ -526,17 +525,17 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             this._inputLock.Acquire();
             try
             {
-                (GameObject go, bool isFresh) = await this.AcquireInstanceAsync(definition, ct);
+                (UIViewBase acquired, bool isFresh) = await this.AcquireInstanceAsync(definition, ct);
 
-                var view = go.GetComponent<UIView<TViewModel>>();
+                var view = acquired as UIView<TViewModel>;
                 if (!view)
                 {
-                    // go was either freshly instantiated or pulled from the KeepAlive cache
+                    // acquired was either freshly instantiated or pulled from the KeepAlive cache
                     // above; either way it's not registered anywhere yet, so it would otherwise
                     // leak silently rather than surfacing only as a thrown exception.
-                    UnityEngine.Object.Destroy(go);
+                    UnityEngine.Object.Destroy(acquired.gameObject);
                     throw new InvalidOperationException(
-                        $"Prefab for '{vmType.Name}' has no UIView<{vmType.Name}> component on its root.");
+                        $"Prefab for '{vmType.Name}' is a {acquired.GetType().Name}, not a UIView<{vmType.Name}>.");
                 }
 
                 var viewModel = (TViewModel)resolver.Resolve(vmType);
@@ -546,7 +545,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                 var instance = new ViewInstance
                 {
                     Definition = definition,
-                    GameObject = go,
+                    GameObject = view.gameObject,
                     View = view,
                     ViewModel = viewModel,
                     ViewModelType = vmType,

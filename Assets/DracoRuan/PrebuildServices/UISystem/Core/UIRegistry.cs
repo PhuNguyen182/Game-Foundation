@@ -27,7 +27,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                         $"UIViewDefinition '{definition.name}' has an unresolvable ViewModelType (stale or empty type reference).");
                 }
 
-                if (!definition.Prefab)
+                if (!definition.HasPrefabSource)
                     throw new InvalidOperationException($"UIViewDefinition '{definition.name}' (VM: {vmType.Name}) has no prefab assigned.");
 
                 if (!definition.Layer)

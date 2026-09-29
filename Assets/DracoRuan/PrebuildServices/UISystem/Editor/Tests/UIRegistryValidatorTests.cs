@@ -29,17 +29,6 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor.Tests
             }
         }
 
-        /// <summary>Deliberately references a UnityEngine type in a field, so
-        /// ValidateViewModelsDoNotUseUnityEngine has something real to flag.</summary>
-        private sealed class OffendingViewModel : UIViewModel
-        {
-            private Transform _target;
-
-            public OffendingViewModel(IUINavigator navigator) : base(navigator)
-            {
-            }
-        }
-
         private sealed class FakeView : UIView<FakeViewModel>
         {
             protected override void Bind(ref UIBinder binder, FakeViewModel viewModel)
@@ -76,8 +65,22 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor.Tests
         private void SetPrefab(UIViewDefinition definition, GameObject prefab)
         {
             var serialized = new SerializedObject(definition);
-            serialized.FindProperty("prefab").objectReferenceValue = prefab;
+            serialized.FindProperty("viewPrefab").objectReferenceValue = prefab.GetComponent<UIViewBase>();
             serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private void SetLayer(UIViewDefinition definition, UILayerDefinition layer)
+        {
+            var serialized = new SerializedObject(definition);
+            serialized.FindProperty("layer").objectReferenceValue = layer;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private UILayerDefinition NewLayer()
+        {
+            var layer = ScriptableObject.CreateInstance<UILayerDefinition>();
+            this._created.Add(layer);
+            return layer;
         }
 
         private GameObject NewViewPrefab()
@@ -111,19 +114,6 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor.Tests
         }
 
         [Test]
-        public void Validate_PrefabHasNoUIView_ReportsError()
-        {
-            UIViewDefinition definition = this.NewDefinition<FakeViewModel>();
-            var prefab = new GameObject("NoView");
-            this._created.Add(prefab);
-            this.SetPrefab(definition, prefab);
-
-            List<UIValidationFinding> findings = UIRegistryValidator.Validate(new[] { definition });
-
-            Assert.IsTrue(findings.Any(f => f.Severity == UIValidationSeverity.Error && f.Message.Contains("has no UIView<TVM>")));
-        }
-
-        [Test]
         public void Validate_PrefabHasMismatchedUIView_ReportsError()
         {
             UIViewDefinition definition = this.NewDefinition<OtherFakeViewModel>();
@@ -132,7 +122,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor.Tests
 
             List<UIValidationFinding> findings = UIRegistryValidator.Validate(new[] { definition });
 
-            Assert.IsTrue(findings.Any(f => f.Severity == UIValidationSeverity.Error && f.Message.Contains("has no UIView<OtherFakeViewModel>")));
+            Assert.IsTrue(findings.Any(f => f.Severity == UIValidationSeverity.Error && f.Message.Contains("not a UIView<OtherFakeViewModel>")));
         }
 
         [Test]
@@ -144,64 +134,99 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor.Tests
 
             List<UIValidationFinding> findings = UIRegistryValidator.Validate(new[] { definition });
 
-            Assert.IsFalse(findings.Any(f => f.Message.Contains("has no UIView<")));
+            Assert.IsFalse(findings.Any(f => f.Message.Contains("not a UIView<")));
         }
 
         [Test]
-        public void Validate_RaycastTargetWithNoInteractiveComponent_ReportsWarning()
+        public void Validate_ViewNotOnPrefabRoot_ReportsError()
         {
             UIViewDefinition definition = this.NewDefinition<FakeViewModel>();
-            GameObject prefab = this.NewViewPrefab();
-            var childGo = new GameObject("DecorativeImage", typeof(RectTransform), typeof(Image));
-            childGo.transform.SetParent(prefab.transform);
-            childGo.GetComponent<Image>().raycastTarget = true;
-            this._created.Add(childGo);
-            this.SetPrefab(definition, prefab);
+            var root = new GameObject("Root", typeof(RectTransform));
+            this._created.Add(root);
+            var child = new GameObject("Child", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster), typeof(CanvasGroup));
+            child.transform.SetParent(root.transform);
+            child.AddComponent<FakeView>();
+            this.SetPrefab(definition, child);
 
             List<UIValidationFinding> findings = UIRegistryValidator.Validate(new[] { definition });
 
-            Assert.IsTrue(findings.Any(f => f.Severity == UIValidationSeverity.Warning && f.Message.Contains("raycastTarget enabled")));
+            Assert.IsTrue(findings.Any(f => f.Severity == UIValidationSeverity.Error && f.Message.Contains("not on its prefab's root")));
         }
 
         [Test]
-        public void Validate_NestedLayoutGroups_ReportsWarning()
+        public void Validate_MissingPrefab_ReportsError()
         {
             UIViewDefinition definition = this.NewDefinition<FakeViewModel>();
-            GameObject prefab = this.NewViewPrefab();
-            var outerGo = new GameObject("Outer", typeof(RectTransform), typeof(VerticalLayoutGroup));
-            outerGo.transform.SetParent(prefab.transform);
-            var innerGo = new GameObject("Inner", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            innerGo.transform.SetParent(outerGo.transform);
-            this._created.Add(outerGo);
-            this._created.Add(innerGo);
-            this.SetPrefab(definition, prefab);
 
             List<UIValidationFinding> findings = UIRegistryValidator.Validate(new[] { definition });
 
-            Assert.IsTrue(findings.Any(f => f.Severity == UIValidationSeverity.Warning && f.Message.Contains("nested inside another LayoutGroup")));
+            Assert.IsTrue(findings.Any(f => f.Severity == UIValidationSeverity.Error && f.Message.Contains("no prefab assigned")));
         }
 
         [Test]
-        public void Validate_MaskComponent_RecommendsRectMask2D()
+        public void Validate_MissingLayer_ReportsError()
         {
             UIViewDefinition definition = this.NewDefinition<FakeViewModel>();
-            GameObject prefab = this.NewViewPrefab();
-            var maskGo = new GameObject("Masked", typeof(RectTransform), typeof(Image), typeof(Mask));
-            maskGo.transform.SetParent(prefab.transform);
-            this._created.Add(maskGo);
-            this.SetPrefab(definition, prefab);
+            this.SetPrefab(definition, this.NewViewPrefab());
 
             List<UIValidationFinding> findings = UIRegistryValidator.Validate(new[] { definition });
 
-            Assert.IsTrue(findings.Any(f => f.Message.Contains("RectMask2D")));
+            Assert.IsTrue(findings.Any(f => f.Severity == UIValidationSeverity.Error && f.Message.Contains("no layer assigned")));
         }
 
         [Test]
-        public void Validate_ViewModelWithUnityEngineField_ReportsWarning()
+        public void Validate_FullyConfiguredDefinition_NoFindings()
         {
-            List<UIValidationFinding> findings = UIRegistryValidator.Validate(new UIViewDefinition[0]);
+            UIViewDefinition definition = this.NewDefinition<FakeViewModel>();
+            this.SetPrefab(definition, this.NewViewPrefab());
+            this.SetLayer(definition, this.NewLayer());
 
-            Assert.IsTrue(findings.Any(f => f.Message.Contains(nameof(OffendingViewModel)) && f.Message.Contains("UnityEngine")));
+            List<UIValidationFinding> findings = UIRegistryValidator.Validate(new[] { definition });
+
+            Assert.IsEmpty(findings);
+        }
+
+        [Test]
+        public void Completeness_KeyInTwoCollections_ReportsError()
+        {
+            UIViewDefinition a = this.NewDefinition<FakeViewModel>();
+            UIViewDefinition b = this.NewDefinition<FakeViewModel>();
+            UIViewCollection first = this.NewCollection(a);
+            UIViewCollection second = this.NewCollection(b);
+
+            List<UIValidationFinding> findings = UIRegistryCompletenessChecker.Check(
+                new[] { first, second }, new[] { a, b });
+
+            Assert.IsTrue(findings.Any(f => f.Message.Contains("more than one collection")));
+        }
+
+        [Test]
+        public void Completeness_DefinitionInNoCollection_ReportsError()
+        {
+            UIViewDefinition registered = this.NewDefinition<FakeViewModel>();
+            UIViewDefinition orphan = this.NewDefinition<OtherFakeViewModel>();
+            UIViewCollection collection = this.NewCollection(registered);
+
+            List<UIValidationFinding> findings = UIRegistryCompletenessChecker.Check(
+                new[] { collection }, new[] { registered, orphan });
+
+            Assert.IsTrue(findings.Any(f => f.Message.Contains("not registered in any collection") && f.Context == orphan));
+            Assert.IsFalse(findings.Any(f => f.Context == registered));
+        }
+
+        private UIViewCollection NewCollection(params UIViewDefinition[] definitions)
+        {
+            var collection = ScriptableObject.CreateInstance<UIViewCollection>();
+            this._created.Add(collection);
+
+            var serialized = new SerializedObject(collection);
+            SerializedProperty list = serialized.FindProperty("definitions");
+            list.arraySize = definitions.Length;
+            for (int i = 0; i < definitions.Length; i++)
+                list.GetArrayElementAtIndex(i).objectReferenceValue = definitions[i];
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return collection;
         }
     }
 }

@@ -18,7 +18,8 @@ MonoBehaviour:
       PublicKeyToken=null
   layer: {fileID: 11400000, guid: c85a7d29edac7b34e9150756e4518342, type: 2}
   preset: 5
-  prefab: {fileID: 2588062146894487637, guid: 67b8ba5e06adea44cadca9054f95d7f6, type: 3}
+  viewPrefab: {fileID: 3794774149324592756, guid: 67b8ba5e06adea44cadca9054f95d7f6, type: 3}
+  prefab: {fileID: 0}
   addressablePrefab:
     m_AssetGUID: 
     m_SubObjectName: 

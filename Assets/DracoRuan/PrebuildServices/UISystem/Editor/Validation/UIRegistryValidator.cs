@@ -1,19 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using DracoRuan.PrebuildServices.UISystem.Data;
-using DracoRuan.PrebuildServices.UISystem.MVVM;
 using DracoRuan.PrebuildServices.UISystem.Views;
-using UnityEngine;
-using UnityEngine.UI;
 
 namespace DracoRuan.PrebuildServices.UISystem.Editor.Validation
 {
     /// <summary>
-    /// REWRITE_PLAN.md 2.8/mục 5 bước 8: key uniqueness, prefab ↔ VM match, raycast/layout
-    /// hygiene, "VM không dùng UnityEngine". Pure data in/out (no EditorWindow/GUI dependency)
-    /// so both UIRegistryWindow and UIRegistryBuildValidator can share it.
+    /// Registration correctness for one set of definitions: key uniqueness, required fields
+    /// (VM/prefab/layer), and prefab ↔ VM match. Every finding is an Error - anything that would
+    /// break at runtime. Pure data in/out (no EditorWindow/GUI dependency) so both
+    /// UIRegistryWindow and UIRegistryBuildValidator can share it.
     /// </summary>
     public static class UIRegistryValidator
     {
@@ -26,11 +23,9 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor.Validation
 
             foreach (UIViewDefinition definition in definitionList)
             {
+                ValidateRequiredFields(definition, findings);
                 ValidatePrefabMatchesViewModel(definition, findings);
-                ValidateRaycastAndLayoutHygiene(definition, findings);
             }
-
-            ValidateViewModelsDoNotUseUnityEngine(findings);
 
             return findings;
         }
@@ -65,172 +60,70 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor.Validation
             }
         }
 
-        /// <summary>The prefab's root must carry a UIView&lt;TVM&gt; for exactly this
-        /// definition's ViewModelType (REWRITE_PLAN.md 2.2: "Validator kiểm tra prefab có
-        /// UIView&lt;TVM&gt; với đúng VM đó").</summary>
-        private static void ValidatePrefabMatchesViewModel(UIViewDefinition definition, List<UIValidationFinding> findings)
+        /// <summary>Prefab (direct or Addressable) and layer are required; UIRegistry throws at
+        /// init without them, so surface it at edit time instead.</summary>
+        private static void ValidateRequiredFields(UIViewDefinition definition, List<UIValidationFinding> findings)
         {
-            Type vmType = definition.ViewModelType;
-            if (vmType == null || definition.Prefab == null)
-                return;
-
-            UIViewBase[] views = definition.Prefab.GetComponents<UIViewBase>();
-            if (views.Length == 0)
+            if (!definition.HasPrefabSource)
             {
                 findings.Add(new UIValidationFinding(
                     UIValidationSeverity.Error,
-                    $"Prefab '{definition.Prefab.name}' (definition '{definition.name}') has no UIView<TVM> on its root.",
-                    definition.Prefab));
-                return;
+                    $"'{definition.name}' has no prefab assigned.", definition));
             }
 
-            bool matches = views.Any(view => MatchesViewModelType(view.GetType(), vmType));
-            if (!matches)
+            if (definition.Layer == null)
             {
                 findings.Add(new UIValidationFinding(
                     UIValidationSeverity.Error,
-                    $"Prefab '{definition.Prefab.name}' has no UIView<{vmType.Name}> matching definition '{definition.name}'.",
-                    definition.Prefab));
+                    $"'{definition.name}' has no layer assigned.", definition));
             }
         }
 
-        private static bool MatchesViewModelType(Type viewType, Type expectedVmType)
+        /// <summary>The prefab's view must be a UIView&lt;TVM&gt; for exactly this definition's
+        /// ViewModelType, and must sit on the prefab root (REWRITE_PLAN.md 2.2). The field is
+        /// typed UIViewBase, so "prefab has no view" can no longer be authored.</summary>
+        private static void ValidatePrefabMatchesViewModel(UIViewDefinition definition,
+            List<UIValidationFinding> findings)
+        {
+            Type vmType = definition.ViewModelType;
+            UIViewBase view = definition.Prefab;
+            if (vmType == null || view == null)
+                return;
+
+            if (view.transform != view.transform.root)
+            {
+                findings.Add(new UIValidationFinding(
+                    UIValidationSeverity.Error,
+                    $"'{view.name}' (definition '{definition.name}') is not on its prefab's root; the view component must sit on the root GameObject.",
+                    definition));
+            }
+
+            if (!MatchesViewModelType(view.GetType(), vmType))
+            {
+                findings.Add(new UIValidationFinding(
+                    UIValidationSeverity.Error,
+                    $"Prefab '{view.name}' is a {view.GetType().Name}, not a UIView<{vmType.Name}> matching definition '{definition.name}'.",
+                    definition));
+            }
+        }
+
+        internal static bool MatchesViewModelType(Type viewType, Type expectedVmType) =>
+            TryGetViewModelType(viewType, out Type vmType) && vmType == expectedVmType;
+
+        /// <summary>The TVM of the UIView&lt;TVM&gt; a view type derives from, if any.</summary>
+        internal static bool TryGetViewModelType(Type viewType, out Type viewModelType)
         {
             for (Type type = viewType; type != null && type != typeof(object); type = type.BaseType)
             {
-                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(UIView<>)
-                    && type.GetGenericArguments()[0] == expectedVmType)
+                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(UIView<>))
+                {
+                    viewModelType = type.GetGenericArguments()[0];
                     return true;
+                }
             }
 
+            viewModelType = null;
             return false;
-        }
-
-        private static void ValidateRaycastAndLayoutHygiene(UIViewDefinition definition, List<UIValidationFinding> findings)
-        {
-            if (definition.Prefab == null)
-                return;
-
-            GraphicRaycaster[] raycasters = definition.Prefab.GetComponentsInChildren<GraphicRaycaster>(true);
-            if (raycasters.Length > 1)
-            {
-                findings.Add(new UIValidationFinding(
-                    UIValidationSeverity.Warning,
-                    $"Prefab '{definition.Prefab.name}' has {raycasters.Length} GraphicRaycaster components; a view should have exactly one.",
-                    definition.Prefab));
-            }
-
-            foreach (Graphic graphic in definition.Prefab.GetComponentsInChildren<Graphic>(true))
-            {
-                if (!graphic.raycastTarget)
-                    continue;
-
-                bool hasInteractiveSibling = graphic.GetComponent<Selectable>() != null
-                    || graphic.GetComponent<UnityEngine.EventSystems.IPointerClickHandler>() != null;
-                if (!hasInteractiveSibling)
-                {
-                    findings.Add(new UIValidationFinding(
-                        UIValidationSeverity.Warning,
-                        $"'{graphic.name}' in prefab '{definition.Prefab.name}' has raycastTarget enabled but no interactive component - likely unnecessary raycast cost.",
-                        graphic));
-                }
-            }
-
-            foreach (LayoutGroup layoutGroup in definition.Prefab.GetComponentsInChildren<LayoutGroup>(true))
-            {
-                Transform parent = layoutGroup.transform.parent;
-                if (parent != null && parent.GetComponentInParent<LayoutGroup>() != null)
-                {
-                    findings.Add(new UIValidationFinding(
-                        UIValidationSeverity.Warning,
-                        $"'{layoutGroup.name}' in prefab '{definition.Prefab.name}' is a LayoutGroup nested inside another LayoutGroup - consider flattening.",
-                        layoutGroup));
-                }
-
-                var fitter = layoutGroup.GetComponent<ContentSizeFitter>();
-                if (fitter != null)
-                {
-                    findings.Add(new UIValidationFinding(
-                        UIValidationSeverity.Warning,
-                        $"'{layoutGroup.name}' in prefab '{definition.Prefab.name}' has a ContentSizeFitter on the same GameObject as its LayoutGroup - the fitter's own size is being driven by the group it sits on, which usually isn't intended.",
-                        layoutGroup));
-                }
-            }
-
-            foreach (Mask mask in definition.Prefab.GetComponentsInChildren<Mask>(true))
-            {
-                findings.Add(new UIValidationFinding(
-                    UIValidationSeverity.Warning,
-                    $"'{mask.name}' in prefab '{definition.Prefab.name}' uses Mask - RectMask2D is cheaper for a plain rectangular clip.",
-                    mask));
-            }
-        }
-
-        /// <summary>
-        /// REWRITE_PLAN.md: "VM không dùng UnityEngine" - scans every loaded UIViewModel
-        /// subclass's members (fields, properties, method signatures) for a UnityEngine.* type,
-        /// via reflection rather than source scanning (Editor-only, so IL2CPP/AOT concerns don't
-        /// apply). A false negative is possible (a method body could still new up a UnityEngine
-        /// type without it appearing in any signature), but this catches the common case - a
-        /// serialized/injected UnityEngine dependency - cheaply and without a source parser.
-        /// </summary>
-        private static void ValidateViewModelsDoNotUseUnityEngine(List<UIValidationFinding> findings)
-        {
-            foreach (Type vmType in FindViewModelTypes())
-            {
-                var offendingMembers = new List<string>();
-
-                foreach (FieldInfo field in vmType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-                {
-                    if (IsUnityEngineType(field.FieldType))
-                        offendingMembers.Add($"field '{field.Name}' ({field.FieldType.Name})");
-                }
-
-                foreach (PropertyInfo property in vmType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-                {
-                    if (IsUnityEngineType(property.PropertyType))
-                        offendingMembers.Add($"property '{property.Name}' ({property.PropertyType.Name})");
-                }
-
-                if (offendingMembers.Count > 0)
-                {
-                    findings.Add(new UIValidationFinding(
-                        UIValidationSeverity.Warning,
-                        $"ViewModel '{vmType.FullName}' references UnityEngine types directly: {string.Join(", ", offendingMembers)}. "
-                        + "VMs should stay engine-agnostic; move Unity-specific state to the view."));
-                }
-            }
-        }
-
-        private static bool IsUnityEngineType(Type type)
-        {
-            if (type.IsGenericType)
-                return type.GetGenericArguments().Any(IsUnityEngineType);
-
-            string ns = type.Namespace;
-            return ns != null && (ns == "UnityEngine" || ns.StartsWith("UnityEngine."));
-        }
-
-        private static IEnumerable<Type> FindViewModelTypes()
-        {
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                Type[] types;
-                try
-                {
-                    types = assembly.GetTypes();
-                }
-                catch (ReflectionTypeLoadException ex)
-                {
-                    types = ex.Types.Where(t => t != null).ToArray();
-                }
-
-                foreach (Type type in types)
-                {
-                    if (typeof(UIViewModel).IsAssignableFrom(type) && !type.IsAbstract && type != typeof(UIViewModel))
-                        yield return type;
-                }
-            }
         }
     }
 }

@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using UnityEngine;
+using DracoRuan.PrebuildServices.UISystem.Views;
 #if USE_EXTENDED_ADDRESSABLE
 using UnityEngine.ResourceManagement.AsyncOperations;
 #endif
@@ -7,10 +7,10 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
 {
     /// <summary>One definition's loaded prefab and who is still using it. Mirrors
-    /// AudioSystem/Core/Loading/AudioClipLease.cs, adapted for GameObject prefabs.</summary>
+    /// AudioSystem/Core/Loading/AudioClipLease.cs, adapted for UIViewBase prefabs.</summary>
     public sealed class UIPrefabLease
     {
-        public GameObject Prefab;
+        public UIViewBase Prefab;
 
         /// <summary>How many open/cached views still need this prefab.</summary>
         public int RefCount;
@@ -20,10 +20,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
 
         /// <summary>Set while a load is in flight, so a burst of opens on a cold prefab issues
         /// a single load rather than one per open.</summary>
-        public UniTaskCompletionSource<GameObject> Pending;
+        public UniTaskCompletionSource<UIViewBase> Pending;
 
 #if USE_EXTENDED_ADDRESSABLE
-        public AsyncOperationHandle<GameObject> Handle;
+        public AsyncOperationHandle<UIViewBase> Handle;
         public bool HasHandle;
 #endif
     }

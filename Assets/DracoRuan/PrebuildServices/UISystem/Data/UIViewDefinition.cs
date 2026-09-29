@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DracoRuan.PrebuildServices.UISystem.MVVM;
+using DracoRuan.PrebuildServices.UISystem.Views;
 using UnityEngine;
 #if USE_EXTENDED_ADDRESSABLE
 using UnityEngine.AddressableAssets;
@@ -17,16 +18,22 @@ namespace DracoRuan.PrebuildServices.UISystem.Data
     [CreateAssetMenu(fileName = "UIViewDefinition", menuName = "DracoRuan/UISystem/View Definition")]
     public sealed class UIViewDefinition : ScriptableObject
     {
-        [SerializeField] [TypeConstraint(typeof(UIViewModel))] private SerializableTypeRef viewModelType;
+        [SerializeField] [TypeConstraint(typeof(UIViewModel))]
+        private SerializableTypeRef viewModelType;
+
         [SerializeField] private UILayerDefinition layer;
         [SerializeField] private UIViewPreset preset;
-        [SerializeField] private GameObject prefab;
+
+        /// <summary>Typed as the root view component (not GameObject) so the router instantiates
+        /// and gets the view back in one step, with no runtime GetComponent/convert.</summary>
+        [SerializeField] private UIViewBase viewPrefab;
+
 #if USE_EXTENDED_ADDRESSABLE
-        /// <summary>Addressables alternative to `prefab` (REWRITE_PLAN.md 2.2: "Prefab: direct
-        /// reference hoặc AssetReferenceGameObject"). Set this and leave `prefab` null to load
+        /// <summary>Addressables alternative to `viewPrefab` (REWRITE_PLAN.md 2.2: "Prefab: direct
+        /// reference hoặc AssetReference"). Set this and leave `viewPrefab` null to load
         /// through Addressables instead - AddressableUIAssetProvider prefers this when both are
         /// somehow set, though authoring only one at a time is the expectation.</summary>
-        [SerializeField] private AssetReferenceGameObject addressablePrefab;
+        [SerializeField] private AssetReferenceUIView addressablePrefab;
 #endif
         [SerializeField] private UICachePolicy cachePolicy = UICachePolicy.Destroy;
         [SerializeField] private bool preload;
@@ -45,14 +52,31 @@ namespace DracoRuan.PrebuildServices.UISystem.Data
         /// this HUD should be visible on. Empty = always visible whenever open, no restriction.
         /// The router re-evaluates this against the current topmost screen every time the
         /// screen stack changes (see UIService.RefreshHudVisibility).</summary>
-        [SerializeField] [TypeConstraint(typeof(UIViewModel))] private SerializableTypeRef[] visibleOnScreens = Array.Empty<SerializableTypeRef>();
+        [SerializeField] [TypeConstraint(typeof(UIViewModel))]
+        private SerializableTypeRef[] visibleOnScreens = Array.Empty<SerializableTypeRef>();
 
         public Type ViewModelType => this.viewModelType?.ResolveType();
         public UILayerDefinition Layer => this.layer;
         public UIViewPreset Preset => this.preset;
-        public GameObject Prefab => this.prefab;
+        public UIViewBase Prefab => this.viewPrefab;
+
+        /// <summary>True when a direct prefab or a valid Addressables reference is assigned.</summary>
+        public bool HasPrefabSource
+        {
+            get
+            {
+                if (this.viewPrefab)
+                    return true;
 #if USE_EXTENDED_ADDRESSABLE
-        public AssetReferenceGameObject AddressablePrefab => this.addressablePrefab;
+                return this.addressablePrefab != null && this.addressablePrefab.RuntimeKeyIsValid();
+#else
+                return false;
+#endif
+            }
+        }
+
+#if USE_EXTENDED_ADDRESSABLE
+        public AssetReferenceUIView AddressablePrefab => this.addressablePrefab;
 #endif
         public UICachePolicy CachePolicy => this.cachePolicy;
         public bool Preload => this.preload;

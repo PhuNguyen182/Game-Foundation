@@ -149,20 +149,20 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         /// in the scene, and Object.FindObjectOfType/FindObjectsOfType (used throughout this
         /// fixture to observe what UIService actually instantiated) ignore inactive objects by
         /// default, so an active source would otherwise be indistinguishable from a real clone.</summary>
-        private GameObject NewPrefab<TView>() where TView : Component
+        private TView NewPrefab<TView>() where TView : UIViewBase
         {
             var go = new GameObject(typeof(TView).Name, typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster), typeof(CanvasGroup));
-            go.AddComponent<TView>();
+            var view = go.AddComponent<TView>();
             go.SetActive(false);
             this._created.Add(go);
-            return go;
+            return view;
         }
 
         private UIViewDefinition NewDefinition<TVM, TView>(UILayerDefinition layer, UIViewPreset preset,
             bool modal = false, bool participatesInStack = true, bool hidesBelow = false,
             UIReopenPolicy reopenPolicy = UIReopenPolicy.BringToFront)
             where TVM : UIViewModel
-            where TView : Component
+            where TView : UIViewBase
         {
             var definition = ScriptableObject.CreateInstance<UIViewDefinition>();
             this._created.Add(definition);
@@ -172,7 +172,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
             vmTypeProperty.FindPropertyRelative("assemblyQualifiedName").stringValue = typeof(TVM).AssemblyQualifiedName;
             serialized.FindProperty("layer").objectReferenceValue = layer;
             serialized.FindProperty("preset").enumValueIndex = (int)preset;
-            serialized.FindProperty("prefab").objectReferenceValue = this.NewPrefab<TView>();
+            serialized.FindProperty("viewPrefab").objectReferenceValue = this.NewPrefab<TView>();
             serialized.FindProperty("modal").boolValue = modal;
             serialized.FindProperty("participatesInStack").boolValue = participatesInStack;
             serialized.FindProperty("hidesBelow").boolValue = hidesBelow;

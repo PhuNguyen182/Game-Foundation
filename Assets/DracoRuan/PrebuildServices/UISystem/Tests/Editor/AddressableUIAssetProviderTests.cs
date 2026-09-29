@@ -1,6 +1,7 @@
 using System.Threading;
 using DracoRuan.PrebuildServices.UISystem.Core.Loading;
 using DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.Views;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -9,27 +10,33 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
 {
     public class AddressableUIAssetProviderTests
     {
+        private sealed class StandInView : UIViewBase
+        {
+        }
+
         private UIViewDefinition _definition;
-        private GameObject _prefabStandIn;
+        private GameObject _prefabStandInObject;
+        private UIViewBase _prefabStandIn;
 
         [SetUp]
         public void SetUp()
         {
-            this._prefabStandIn = new GameObject("PrefabStandIn");
+            this._prefabStandInObject = new GameObject("PrefabStandIn", typeof(Canvas), typeof(UnityEngine.UI.GraphicRaycaster), typeof(CanvasGroup));
+            this._prefabStandIn = this._prefabStandInObject.AddComponent<StandInView>();
             this._definition = ScriptableObject.CreateInstance<UIViewDefinition>();
 
             // Prefab is a private SerializeField with no public setter - assign it the same way
             // an Inspector would, through SerializedObject, rather than adding a test-only
             // internal setter to a Data asset whose whole point is designer-authored fields.
             var serialized = new SerializedObject(this._definition);
-            serialized.FindProperty("prefab").objectReferenceValue = this._prefabStandIn;
+            serialized.FindProperty("viewPrefab").objectReferenceValue = this._prefabStandIn;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         [TearDown]
         public void TearDown()
         {
-            Object.DestroyImmediate(this._prefabStandIn);
+            Object.DestroyImmediate(this._prefabStandInObject);
             Object.DestroyImmediate(this._definition);
         }
 
@@ -38,7 +45,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         {
             var provider = new AddressableUIAssetProvider();
 
-            GameObject result = provider.LoadPrefabAsync(this._definition, CancellationToken.None).GetAwaiter().GetResult();
+            UIViewBase result = provider.LoadPrefabAsync(this._definition, CancellationToken.None).GetAwaiter().GetResult();
 
             Assert.AreEqual(this._prefabStandIn, result);
         }

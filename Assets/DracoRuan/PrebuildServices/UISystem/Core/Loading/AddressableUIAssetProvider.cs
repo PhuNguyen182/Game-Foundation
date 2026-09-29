@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.Views;
 using UnityEngine;
 #if USE_EXTENDED_ADDRESSABLE
 using UnityEngine.AddressableAssets;
@@ -23,7 +24,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
         private readonly Dictionary<UIViewDefinition, UIPrefabLease> _leases = new Dictionary<UIViewDefinition, UIPrefabLease>();
         private bool _isDisposed;
 
-        public UniTask<GameObject> LoadPrefabAsync(UIViewDefinition definition, CancellationToken ct)
+        public UniTask<UIViewBase> LoadPrefabAsync(UIViewDefinition definition, CancellationToken ct)
         {
 #if USE_EXTENDED_ADDRESSABLE
             if (definition.AddressablePrefab == null || !definition.AddressablePrefab.RuntimeKeyIsValid())
@@ -35,7 +36,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
 #endif
         }
 
-        public void ReleasePrefab(UIViewDefinition definition, GameObject prefab)
+        public void ReleasePrefab(UIViewDefinition definition, UIViewBase prefab)
         {
 #if USE_EXTENDED_ADDRESSABLE
             if (definition.AddressablePrefab == null || !definition.AddressablePrefab.RuntimeKeyIsValid())
@@ -58,7 +59,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
             if (definition.AddressablePrefab == null || !definition.AddressablePrefab.RuntimeKeyIsValid())
                 return;
 
-            GameObject prefab = await this.AcquireAsync(definition, ct);
+            UIViewBase prefab = await this.AcquireAsync(definition, ct);
             if (prefab == null)
                 return;
 
@@ -91,7 +92,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
         }
 
 #if USE_EXTENDED_ADDRESSABLE
-        private async UniTask<GameObject> AcquireAsync(UIViewDefinition definition, CancellationToken ct)
+        private async UniTask<UIViewBase> AcquireAsync(UIViewDefinition definition, CancellationToken ct)
         {
             if (this._leases.TryGetValue(definition, out UIPrefabLease existing))
             {
@@ -103,7 +104,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
 
                 if (existing.Pending != null)
                 {
-                    GameObject shared = await existing.Pending.Task.AttachExternalCancellation(ct);
+                    UIViewBase shared = await existing.Pending.Task.AttachExternalCancellation(ct);
                     if (shared != null)
                         existing.RefCount++;
 
@@ -113,12 +114,12 @@ namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
 
             UIPrefabLease lease = existing ?? new UIPrefabLease();
             this._leases[definition] = lease;
-            lease.Pending = new UniTaskCompletionSource<GameObject>();
+            lease.Pending = new UniTaskCompletionSource<UIViewBase>();
 
-            GameObject loaded;
+            UIViewBase loaded;
             try
             {
-                AsyncOperationHandle<GameObject> handle = definition.AddressablePrefab.LoadAssetAsync<GameObject>();
+                AsyncOperationHandle<UIViewBase> handle = definition.AddressablePrefab.LoadAssetAsync<UIViewBase>();
                 lease.Handle = handle;
                 lease.HasHandle = true;
 
