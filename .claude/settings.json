@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(python3 -c ' *)",
-      "Bash(git -C . log --oneline -1 -- Input)"
+      "Bash(git -C . log --oneline -1 -- Input)",
+      "Bash(python -)"
     ]
   }
 }
