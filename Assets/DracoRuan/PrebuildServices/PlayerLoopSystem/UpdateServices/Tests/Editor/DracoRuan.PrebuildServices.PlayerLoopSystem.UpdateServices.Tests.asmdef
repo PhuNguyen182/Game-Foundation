@@ -1,0 +1,26 @@
+{
+    "name": "DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices.Tests",
+    "rootNamespace": "DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices.Tests",
+    "references": [
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.Core",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.Handlers",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

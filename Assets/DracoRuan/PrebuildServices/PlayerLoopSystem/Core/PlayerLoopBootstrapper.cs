@@ -1,28 +1,51 @@
 using DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.LowLevel;
 using FixedUpdate = UnityEngine.PlayerLoop.FixedUpdate;
+using LoopSystem = UnityEngine.LowLevel.PlayerLoopSystem;
 using Update = UnityEngine.PlayerLoop.Update;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace DracoRuan.PrebuildServices.PlayerLoopSystem.Core
 {
+    /// <summary>Loop entry of <see cref="UpdateServiceManager"/>; its own type so it never collides with Unity's <c>Update</c>.</summary>
+    internal struct DracoUpdateSystem
+    {
+    }
+
+    /// <summary>Loop entry of <see cref="FixedUpdateServiceManager"/>.</summary>
+    internal struct DracoFixedUpdateSystem
+    {
+    }
+
+    /// <summary>
+    /// Hooks the service managers into the player loop: one system at the start of <c>Update</c> and one at the start of
+    /// <c>FixedUpdate</c>, both ahead of the scripts' own <c>Update</c> / <c>FixedUpdate</c>.
+    /// </summary>
     public static class PlayerLoopBootstrapper
     {
-        private static UnityEngine.LowLevel.PlayerLoopSystem _playerLoopSystem;
-
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
         internal static void Initialize()
         {
-            UnityEngine.LowLevel.PlayerLoopSystem currentLoopSystem = PlayerLoop.GetCurrentPlayerLoop();
+            LoopSystem currentLoopSystem = PlayerLoop.GetCurrentPlayerLoop();
 
-            if (!InsertUpdateSystem<Update>(ref currentLoopSystem, 0))
+            // Safe to call repeatedly: with Enter Play Mode Options (no domain reload) the previous session's systems are
+            // still in the loop and would otherwise tick the managers once more per frame for every play session.
+            RemoveOwnSystems(ref currentLoopSystem);
+
+            LoopSystem updateSystem = CreateUpdateSystem();
+            if (!PlayerLoopUtils.InsertSystemBefore<Update, Update.ScriptRunBehaviourUpdate>(
+                    ref currentLoopSystem, in updateSystem))
             {
                 Debug.LogError("Failed to insert Update system to PlayerLoop.");
                 return;
             }
 
-            if (!InsertFixedUpdateSystem<FixedUpdate>(ref currentLoopSystem, 1))
+            LoopSystem fixedUpdateSystem = CreateFixedUpdateSystem();
+            if (!PlayerLoopUtils.InsertSystemBefore<FixedUpdate, FixedUpdate.ScriptRunBehaviourFixedUpdate>(
+                    ref currentLoopSystem, in fixedUpdateSystem))
             {
                 Debug.LogError("Failed to insert FixedUpdate system to PlayerLoop.");
                 return;
@@ -31,59 +54,55 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.Core
             PlayerLoop.SetPlayerLoop(currentLoopSystem);
 
 #if UNITY_EDITOR
-            EditorApplication.playModeStateChanged -= OnPlayModeState;
-            EditorApplication.playModeStateChanged += OnPlayModeState;
-
-            static void OnPlayModeState(PlayModeStateChange state)
-            {
-                if (state != PlayModeStateChange.ExitingPlayMode) 
-                    return;
-                
-                UnityEngine.LowLevel.PlayerLoopSystem currentPlayerLoop = PlayerLoop.GetCurrentPlayerLoop();
-                RemoveTimeSystem<Update>(ref currentPlayerLoop);
-                RemoveTimeSystem<FixedUpdate>(ref currentPlayerLoop);
-                PlayerLoop.SetPlayerLoop(currentPlayerLoop);
-                UpdateServiceManager.Clear();
-                FixedUpdateServiceManager.Clear();
-            }
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 #endif
         }
 
-        private static bool InsertUpdateSystem<T>(ref UnityEngine.LowLevel.PlayerLoopSystem playerLoopSystem, int index)
+        /// <summary>Takes both systems out of the player loop and drops every registered handler.</summary>
+        internal static void Shutdown()
         {
-            _playerLoopSystem = new UnityEngine.LowLevel.PlayerLoopSystem
-            {
-                type = typeof(T),
-                updateDelegate = Update,
-                subSystemList = null
-            };
+            LoopSystem currentLoopSystem = PlayerLoop.GetCurrentPlayerLoop();
+            RemoveOwnSystems(ref currentLoopSystem);
+            PlayerLoop.SetPlayerLoop(currentLoopSystem);
 
-            return PlayerLoopUtils.InsertSystem<T>(ref playerLoopSystem, in _playerLoopSystem, index);
-        }
-        
-        private static bool InsertFixedUpdateSystem<T>(ref UnityEngine.LowLevel.PlayerLoopSystem playerLoopSystem, int index)
-        {
-            _playerLoopSystem = new UnityEngine.LowLevel.PlayerLoopSystem
-            {
-                type = typeof(T),
-                updateDelegate = FixedUpdate,
-                subSystemList = null
-            };
-
-            return PlayerLoopUtils.InsertSystem<T>(ref playerLoopSystem, in _playerLoopSystem, index);
+            UpdateServiceManager.Clear();
+            FixedUpdateServiceManager.Clear();
         }
 
-        private static void RemoveTimeSystem<T>(ref UnityEngine.LowLevel.PlayerLoopSystem playerLoopSystem) =>
-            PlayerLoopUtils.RemoveSystem<T>(ref playerLoopSystem, in _playerLoopSystem);
+#if UNITY_EDITOR
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state == PlayModeStateChange.ExitingPlayMode)
+                Shutdown();
+        }
+#endif
 
-        private static void Update()
+        private static void RemoveOwnSystems(ref LoopSystem playerLoopSystem)
         {
-            UpdateServiceManager.UpdateTime();
+            LoopSystem updateSystem = CreateUpdateSystem();
+            LoopSystem fixedUpdateSystem = CreateFixedUpdateSystem();
+
+            PlayerLoopUtils.RemoveSystem<Update>(ref playerLoopSystem, in updateSystem);
+            PlayerLoopUtils.RemoveSystem<FixedUpdate>(ref playerLoopSystem, in fixedUpdateSystem);
         }
-        
-        private static void FixedUpdate()
+
+        private static LoopSystem CreateUpdateSystem() => new()
         {
-            FixedUpdateServiceManager.FixedUpdateTime();
-        }
+            type = typeof(DracoUpdateSystem),
+            updateDelegate = TickUpdate,
+            subSystemList = null
+        };
+
+        private static LoopSystem CreateFixedUpdateSystem() => new()
+        {
+            type = typeof(DracoFixedUpdateSystem),
+            updateDelegate = TickFixedUpdate,
+            subSystemList = null
+        };
+
+        private static void TickUpdate() => UpdateServiceManager.UpdateTime();
+
+        private static void TickFixedUpdate() => FixedUpdateServiceManager.FixedUpdateTime();
     }
 }

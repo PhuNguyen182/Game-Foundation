@@ -27,11 +27,11 @@ namespace DracoRuan.PrebuildServices.AudioSystem.Core
     /// <see cref="InitializeAsync"/> and forgets it, the same shape the localisation and Firebase
     /// services use.</para>
     ///
-    /// <para><b>One tick handler for the whole system.</b> <c>UpdateServiceManager</c> walks its list
-    /// backwards using a static index that <c>DeregisterUpdateHandler</c> decrements by hand.
-    /// Registering and deregistering dozens of handlers a second through that — which is what a
-    /// handler per voice would do — makes <i>unrelated</i> handlers get skipped. This service
-    /// registers once and walks its own voices.</para>
+    /// <para><b>One tick handler for the whole system.</b> Voices start and stop dozens of times a
+    /// second, so a handler per voice would mean that many register/deregister calls on
+    /// <c>UpdateServiceManager</c> every second, each a dictionary operation, plus one interface
+    /// call per voice per frame. This service registers once and walks its own voices in a tight
+    /// loop.</para>
     ///
     /// <para><b>It never persists the mix.</b> <see cref="GetVolumeSnapshot"/> and
     /// <see cref="ApplyVolumeSnapshot"/> hand plain data to the game, whose own save system owns

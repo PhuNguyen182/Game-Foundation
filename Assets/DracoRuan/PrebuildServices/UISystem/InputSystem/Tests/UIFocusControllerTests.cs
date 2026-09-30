@@ -82,11 +82,9 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
             using System.IDisposable scope = focus.BeginModalScope(this._modalRootGo.transform, fallback);
 
             this._eventSystem.SetSelectedGameObject(this._outsideGo);
-            // RegisterUpdateHandler only queues into a pending list, applied at the START of
-            // the NEXT UpdateTime() call (see UpdateServiceManager.UpdateTime) - the handler
-            // registered by BeginModalScope above needs one "flush" call before it actually
-            // ticks on the second.
-            UpdateServiceManager.UpdateTime();
+            // RegisterUpdateHandler only queues into a pending list, which joins the active list
+            // at the START of the next UpdateTime() pass (see UpdateServiceManager) - so the
+            // handler registered by BeginModalScope above ticks in this very first pass.
             UpdateServiceManager.UpdateTime();
 
             Assert.AreEqual(this._insideGo, this._eventSystem.currentSelectedGameObject);
@@ -100,7 +98,6 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
             using System.IDisposable scope = focus.BeginModalScope(this._modalRootGo.transform, fallback);
 
             this._eventSystem.SetSelectedGameObject(this._insideGo);
-            UpdateServiceManager.UpdateTime();
             UpdateServiceManager.UpdateTime();
 
             Assert.AreEqual(this._insideGo, this._eventSystem.currentSelectedGameObject);
