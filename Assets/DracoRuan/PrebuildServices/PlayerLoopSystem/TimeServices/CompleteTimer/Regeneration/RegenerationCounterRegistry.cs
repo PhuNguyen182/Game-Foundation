@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Clock;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Clock;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Production;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Regeneration
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Regeneration
 {
     /// <summary>Owns every <see cref="RegenerationCounter"/> in the game and handles their bulk capture/restore.</summary>
     public sealed class RegenerationCounterRegistry
@@ -46,7 +47,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         /// <summary>
         /// Restores every entry into its matching already-registered counter (by <see cref="RegenerationSnapshot.Key"/>).
         /// Counters must be created up front by gameplay code before restoring, exactly as with
-        /// <see cref="Production.ProductionQueueRegistry"/>.
+        /// <see cref="ProductionQueueRegistry"/>.
         /// </summary>
         public void Restore(IReadOnlyList<RegenerationSnapshot> entries, Action<string> onWarning = null)
         {

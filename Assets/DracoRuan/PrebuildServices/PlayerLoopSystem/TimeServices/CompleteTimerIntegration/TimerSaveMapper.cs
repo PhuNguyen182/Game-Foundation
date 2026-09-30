@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.CompleteTimerIntegration
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimerIntegration
 {
     /// <summary>
     /// Copies timer state between the scheduler's <see cref="TimerEntrySnapshot"/>s and the persisted

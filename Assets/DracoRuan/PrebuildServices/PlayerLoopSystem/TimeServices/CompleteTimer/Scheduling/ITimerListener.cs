@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling
 {
     /// <summary>Receives <see cref="TimerEvent"/> notifications, either for a single timer or for a whole channel.</summary>
     public interface ITimerListener

@@ -1,7 +1,7 @@
 using DracoRuan.Foundation.DataFlow.Runtime;
 using DracoRuan.Foundation.DataFlow.StaticData;
 using DracoRuan.Foundation.DataFlow.StaticData.Sources;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.CompleteTimerIntegration;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimerIntegration;
 using DracoRuan.RemoteConfig;
 using DracoRuan.VContainerInstallerSupport.Generated;
 using Temps.Scripts;

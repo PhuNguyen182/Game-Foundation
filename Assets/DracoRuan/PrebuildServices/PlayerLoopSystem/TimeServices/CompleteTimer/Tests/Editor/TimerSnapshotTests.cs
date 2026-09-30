@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
 using NUnit.Framework;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.Editor
 {
-    /// <summary>Covers <see cref="TimerScheduler.CaptureSnapshot"/>/<see cref="TimerScheduler.Restore"/> round-tripping (see REWRITE_PLAN.md 6.5, TimerSnapshotTests).</summary>
+    /// <summary>Covers <see cref="TimerScheduler.CaptureSnapshot"/>/<see cref="TimerScheduler.Restore"/> round-tripping (see README.md).</summary>
     [TestFixture]
     public sealed class TimerSnapshotTests
     {

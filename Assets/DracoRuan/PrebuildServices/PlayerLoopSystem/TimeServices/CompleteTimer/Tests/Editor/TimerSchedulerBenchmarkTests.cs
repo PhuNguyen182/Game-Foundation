@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
 using NUnit.Framework;
 using Unity.Profiling;
 using UnityEngine.Profiling;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.Editor
 {
     /// <summary>
     /// 100,000-timer benchmark of the scheduler's hot paths.

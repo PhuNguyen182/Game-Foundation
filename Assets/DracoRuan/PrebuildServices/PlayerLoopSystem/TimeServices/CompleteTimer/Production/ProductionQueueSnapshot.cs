@@ -1,4 +1,6 @@
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Production
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Production
 {
     /// <summary>One pending item's persisted shape: id plus the duration it will run for once started.</summary>
     public struct ProductionQueueItemSnapshot
@@ -19,9 +21,9 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
     /// </summary>
     /// <remarks>
     /// The active timer itself is not duplicated here - only its key, <see cref="ActiveTimerKey"/> -
-    /// because the timer's own state already lives in a <see cref="Scheduling.TimerEntrySnapshot"/>
-    /// captured by <see cref="Scheduling.TimerScheduler.CaptureSnapshot"/>. Restoring re-links the two
-    /// via <see cref="Scheduling.TimerScheduler.TryGetHandle"/> rather than re-creating the timer.
+    /// because the timer's own state already lives in a <see cref="TimerEntrySnapshot"/>
+    /// captured by <see cref="TimerScheduler.CaptureSnapshot"/>. Restoring re-links the two
+    /// via <see cref="TimerScheduler.TryGetHandle"/> rather than re-creating the timer.
     /// </remarks>
     public sealed class ProductionQueueSnapshot
     {

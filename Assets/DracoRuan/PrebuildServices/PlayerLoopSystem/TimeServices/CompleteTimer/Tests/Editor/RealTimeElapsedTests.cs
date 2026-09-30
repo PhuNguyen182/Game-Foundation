@@ -1,11 +1,11 @@
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
 using NUnit.Framework;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.Editor
 {
     /// <summary>
     /// Confirms remaining time always matches real elapsed wall-clock time, independent of when or
-    /// how often the app was running in between (see REWRITE_PLAN.md Q1/5.1, 6.5 RealTimeElapsedTests).
+    /// how often the app was running in between (see README.md).
     /// </summary>
     [TestFixture]
     public sealed class RealTimeElapsedTests

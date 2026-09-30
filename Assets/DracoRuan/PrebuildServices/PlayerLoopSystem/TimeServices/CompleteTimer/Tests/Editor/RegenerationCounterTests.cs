@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Regeneration;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Regeneration;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
 using NUnit.Framework;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.Editor
 {
-    /// <summary>Lives scenario (5 max, 30-minute interval) from REWRITE_PLAN.md Q3/5.3, 6.5 RegenerationCounterTests.</summary>
+    /// <summary>Lives scenario (5 max, 30-minute interval) from the README.</summary>
     [TestFixture]
     public sealed class RegenerationCounterTests
     {

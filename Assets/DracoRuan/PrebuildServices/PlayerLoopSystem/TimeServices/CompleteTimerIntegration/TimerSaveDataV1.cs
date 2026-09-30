@@ -2,10 +2,13 @@ using System;
 using System.Collections.Generic;
 using DracoRuan.Foundation.DataFlow.LocalData;
 using MessagePack;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Production;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Regeneration;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.CompleteTimerIntegration
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimerIntegration
 {
-    /// <summary>One persisted timer entry, mirroring <see cref="Scheduling.TimerEntrySnapshot"/>.</summary>
+    /// <summary>One persisted timer entry, mirroring <see cref="TimerEntrySnapshot"/>.</summary>
     [Serializable]
     [MessagePackObject]
     public sealed class TimerEntryV1
@@ -23,7 +26,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         [Key(10)] public bool CompletedDelivered { get; set; }
     }
 
-    /// <summary>One persisted production-queue item, mirroring <see cref="Production.ProductionQueueItemSnapshot"/>.</summary>
+    /// <summary>One persisted production-queue item, mirroring <see cref="ProductionQueueItemSnapshot"/>.</summary>
     [Serializable]
     [MessagePackObject]
     public sealed class ProductionQueueItemEntryV1
@@ -32,7 +35,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         [Key(1)] public long DurationMs { get; set; }
     }
 
-    /// <summary>One persisted production-queue output, mirroring <see cref="Production.ProductionQueueOutputSnapshot"/>.</summary>
+    /// <summary>One persisted production-queue output, mirroring <see cref="ProductionQueueOutputSnapshot"/>.</summary>
     [Serializable]
     [MessagePackObject]
     public sealed class ProductionQueueOutputEntryV1
@@ -41,7 +44,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         [Key(1)] public long AtMs { get; set; }
     }
 
-    /// <summary>One persisted production queue, mirroring <see cref="Production.ProductionQueueSnapshot"/>.</summary>
+    /// <summary>One persisted production queue, mirroring <see cref="ProductionQueueSnapshot"/>.</summary>
     [Serializable]
     [MessagePackObject]
     public sealed class ProductionQueueEntryV1
@@ -56,7 +59,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         [Key(7)] public bool IsPaused { get; set; }
     }
 
-    /// <summary>One persisted regeneration counter, mirroring <see cref="Regeneration.RegenerationSnapshot"/>.</summary>
+    /// <summary>One persisted regeneration counter, mirroring <see cref="RegenerationSnapshot"/>.</summary>
     [Serializable]
     [MessagePackObject]
     public sealed class RegenerationEntryV1

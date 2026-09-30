@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using DracoRuan.PrebuildServices.PlayerLoopSystem.Core.Handlers;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Clock;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Clock;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling
 {
     /// <summary>
     /// Single min-heap-backed scheduler for every timer in the game.
@@ -11,8 +11,8 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
     /// <remarks>
     /// <para><b>One scheduler, one heap.</b> Each frame only the heap's top (the single nearest
     /// deadline across every timer) is inspected, so an idle frame with 10,000 running timers costs
-    /// O(1) - not O(N) - and popping a timer that is due costs O(log N). This is the fix for the old
-    /// per-timer-per-frame <c>DateTime.UtcNow</c> + tier loop described in REWRITE_PLAN.md 1.3.</para>
+    /// O(1) - not O(N) - and popping a timer that is due costs O(log N). This replaces the old
+    /// per-timer-per-frame <c>DateTime.UtcNow</c> + tier loop.</para>
     ///
     /// <para><b>Implements <see cref="IUpdateHandler"/></b> so <c>UpdateServiceManager</c> can drive
     /// it, but it reads time exclusively from the injected <see cref="ITimeProvider"/> - the
@@ -97,7 +97,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         /// frame, including before the very first <see cref="Tick"/> ever runs after construction or
         /// a <see cref="Restore"/> - a value frozen at construction time would silently read as
         /// "now" until the next Tick happened to run, which is exactly the offline/pre-Tick case
-        /// REWRITE_PLAN.md 6.1.2 requires <see cref="GetCurrentStage"/> to get right.
+        /// that <see cref="GetCurrentStage"/> has to get right (see README.md).
         /// </summary>
         public long NowMs => this._clock.UtcNowMs;
 
@@ -309,7 +309,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             this._structureChangedThisTick = true;
         }
 
-        /// <summary>Shifts <c>StartMs</c> so the current stage ends exactly at <c>now</c>, then dispatches synchronously (see REWRITE_PLAN.md 6.1.2).</summary>
+        /// <summary>Shifts <c>StartMs</c> so the current stage ends exactly at <c>now</c>, then dispatches synchronously (see README.md).</summary>
         public void SkipCurrentStage(TimerHandle h)
         {
             if (!this.TryResolve(h, out TimerRecord record) || record.State != TimerState.Running)
@@ -459,7 +459,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         /// <summary>
         /// Current stage index (0-based), computed fresh from <c>now</c> by scanning
         /// <c>StageEnds</c> - not read from <c>DispatchedStage</c> - so it is correct even before the
-        /// first Tick after Restore or while <c>ProcessingEnabled</c> is false (see REWRITE_PLAN.md 6.1.2).
+        /// first Tick after Restore (see README.md).
         /// </summary>
         public int GetCurrentStage(TimerHandle h) =>
             this.TryResolve(h, out TimerRecord record)

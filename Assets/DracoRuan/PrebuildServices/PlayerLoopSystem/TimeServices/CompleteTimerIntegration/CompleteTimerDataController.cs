@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using DracoRuan.Foundation.DataFlow.LocalData;
 using DracoRuan.Foundation.DataFlow.Runtime;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Clock;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Production;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Regeneration;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Clock;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Production;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Regeneration;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.CompleteTimerIntegration
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimerIntegration
 {
     /// <summary>
     /// Repository bridging the pure-C# <see cref="TimerScheduler"/> / <see cref="ProductionQueueRegistry"/> /
@@ -16,7 +16,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
     /// <para>The scheduler and registries are the actual source of truth at runtime; <see cref="DynamicGameDataController{TData}.Data"/>
     /// only holds a snapshot copy, refreshed in <see cref="OnBeforeSave"/> right before a flush - so a
     /// long play session never keeps two copies of the same state in sync on every mutation, only at
-    /// the moment it is about to be written (see REWRITE_PLAN.md Q4/6.2).</para>
+    /// the moment it is about to be written (see README.md).</para>
     /// </remarks>
     [DynamicGameDataController(Id)]
     public sealed class CompleteTimerDataController : DynamicGameDataController<TimerSaveDataV1>

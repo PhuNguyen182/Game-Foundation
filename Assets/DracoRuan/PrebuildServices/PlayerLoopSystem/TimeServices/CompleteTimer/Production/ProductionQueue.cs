@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Production
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Production
 {
     /// <summary>One item waiting for or currently occupying the queue's active slot.</summary>
     public readonly struct ProductionQueueItem
@@ -44,7 +44,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
     /// computed deadline is already in the past (offline catch-up), the newly started timer is
     /// already due and the scheduler pops it again within the very same <see cref="TimerScheduler.Tick"/>,
     /// so an entire offline queue can drain in one frame with every output's <see cref="ProductionQueueOutput.AtMs"/>
-    /// exactly where it should be (see REWRITE_PLAN.md 6.1.3).</para>
+    /// exactly where it should be (see README.md).</para>
     /// </remarks>
     public sealed class ProductionQueue : ITimerListener
     {

@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling
 {
     /// <summary>Kind of notification carried by a <see cref="TimerEvent"/>.</summary>
     public enum TimerEventType

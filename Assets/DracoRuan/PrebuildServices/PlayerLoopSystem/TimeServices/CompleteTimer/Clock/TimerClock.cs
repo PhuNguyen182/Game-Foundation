@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Clock
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Clock
 {
     /// <summary>
     /// Anchored clock: <see cref="UtcNowMs"/> advances by the monotonic source, not by re-reading the

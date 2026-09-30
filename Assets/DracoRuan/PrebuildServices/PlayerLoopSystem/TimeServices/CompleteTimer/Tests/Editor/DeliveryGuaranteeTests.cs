@@ -1,12 +1,11 @@
 using System.Collections.Generic;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
 using NUnit.Framework;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.Editor
 {
     /// <summary>
-    /// At-least-once delivery guarantees for Completed/StageChanged events (see REWRITE_PLAN.md Q2/5.2,
-    /// 6.5 DeliveryGuaranteeTests).
+    /// At-least-once delivery guarantees for Completed/StageChanged events (see README.md).
     /// </summary>
     [TestFixture]
     public sealed class DeliveryGuaranteeTests

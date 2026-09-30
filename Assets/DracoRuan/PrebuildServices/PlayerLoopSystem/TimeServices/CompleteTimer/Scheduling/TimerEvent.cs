@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling
 {
     /// <summary>
     /// One notification dispatched by <see cref="TimerScheduler"/>: a stage advance or a completion.

@@ -1,23 +1,23 @@
 using System;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Regeneration
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Regeneration
 {
     /// <summary>
     /// Integer-tick regenerating resource (Lives/Energy/Stamina): whole units accrue at a fixed
     /// interval, with zero cumulative rounding error, even when consumed mid-interval.
     /// </summary>
     /// <remarks>
-    /// <para><b>Why not multi-stage timers.</b> A multi-stage <see cref="Scheduling.TimerScheduler"/>
+    /// <para><b>Why not multi-stage timers.</b> A multi-stage <see cref="TimerScheduler"/>
     /// timer models a fixed sequence that is never "spent" partway through (crop growth). Lives are
     /// consumed while a regen interval is only partially elapsed, and consuming must not reset that
     /// partial progress - which a stage-based timer has no way to express. This class instead tracks
     /// <see cref="AnchorMs"/>, the moment the *current* regen interval started, and folds completed
     /// intervals into <see cref="Stored"/> while carrying the remainder forward
     /// (<c>AnchorMs += n * IntervalMs</c>), so no fractional progress is ever discarded (see
-    /// REWRITE_PLAN.md Q3/5.3).</para>
+    /// README.md).</para>
     ///
-    /// <para>Only one <see cref="Scheduling.TimerScheduler"/> timer is used per counter - for the
+    /// <para>Only one <see cref="TimerScheduler"/> timer is used per counter - for the
     /// next single regen tick - regardless of how many units are missing, so an offline gap of any
     /// length resolves in O(1) rather than firing once per missed tick.</para>
     /// </remarks>
@@ -250,7 +250,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             // caps a catch-up to at most one interval's worth of gain, because Normalize only sees
             // elapsed = e.AtMs - AnchorMs, which is exactly one IntervalMs by construction. A 2-hour
             // offline gap with a 30-minute interval must fold all 4 missed intervals in one shot
-            // (REWRITE_PLAN.md 5.3), which requires the real "now".
+            // (see README.md), which requires the real "now".
             long nowMs = this._scheduler.NowMs;
             long before = this.Stored;
 

@@ -1,12 +1,12 @@
 using System;
 using DracoRuan.PrebuildServices.PlayerLoopSystem.Core.Handlers;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Clock;
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Clock;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
 using DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices;
 using UnityEngine;
 using VContainer.Unity;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.CompleteTimerIntegration
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimerIntegration
 {
     /// <summary>
     /// Wires the pure-C# timer core into the Unity runtime: drives its per-frame tick, checks clock
@@ -15,7 +15,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
     /// <remarks>
     /// This is the only place in the whole feature that touches <c>UnityEngine</c> or global
     /// <c>Debug</c> - everything under <c>CompleteTimer/</c> proper stays <c>noEngineReferences</c> so
-    /// it can be unit tested with a fake clock (see REWRITE_PLAN.md section 4).
+    /// it can be unit tested with a fake clock (see README.md).
     /// </remarks>
     public sealed class CompleteTimerRuntime : IStartable, IDisposable, IUpdateHandler
     {
@@ -36,8 +36,8 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         {
             // Registered separately from the scheduler: this only drives TimerClock.CheckDrift(),
             // which must run every frame even if ReanchorFromDevice's focus-regain event never fires
-            // (deep sleep without an OS focus transition is exactly the case REWRITE_PLAN.md 5.1
-            // calls out as needing this second layer of defense).
+            // (deep sleep without an OS focus transition is exactly the case the README's clock
+            // section calls out as needing this second layer of defense).
             //
             // UpdateServiceManager.UpdateTime() ticks its handler list back-to-front, so whichever
             // handler is registered *last* runs *first* next frame. The scheduler is registered

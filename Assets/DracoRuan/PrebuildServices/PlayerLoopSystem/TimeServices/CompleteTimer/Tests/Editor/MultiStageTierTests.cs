@@ -1,10 +1,10 @@
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling;
 using NUnit.Framework;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.Editor
 {
     /// <summary>
-    /// Crop-growth scenario from REWRITE_PLAN.md Q5: stage A = 1', B = 3', C = 8' (cumulative ends
+    /// Crop-growth scenario from the README: stage A = 1', B = 3', C = 8' (cumulative ends
     /// 1', 4', 12').
     /// </summary>
     [TestFixture]

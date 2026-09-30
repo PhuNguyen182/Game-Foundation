@@ -1,6 +1,6 @@
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Scheduling
 {
-    /// <summary>Lifecycle state of one timer slot. See REWRITE_PLAN.md section 4/Q4 for the full lifecycle.</summary>
+    /// <summary>Lifecycle state of one timer slot. See README.md for the full lifecycle.</summary>
     public enum TimerState
     {
         /// <summary>Slot is unused and sits in the scheduler's free list.</summary>

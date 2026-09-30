@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Regeneration
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Regeneration
 {
     /// <summary>Persistence-facing snapshot of one <see cref="RegenerationCounter"/>.</summary>
     public sealed class RegenerationSnapshot

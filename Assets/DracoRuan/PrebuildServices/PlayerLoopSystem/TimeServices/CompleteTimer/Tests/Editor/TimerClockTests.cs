@@ -1,11 +1,11 @@
-using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Clock;
+using DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Clock;
 using NUnit.Framework;
 
-namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests
+namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer.Tests.Editor
 {
     /// <summary>
     /// Covers <see cref="TimerClock"/>'s anchoring, clock-rollback protection, server sync and
-    /// deep-sleep drift handling (see REWRITE_PLAN.md 6.5, TimerClockTests).
+    /// deep-sleep drift handling (see README.md).
     /// </summary>
     [TestFixture]
     public sealed class TimerClockTests
