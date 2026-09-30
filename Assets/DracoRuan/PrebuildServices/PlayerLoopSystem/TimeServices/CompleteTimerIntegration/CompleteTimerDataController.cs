@@ -78,25 +78,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             this._queues.Capture(this._queueSnapshotBuffer);
             this._regenerations.Capture(this._regenSnapshotBuffer);
 
-            this.Data.Timers.Clear();
-            for (int i = 0; i < this._timerSnapshotBuffer.Count; i++)
-            {
-                TimerEntrySnapshot snapshot = this._timerSnapshotBuffer[i];
-                this.Data.Timers.Add(new TimerEntryV1
-                {
-                    Key = snapshot.Key,
-                    Channel = snapshot.Channel,
-                    State = (int)snapshot.State,
-                    StartMs = snapshot.StartMs,
-                    DurationMs = snapshot.DurationMs,
-                    PausedAtMs = snapshot.PausedAtMs,
-                    StageEnds = CopyArray(snapshot.StageEnds),
-                    DispatchedStage = snapshot.DispatchedStage,
-                    AutoRelease = snapshot.AutoRelease,
-                    CompletedAtMs = snapshot.CompletedAtMs,
-                    CompletedDelivered = snapshot.CompletedDelivered
-                });
-            }
+            TimerSaveMapper.WriteEntries(this._timerSnapshotBuffer, this.Data.Timers);
 
             this.Data.Queues.Clear();
             for (int i = 0; i < this._queueSnapshotBuffer.Count; i++)
@@ -161,25 +143,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
 
         private void RestoreSchedulerFromData()
         {
-            this._timerSnapshotBuffer.Clear();
-            for (int i = 0; i < this.Data.Timers.Count; i++)
-            {
-                TimerEntryV1 entry = this.Data.Timers[i];
-                this._timerSnapshotBuffer.Add(new TimerEntrySnapshot
-                {
-                    Key = entry.Key,
-                    Channel = entry.Channel,
-                    State = (TimerState)entry.State,
-                    StartMs = entry.StartMs,
-                    DurationMs = entry.DurationMs,
-                    PausedAtMs = entry.PausedAtMs,
-                    StageEnds = CopyArray(entry.StageEnds),
-                    DispatchedStage = entry.DispatchedStage,
-                    AutoRelease = entry.AutoRelease,
-                    CompletedAtMs = entry.CompletedAtMs,
-                    CompletedDelivered = entry.CompletedDelivered
-                });
-            }
+            TimerSaveMapper.ReadSnapshots(this.Data.Timers, this._timerSnapshotBuffer);
 
             this._scheduler.OnWarning += this.RaiseWarning;
             this._scheduler.Restore(this._timerSnapshotBuffer);
@@ -235,16 +199,6 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             }
 
             return result;
-        }
-
-        private static long[] CopyArray(long[] source)
-        {
-            if (source == null)
-                return null;
-
-            long[] copy = new long[source.Length];
-            System.Array.Copy(source, copy, source.Length);
-            return copy;
         }
 
         private void RaiseWarning(string message) => this.OnWarning?.Invoke(message);

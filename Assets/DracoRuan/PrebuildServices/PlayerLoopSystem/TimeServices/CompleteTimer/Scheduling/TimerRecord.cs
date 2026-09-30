@@ -27,6 +27,11 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         /// stage k+1 begins (equivalently, stage k ends). Length N means the timer has N stages;
         /// <c>StageEnds[N-1]</c> is the total duration.
         /// </summary>
+        /// <remarks>
+        /// Immutable once assigned: the scheduler only ever replaces the array, never writes into it.
+        /// That lets single-stage timers of equal duration share one array and lets snapshots hand it
+        /// out without copying.
+        /// </remarks>
         public long[] StageEnds;
 
         /// <summary>Absolute UTC ms at which the timer was paused; meaningless unless <see cref="State"/> is <see cref="TimerState.Paused"/>.</summary>
@@ -44,9 +49,6 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
 
         /// <summary>Monotonically increasing counter used to order equal-deadline entries by their creation order.</summary>
         public long Sequence;
-
-        /// <summary>Current position of this record inside the min-heap's backing array, or -1 if not in the heap.</summary>
-        public int HeapIndex;
 
         /// <summary>Generation of this slot; bumped every time it is released back to the free list.</summary>
         public int Version;
@@ -75,7 +77,6 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             this.DispatchedStage = 0;
             this.NextDeadlineMs = 0;
             this.Sequence = 0;
-            this.HeapIndex = -1;
             this.Listener = null;
             this.AutoRelease = false;
             this.CompletedAtMs = 0;

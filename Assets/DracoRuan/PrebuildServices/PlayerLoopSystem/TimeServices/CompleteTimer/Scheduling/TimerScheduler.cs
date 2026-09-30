@@ -27,6 +27,9 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         /// <summary>An event is considered late when dispatched more than this long after its theoretical <see cref="TimerEvent.AtMs"/>.</summary>
         private const long LateThresholdMs = 1000;
 
+        /// <summary>Upper bound on distinct single-stage durations kept in <see cref="_singleStageEnds"/>; beyond it new durations just allocate their own array.</summary>
+        private const int MaxSharedSingleStageDurations = 1024;
+
         private readonly ITimeProvider _clock;
         private readonly int _maxEventsPerTick;
 
@@ -37,6 +40,26 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         private readonly Dictionary<int, ITimerListener> _channelListeners;
         private readonly List<TimerEvent> _undelivered;
         private readonly List<TimerEvent> _deliveryScratch;
+
+        /// <summary>
+        /// Shared <c>StageEnds</c> arrays for single-stage timers, keyed by duration. Safe to share
+        /// because a record's <c>StageEnds</c> is never written into after assignment, and it means
+        /// starting thousands of timers with the same handful of durations allocates nothing.
+        /// </summary>
+        private readonly Dictionary<long, long[]> _singleStageEnds = new();
+
+        // One-entry cache in front of _channelListeners: mass completion dispatches long runs of
+        // events on the same channel, so the dictionary lookup per event is almost always redundant.
+        private bool _channelCacheValid;
+        private int _cachedChannel;
+        private ITimerListener _cachedChannelListener;
+
+        /// <summary>
+        /// Slots below this index have had a <see cref="TimerRecord"/> created. Records are created the
+        /// first time a slot is handed out rather than up front, so a generous
+        /// <c>initialCapacity</c> costs only the (pointer-sized) array slot until timers actually exist.
+        /// </summary>
+        private int _nextFreshSlot;
 
         private long _sequenceCounter;
         private bool _structureChangedThisTick;
@@ -55,12 +78,6 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             this._channelListeners = new Dictionary<int, ITimerListener>();
             this._undelivered = new List<TimerEvent>();
             this._deliveryScratch = new List<TimerEvent>();
-
-            for (int i = capacity - 1; i >= 0; i--)
-            {
-                this._records[i] = new TimerRecord { HeapIndex = -1 };
-                this._freeList.Push(i);
-            }
 
             this._heap = new TimerMinHeap(this._records, capacity);
 
@@ -160,7 +177,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             return false;
         }
 
-        private static long[] BuildStageEnds(in TimerSpec spec)
+        private long[] BuildStageEnds(in TimerSpec spec)
         {
             if (spec.StageDurationsMs != null && spec.StageDurationsMs.Length > 0)
             {
@@ -183,7 +200,19 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             if (spec.DurationMs <= 0)
                 return null;
 
-            return new[] { spec.DurationMs };
+            return this.GetSingleStageEnds(spec.DurationMs);
+        }
+
+        private long[] GetSingleStageEnds(long durationMs)
+        {
+            if (this._singleStageEnds.TryGetValue(durationMs, out long[] shared))
+                return shared;
+
+            long[] ends = { durationMs };
+            if (this._singleStageEnds.Count < MaxSharedSingleStageDurations)
+                this._singleStageEnds[durationMs] = ends;
+
+            return ends;
         }
 
         private int AcquireSlot()
@@ -191,19 +220,15 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             if (this._freeList.Count > 0)
                 return this._freeList.Pop();
 
-            int oldCapacity = this._records.Length;
-            int newCapacity = oldCapacity * 2;
-            Array.Resize(ref this._records, newCapacity);
-            this._heap.OnRecordsArrayReplaced(this._records);
-
-            for (int i = oldCapacity; i < newCapacity; i++)
+            if (this._nextFreshSlot == this._records.Length)
             {
-                this._records[i] = new TimerRecord { HeapIndex = -1 };
-                if (i != oldCapacity)
-                    this._freeList.Push(i);
+                Array.Resize(ref this._records, this._records.Length * 2);
+                this._heap.OnRecordsArrayReplaced(this._records);
             }
 
-            return oldCapacity;
+            int index = this._nextFreshSlot++;
+            this._records[index] = new TimerRecord();
+            return index;
         }
 
         // ------------------------------------------------------------------
@@ -515,7 +540,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
             if (h.IsValid && h.Index < this._records.Length)
             {
                 TimerRecord candidate = this._records[h.Index];
-                if (candidate.Version == h.Version && candidate.State != TimerState.Free)
+                if (candidate != null && candidate.Version == h.Version && candidate.State != TimerState.Free)
                 {
                     record = candidate;
                     return true;
@@ -542,6 +567,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
 
         public void AddChannelListener(int channel, ITimerListener listener)
         {
+            this._channelCacheValid = false;
             this._channelListeners[channel] = listener;
             this.FlushUndeliveredForChannel(channel, listener);
         }
@@ -549,7 +575,10 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         public void RemoveChannelListener(int channel, ITimerListener listener)
         {
             if (this._channelListeners.TryGetValue(channel, out ITimerListener current) && current == listener)
+            {
+                this._channelCacheValid = false;
                 this._channelListeners.Remove(channel);
+            }
         }
 
         private void FlushUndeliveredFor(int recordIndex, ITimerListener listener) =>
@@ -619,14 +648,14 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
 
             into.Clear();
 
-            for (int i = 0; i < this._records.Length; i++)
+            for (int i = 0; i < this._nextFreshSlot; i++)
             {
                 TimerRecord record = this._records[i];
                 if (record.State == TimerState.Free)
                     continue;
 
-                long[] stageEndsCopy = new long[record.StageEnds.Length];
-                Array.Copy(record.StageEnds, stageEndsCopy, stageEndsCopy.Length);
+                // StageEnds is shared, not copied: it is immutable (see TimerRecord.StageEnds).
+                long[] stageEnds = record.StageEnds;
 
                 into.Add(new TimerEntrySnapshot
                 {
@@ -634,9 +663,9 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
                     Channel = record.Channel,
                     State = record.State,
                     StartMs = record.StartMs,
-                    DurationMs = stageEndsCopy[stageEndsCopy.Length - 1],
+                    DurationMs = stageEnds[stageEnds.Length - 1],
                     PausedAtMs = record.PausedAtMs,
-                    StageEnds = stageEndsCopy,
+                    StageEnds = stageEnds,
                     DispatchedStage = record.DispatchedStage,
                     AutoRelease = record.AutoRelease,
                     CompletedAtMs = record.CompletedAtMs,
@@ -669,8 +698,18 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
                 int index = this.AcquireSlot();
                 TimerRecord record = this._records[index];
 
-                long[] stageEnds = new long[entry.StageEnds.Length];
-                Array.Copy(entry.StageEnds, stageEnds, stageEnds.Length);
+                // Single-stage entries share an interned array; multi-stage ones are copied so later
+                // changes to the caller's array can never reach a live timer.
+                long[] stageEnds;
+                if (entry.StageEnds.Length == 1)
+                {
+                    stageEnds = this.GetSingleStageEnds(entry.StageEnds[0]);
+                }
+                else
+                {
+                    stageEnds = new long[entry.StageEnds.Length];
+                    Array.Copy(entry.StageEnds, stageEnds, stageEnds.Length);
+                }
 
                 record.Key = entry.Key;
                 record.Channel = entry.Channel;
@@ -733,8 +772,8 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
 
             int processed = 0;
             while (processed < this._maxEventsPerTick &&
-                   this._heap.TryPeek(out int recordIndex) &&
-                   this._records[recordIndex].NextDeadlineMs <= this._cachedNowMs)
+                   this._heap.TryPeek(out int recordIndex, out long deadlineMs) &&
+                   deadlineMs <= this._cachedNowMs)
             {
                 this._heap.Pop();
                 processed += this.ProcessDueRecord(recordIndex);
@@ -805,8 +844,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
                 // loop pops before calling it), and it pushes the record back in itself when the
                 // timer advances to a new stage rather than completing - so each pass here must
                 // remove it again before re-processing, or the same index would end up pushed twice.
-                if (this._records[recordIndex].HeapIndex >= 0)
-                    this._heap.Remove(recordIndex);
+                this._heap.Remove(recordIndex);
 
                 this.ProcessDueRecord(recordIndex);
                 record = this._records[recordIndex];
@@ -825,7 +863,7 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
                 delivered = true;
             }
 
-            if (this._channelListeners.TryGetValue(e.Channel, out ITimerListener channelListener))
+            if (this.TryGetChannelListener(e.Channel, out ITimerListener channelListener))
             {
                 channelListener.OnTimerEvent(in e);
                 delivered = true;
@@ -837,6 +875,21 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
                 this.MarkDelivered(e.Handle.Index, e);
 
             return delivered;
+        }
+
+        private bool TryGetChannelListener(int channel, out ITimerListener listener)
+        {
+            if (this._channelCacheValid && this._cachedChannel == channel)
+            {
+                listener = this._cachedChannelListener;
+                return listener != null;
+            }
+
+            bool found = this._channelListeners.TryGetValue(channel, out listener);
+            this._cachedChannel = channel;
+            this._cachedChannelListener = listener;
+            this._channelCacheValid = true;
+            return found;
         }
 
         private void EnqueueUndelivered(TimerEvent e) => this._undelivered.Add(e);

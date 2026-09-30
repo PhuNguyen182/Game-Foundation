@@ -9,8 +9,12 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
     /// entry class rather than the core referencing MessagePack directly (core stays
     /// <c>noEngineReferences</c> and dependency-free). Only absolute moments are stored - no
     /// "remaining" value - per the "store immutable moments, derive remaining" principle.
+    /// <para>
+    /// A struct, so capturing a snapshot into a reused <c>List</c> allocates nothing per entry.
+    /// <see cref="StageEnds"/> is shared with the scheduler rather than copied: treat it as read-only.
+    /// </para>
     /// </remarks>
-    public sealed class TimerEntrySnapshot
+    public struct TimerEntrySnapshot
     {
         public string Key;
         public int Channel;
@@ -18,7 +22,10 @@ namespace DracoRuan.PrebuildServices.PlayerLoopSystem.TimeServices.CompleteTimer
         public long StartMs;
         public long DurationMs;
         public long PausedAtMs;
+
+        /// <summary>Cumulative stage-end offsets. Shared with the scheduler's record (capture) - never write into it.</summary>
         public long[] StageEnds;
+
         public int DispatchedStage;
         public bool AutoRelease;
         public long CompletedAtMs;
