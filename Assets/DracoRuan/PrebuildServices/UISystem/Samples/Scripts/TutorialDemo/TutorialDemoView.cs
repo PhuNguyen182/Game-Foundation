@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
-using DracoRuan.PrebuildServices.UISystem.Binding;
-using DracoRuan.PrebuildServices.UISystem.Components;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Binding;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Components;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views;
 using DracoRuan.PrebuildServices.UISystem.Samples.Home;
-using DracoRuan.PrebuildServices.UISystem.Views;
 using UnityEngine;
 
 namespace DracoRuan.PrebuildServices.UISystem.Samples.TutorialDemo

@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.Logic
+namespace DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Lifecycle
 {
     public enum UIViewState
     {

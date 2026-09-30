@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Motion
+namespace DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion
 {
     /// <summary>
     /// Edit-mode preview support for the Inspector (Play / Pause / Stop / scrub). The runner

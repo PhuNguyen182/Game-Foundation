@@ -4,16 +4,11 @@ using Cysharp.Threading.Tasks;
 using DracoRuan.PrebuildServices.PlayerLoopSystem.Core.Handlers;
 using DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices;
 using DracoRuan.PrebuildServices.UISystem.Motion.Logic;
+using DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic;
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Motion
+namespace DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion
 {
-    public enum UIMotionPlaybackResult
-    {
-        Completed = 0,
-        Replaced = 1,
-    }
-
     /// <summary>Handle to one in-flight timeline playback. Owned by whoever called Play.</summary>
     public sealed class UIMotionPlaybackHandle
     {

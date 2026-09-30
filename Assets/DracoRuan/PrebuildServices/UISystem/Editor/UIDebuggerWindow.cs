@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using DracoRuan.PrebuildServices.UISystem.Core;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Core;
 using UnityEditor;
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Editor
+namespace DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor
 {
     /// <summary>REWRITE_PLAN.md mục 5 bước 8, "UI Debugger": stack, queue, input lock, active
     /// VMs at a glance in Play mode. Reads UIService.Current (see its doc comment) - there is

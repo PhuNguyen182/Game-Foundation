@@ -1,7 +1,6 @@
-using System;
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Components
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Components
 {
     /// <summary>
     /// Fits its RectTransform to Screen.safeArea (REWRITE_PLAN.md 2.5: layer root gets one

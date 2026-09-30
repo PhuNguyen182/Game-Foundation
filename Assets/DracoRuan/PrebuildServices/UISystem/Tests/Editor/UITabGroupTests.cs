@@ -1,9 +1,10 @@
-using DracoRuan.PrebuildServices.UISystem.Components;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Components;
+using DracoRuan.PrebuildServices.UISystem.Input;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DracoRuan.PrebuildServices.UISystem.Tests
+namespace DracoRuan.PrebuildServices.UISystem.Tests.DracoRuan.PrebuildServices.UISystem.Tests.Editor
 {
     public class UITabGroupTests
     {
@@ -39,7 +40,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
             {
                 this._tabGos[i] = new GameObject($"Tab{i}", typeof(RectTransform), typeof(Image), typeof(Button));
                 UIButton button = this._tabGos[i].AddComponent<UIButton>();
-                button.ConfigureForTest(cooldownSeconds: 0f);
+                button.ConfigureForTest(cooldownInSeconds: 0f);
 
                 this._contentGos[i] = new GameObject($"Content{i}");
                 this._contentGos[i].SetActive(false);
@@ -113,6 +114,31 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
             group.SelectPrevious();
 
             Assert.AreEqual(2, group.SelectedIndex.CurrentValue);
+        }
+
+        private sealed class FakeNavigationSource : IUITabNavigationSource
+        {
+            public event System.Action Previous;
+            public event System.Action Next;
+            public void RaisePrevious() => this.Previous?.Invoke();
+            public void RaiseNext() => this.Next?.Invoke();
+        }
+
+        [Test]
+        public void AttachNavigation_SourceEventsMoveSelection_UntilDetached()
+        {
+            UITabGroup group = this.NewTabGroup(3, initialIndex: 0);
+            var source = new FakeNavigationSource();
+
+            group.AttachNavigation(source);
+            source.RaiseNext();
+            Assert.AreEqual(1, group.SelectedIndex.CurrentValue);
+            source.RaisePrevious();
+            Assert.AreEqual(0, group.SelectedIndex.CurrentValue);
+
+            group.DetachNavigation();
+            source.RaiseNext();
+            Assert.AreEqual(0, group.SelectedIndex.CurrentValue);
         }
     }
 }

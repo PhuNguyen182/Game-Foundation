@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.Motion.Logic
+namespace DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic
 {
     /// <summary>
     /// Resolves a track's raw serialized value (Absolute/RelativeToRest/RelativeToStart/

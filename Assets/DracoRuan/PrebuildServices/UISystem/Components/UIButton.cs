@@ -1,11 +1,11 @@
-using System;
 using Cysharp.Threading.Tasks;
 using DracoRuan.PrebuildServices.UISystem.Motion;
 using R3;
 using UnityEngine;
 using UnityEngine.UI;
+using UIMotion = DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion.UIMotion;
 
-namespace DracoRuan.PrebuildServices.UISystem.Components
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Components
 {
     /// <summary>
     /// Concrete click component (REWRITE_PLAN.md 2.5): does not inherit UIViewBase, wraps a
@@ -114,9 +114,9 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
         /// <summary>Test-only setup hook (see AssemblyInfo.cs InternalsVisibleTo): assigns
         /// cooldownSeconds directly instead of through the Inspector, and forces EnsurePrepared
         /// so a test can invoke Button.onClick directly without depending on Awake's timing.</summary>
-        internal void ConfigureForTest(float cooldownSeconds)
+        internal void ConfigureForTest(float cooldownInSeconds)
         {
-            this.cooldownSeconds = cooldownSeconds;
+            this.cooldownSeconds = cooldownInSeconds;
             this.EnsurePrepared();
         }
 

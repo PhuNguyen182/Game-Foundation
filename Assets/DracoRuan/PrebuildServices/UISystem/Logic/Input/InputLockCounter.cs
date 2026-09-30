@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.PrebuildServices.UISystem.Logic
+namespace DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Input
 {
     /// <summary>
     /// Reference-counted input lock. Multiple concurrent transitions/loads can each

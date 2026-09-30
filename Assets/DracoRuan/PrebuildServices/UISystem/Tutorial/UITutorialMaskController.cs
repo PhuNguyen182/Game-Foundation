@@ -1,8 +1,9 @@
 using DracoRuan.PrebuildServices.UISystem.Motion;
+using DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DracoRuan.PrebuildServices.UISystem.Tutorial
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Tutorial
 {
     /// <summary>
     /// Drives one shared TutorialMask material (see UITutorialMask.shader): moves/resizes the

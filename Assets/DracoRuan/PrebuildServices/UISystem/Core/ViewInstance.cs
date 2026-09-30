@@ -1,11 +1,13 @@
 using System;
-using DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views;
 using DracoRuan.PrebuildServices.UISystem.Logic;
+using DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Lifecycle;
 using DracoRuan.PrebuildServices.UISystem.MVVM;
-using DracoRuan.PrebuildServices.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM;
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Core
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Core
 {
     /// <summary>
     /// One open (or cached-but-hidden) view. Non-generic on purpose so heterogeneous views can

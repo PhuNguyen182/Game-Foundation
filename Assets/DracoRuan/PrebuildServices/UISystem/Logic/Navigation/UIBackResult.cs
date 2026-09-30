@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.Logic
+namespace DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Navigation
 {
     /// <summary>What a layer did in response to a Back/Esc request.</summary>
     public enum UIBackResult

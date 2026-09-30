@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.PrebuildServices.UISystem.Logic.Badge
+namespace DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Badge
 {
     /// <summary>
     /// REWRITE_PLAN.md mục 5 bước 10 (tuỳ chọn): "Badge/red-dot service (VM thuần, cây key →

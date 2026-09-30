@@ -1,8 +1,9 @@
 using System;
 using DracoRuan.PrebuildServices.UISystem.Motion;
 using UnityEngine;
+using UIMotion = DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion.UIMotion;
 
-namespace DracoRuan.PrebuildServices.UISystem.Tutorial
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Tutorial
 {
     /// <summary>
     /// One step of a data-driven tutorial (REWRITE_PLAN.md mục 5 bước 10 + user instruction:

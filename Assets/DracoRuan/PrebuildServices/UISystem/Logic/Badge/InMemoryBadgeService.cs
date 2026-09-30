@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DracoRuan.PrebuildServices.UISystem.Logic.Badge
+namespace DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Badge
 {
     /// <summary>
     /// Default IBadgeService: counts held in memory only, lost on process exit. This is the
@@ -11,7 +11,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Logic.Badge
     /// </summary>
     public sealed class InMemoryBadgeService : IBadgeService
     {
-        private readonly Dictionary<BadgeKey, int> _ownCounts = new Dictionary<BadgeKey, int>();
+        private readonly Dictionary<BadgeKey, int> _ownCounts = new();
 
         public event Action<BadgeKey> Changed;
 

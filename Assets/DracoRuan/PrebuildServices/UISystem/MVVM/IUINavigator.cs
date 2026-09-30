@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DracoRuan.PrebuildServices.UISystem.MVVM
+namespace DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM
 {
     /// <summary>
     /// Navigation contract available to view models. Code and view models only ever talk to

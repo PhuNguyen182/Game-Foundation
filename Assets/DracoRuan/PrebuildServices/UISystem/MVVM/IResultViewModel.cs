@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.MVVM
+namespace DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM
 {
     /// <summary>
     /// Implemented by view models opened via IUINavigator.OpenForResultAsync/EnqueueAsync.

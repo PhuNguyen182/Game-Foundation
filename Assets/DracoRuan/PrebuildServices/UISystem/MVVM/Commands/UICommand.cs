@@ -1,7 +1,7 @@
 using System;
 using R3;
 
-namespace DracoRuan.PrebuildServices.UISystem.MVVM
+namespace DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM.Commands
 {
     /// <summary>Synchronous, parameterless command bindable to a button.</summary>
     public sealed class UICommand : IDisposable

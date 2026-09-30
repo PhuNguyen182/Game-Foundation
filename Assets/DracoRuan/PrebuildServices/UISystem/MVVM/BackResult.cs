@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.MVVM
+namespace DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM
 {
     /// <summary>What a view model wants to happen in response to a Back/Esc request.</summary>
     public enum BackResult

@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.MVVM
+namespace DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM
 {
     /// <summary>
     /// Base helper for view models opened via OpenForResultAsync/EnqueueAsync. Calling

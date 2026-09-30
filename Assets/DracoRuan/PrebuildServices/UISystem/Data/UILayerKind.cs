@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.Data
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data
 {
     public enum UILayerKind
     {

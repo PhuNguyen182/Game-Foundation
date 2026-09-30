@@ -1,11 +1,11 @@
 using System;
-using DracoRuan.PrebuildServices.UISystem.Components;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Components;
 using NUnit.Framework;
 using R3;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DracoRuan.PrebuildServices.UISystem.Tests
+namespace DracoRuan.PrebuildServices.UISystem.Tests.DracoRuan.PrebuildServices.UISystem.Tests.Editor
 {
     public class UIButtonTests
     {
@@ -25,7 +25,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
             // AddComponent on a loose GameObject does not reliably run Awake synchronously in
             // this Editor/EditMode context (confirmed empirically - see UIButton.EnsurePrepared's
             // doc comment), so tests force it explicitly instead of depending on Awake's timing.
-            button.ConfigureForTest(cooldownSeconds: 0f);
+            button.ConfigureForTest(cooldownInSeconds: 0f);
             return button;
         }
 
@@ -55,7 +55,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
             this._go = new GameObject("Button", typeof(RectTransform), typeof(Image), typeof(Button));
             var feedback = this._go.AddComponent<FakeFeedback>();
             UIButton button = this._go.AddComponent<UIButton>();
-            button.ConfigureForTest(cooldownSeconds: 0f);
+            button.ConfigureForTest(cooldownInSeconds: 0f);
 
             button.Button.onClick.Invoke();
 
@@ -97,7 +97,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         public void Click_WithCooldownConfigured_DisablesButtonImmediately()
         {
             UIButton button = this.NewButton();
-            button.ConfigureForTest(cooldownSeconds: 5f);
+            button.ConfigureForTest(cooldownInSeconds: 5f);
 
             button.Button.onClick.Invoke();
 
@@ -108,7 +108,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         public void Click_WithCooldownConfigured_SecondClickDuringCooldownDoesNotRaiseClicked()
         {
             UIButton button = this.NewButton();
-            button.ConfigureForTest(cooldownSeconds: 5f);
+            button.ConfigureForTest(cooldownInSeconds: 5f);
             int received = 0;
             using IDisposable _ = button.Clicked.Subscribe(_ => received++);
 

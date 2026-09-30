@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.PrebuildServices.UISystem.Motion.Logic
+namespace DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic
 {
     /// <summary>
     /// Standard easing formulas (Penner/easings.net), normalized to t/value in [0,1]

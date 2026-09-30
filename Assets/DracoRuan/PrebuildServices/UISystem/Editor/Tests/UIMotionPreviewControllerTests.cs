@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using DracoRuan.PrebuildServices.UISystem.Editor.MotionTools;
-using DracoRuan.PrebuildServices.UISystem.Motion;
-using DracoRuan.PrebuildServices.UISystem.Motion.Logic;
+using DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion;
+using DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UIMotion = DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion.UIMotion;
 
-namespace DracoRuan.PrebuildServices.UISystem.Editor.Tests
+namespace DracoRuan.PrebuildServices.UISystem.Editor.Tests.DracoRuan.PrebuildServices.UISystem.Editor.Tests
 {
     /// <summary>Drives the real Inspector preview controller against the live Editor's
     /// AnimationMode: play/pause/scrub/stop, and the guarantee that stopping AnimationMode alone

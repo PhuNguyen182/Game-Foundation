@@ -1,9 +1,9 @@
 #if USE_EXTENDED_ADDRESSABLE
 using System;
-using DracoRuan.PrebuildServices.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views;
 using UnityEngine.AddressableAssets;
 
-namespace DracoRuan.PrebuildServices.UISystem.Data
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data
 {
     /// <summary>Non-generic subclass so the Inspector serializes it and restricts the picker to
     /// prefabs whose root carries a UIViewBase. Serializes the same GUID payload as

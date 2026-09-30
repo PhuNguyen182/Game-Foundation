@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.Motion
+namespace DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion
 {
     /// <summary>
     /// Implemented by a component referenced from a Custom-kind UIMotionTrack. A normal

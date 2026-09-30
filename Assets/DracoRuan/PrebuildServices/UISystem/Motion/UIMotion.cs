@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DracoRuan.PrebuildServices.UISystem.Motion.Logic;
+using DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic;
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Motion
+namespace DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion
 {
     /// <summary>
     /// Standalone animation component: two timelines (Show/Hide), each a flat list of
@@ -21,8 +22,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
     /// </summary>
     public partial class UIMotion : MonoBehaviour
     {
-        [SerializeField] private List<UIMotionTrack> showTracks = new List<UIMotionTrack>();
-        [SerializeField] private List<UIMotionTrack> hideTracks = new List<UIMotionTrack>();
+        [SerializeField] private List<UIMotionTrack> showTracks = new();
+        [SerializeField] private List<UIMotionTrack> hideTracks = new();
         [SerializeField] private UIMotionTrigger trigger = UIMotionTrigger.OnEnable;
         [SerializeField] private float speedOverride = 1f;
 
@@ -176,7 +177,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         public async UniTask HideAndDeactivateAsync(CancellationToken ct = default)
         {
             await this.PlayHideAsync(ct);
-            if (this != null)
+            if (this)
                 this.gameObject.SetActive(false);
         }
 
@@ -228,13 +229,14 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
         /// captured rest pose.</summary>
         internal void ConfigureForTest(
             IEnumerable<UIMotionTrack> show, IEnumerable<UIMotionTrack> hide,
-            bool mirrorHide = false, float speedOverride = 1f, UIMotionTrigger trigger = UIMotionTrigger.Manual)
+            bool shouldMirrorHide = false, float uiSpeedOverride = 1f,
+            UIMotionTrigger motionTrigger = UIMotionTrigger.Manual)
         {
             this.showTracks = new List<UIMotionTrack>(show);
             this.hideTracks = new List<UIMotionTrack>(hide);
-            this.mirrorHide = mirrorHide;
-            this.speedOverride = speedOverride;
-            this.trigger = trigger;
+            this.mirrorHide = shouldMirrorHide;
+            this.speedOverride = uiSpeedOverride;
+            this.trigger = motionTrigger;
 
             this._prepared = true;
             UIMotionRunner.EnsureRegistered();
@@ -264,7 +266,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             return AwaitAndClear(this, handle, ctRegistration);
 
             static async UniTask<UIMotionPlaybackResult> AwaitAndClear(
-                UIMotion self, UIMotionPlaybackHandle handle, CancellationTokenRegistration ctRegistration)
+                DracoRuan.PrebuildServices.UISystem.Motion.UIMotion self, UIMotionPlaybackHandle handle, CancellationTokenRegistration ctRegistration)
             {
                 UIMotionPlaybackResult result = await handle.Task;
                 ctRegistration.Dispose();
@@ -348,9 +350,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
                 // (the array returned here), never back into `source`.
                 UIMotionTrackEvaluator.ResolveTargetCache(mirrored);
 
-                if (source.kind == UIMotionTrackKind.Punch || source.kind == UIMotionTrackKind.Shake
-                                                           || source.kind == UIMotionTrackKind.Custom ||
-                                                           source.kind == UIMotionTrackKind.AnimatorState)
+                if (source.kind is UIMotionTrackKind.Punch or UIMotionTrackKind.Shake or UIMotionTrackKind.Custom
+                    or UIMotionTrackKind.AnimatorState)
                 {
                     // Self-mirroring: Punch/Shake oscillate around "wherever it happens to
                     // be" with no direction to reverse, Custom owns its own from/to through
@@ -504,26 +505,23 @@ namespace DracoRuan.PrebuildServices.UISystem.Motion
             {
                 UIMotionTrack track = tracks[i];
 
-                // Punch/Shake always decay back to exactly the value they started from -
-                // there is no authored Start/Target to resolve, so "snap to end" is just
-                // "leave the rest pose alone".
-                if (track.kind == UIMotionTrackKind.Punch || track.kind == UIMotionTrackKind.Shake)
+                switch (track.kind)
                 {
-                    UIMotionTrackEvaluator.Write(track, restPoses[i]);
-                    continue;
-                }
-
-                if (track.kind == UIMotionTrackKind.Custom)
-                {
-                    if (UIMotionTrackEvaluator.TryGetCustomTrack(track, out IUIMotionCustomTrack custom))
-                        custom.Snap(toEnd: true);
-                    continue;
-                }
-
-                if (track.kind == UIMotionTrackKind.AnimatorState)
-                {
-                    SnapAnimatorTrack(track, toEnd: true);
-                    continue;
+                    // Punch/Shake always decay back to exactly the value they started from -
+                    // there is no authored Start/Target to resolve, so "snap to end" is just
+                    // "leave the rest pose alone".
+                    case UIMotionTrackKind.Punch or UIMotionTrackKind.Shake:
+                        UIMotionTrackEvaluator.Write(track, restPoses[i]);
+                        continue;
+                    case UIMotionTrackKind.Custom:
+                    {
+                        if (UIMotionTrackEvaluator.TryGetCustomTrack(track, out IUIMotionCustomTrack custom))
+                            custom.Snap(toEnd: true);
+                        continue;
+                    }
+                    case UIMotionTrackKind.AnimatorState:
+                        SnapAnimatorTrack(track, toEnd: true);
+                        continue;
                 }
 
                 Float4 rest = restPoses[i].ToFloat4();

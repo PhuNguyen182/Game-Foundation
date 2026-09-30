@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DracoRuan.PrebuildServices.UISystem.Motion.Logic
+namespace DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic
 {
     /// <summary>
     /// Computes each track's absolute start time within its timeline from its startMode

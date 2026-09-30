@@ -1,0 +1,34 @@
+{
+    "name": "DracoRuan.PrebuildServices.UISystem.InputSystem",
+    "rootNamespace": "DracoRuan.PrebuildServices.UISystem.Input",
+    "references": [
+        "DracoRuan.PrebuildServices.UISystem",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.Handlers",
+        "UnityEngine.UI",
+        "Unity.InputSystem",
+        "VContainer",
+        "UniTask",
+        "UniTask.Addressables",
+        "Unity.Addressables",
+        "Unity.ResourceManager",
+        "DracoRuan.Foundation.Initializers"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UISYSTEM_INPUT_SYSTEM"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "UISYSTEM_INPUT_SYSTEM"
+        }
+    ],
+    "noEngineReferences": false
+}

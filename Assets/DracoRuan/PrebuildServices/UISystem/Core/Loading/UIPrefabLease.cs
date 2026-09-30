@@ -1,10 +1,8 @@
 using Cysharp.Threading.Tasks;
-using DracoRuan.PrebuildServices.UISystem.Views;
-#if USE_EXTENDED_ADDRESSABLE
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views;
 using UnityEngine.ResourceManagement.AsyncOperations;
-#endif
 
-namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Core.Loading
 {
     /// <summary>One definition's loaded prefab and who is still using it. Mirrors
     /// AudioSystem/Core/Loading/AudioClipLease.cs, adapted for UIViewBase prefabs.</summary>

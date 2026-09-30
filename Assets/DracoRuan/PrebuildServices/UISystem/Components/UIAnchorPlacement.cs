@@ -1,8 +1,7 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Components
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Components
 {
     /// <summary>
     /// Anchors this RectTransform next to a target RectTransform - REWRITE_PLAN.md 2.5

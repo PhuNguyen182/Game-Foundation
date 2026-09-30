@@ -1,10 +1,11 @@
 using System;
 using DracoRuan.PrebuildServices.UISystem.Motion;
+using DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion;
 using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
+using UIMotion = DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion.UIMotion;
 
-namespace DracoRuan.PrebuildServices.UISystem.Views
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views
 {
     /// <summary>
     /// Root component of every routed view prefab. Deliberately does not use Unity message
@@ -21,8 +22,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Views
         [SerializeField] private Canvas canvas;
         [SerializeField] private GraphicRaycaster graphicRaycaster;
         [SerializeField] private CanvasGroup canvasGroup;
+        [SerializeField] private UIMotion motion;
         
-        private UIMotion _motion;
         private bool _motionResolved;
 
         public Canvas Canvas => this.canvas ? this.canvas : this.canvas = this.GetComponent<Canvas>();
@@ -44,13 +45,14 @@ namespace DracoRuan.PrebuildServices.UISystem.Views
         {
             get
             {
-                if (!this._motionResolved)
-                {
-                    this._motion = this.GetComponent<UIMotion>();
-                    this._motionResolved = true;
-                }
+                if (this._motionResolved) 
+                    return this.motion;
 
-                return this._motion;
+                if (!this.motion)
+                    this.motion = this.GetComponent<UIMotion>();
+                
+                this._motionResolved = true;
+                return this.motion;
             }
         }
 

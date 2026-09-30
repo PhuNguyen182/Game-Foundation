@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.PrebuildServices.UISystem.Logic.Badge
+namespace DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Badge
 {
     /// <summary>
     /// A hierarchical badge path, segment-separated by '/' (e.g. "Shop/Weapons/Sword") - the

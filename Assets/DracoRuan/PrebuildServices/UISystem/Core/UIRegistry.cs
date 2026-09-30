@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
 
-namespace DracoRuan.PrebuildServices.UISystem.Core
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Core
 {
     /// <summary>
     /// Type -> definition map, validated once at construction so a bad asset config fails

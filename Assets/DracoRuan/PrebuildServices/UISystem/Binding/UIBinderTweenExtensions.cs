@@ -1,12 +1,14 @@
 using System;
 using DracoRuan.PrebuildServices.UISystem.Motion;
+using DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion;
 using DracoRuan.PrebuildServices.UISystem.Motion.Logic;
+using DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic;
 using R3;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DracoRuan.PrebuildServices.UISystem.Binding
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Binding
 {
     /// <summary>
     /// Binds an Observable&lt;T&gt; so every new value tweens the target smoothly instead of

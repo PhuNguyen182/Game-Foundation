@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DracoRuan.PrebuildServices.UISystem.MVVM;
+using DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM;
 using R3;
 
 namespace DracoRuan.PrebuildServices.UISystem.Samples.Inventory

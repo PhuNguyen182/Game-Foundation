@@ -1,10 +1,10 @@
 using DracoRuan.Foundation.Initializers.AutoRegisterAttributes;
-using DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
-namespace DracoRuan.PrebuildServices.UISystem.Installer
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Installer
 {
     [AutoInstall(InstallerInstanceType = nameof(InstallerType.ScriptableObject))]
     [CreateAssetMenu(fileName = "UIInstaller", menuName = "DracoRuan/UISystem/UI Installer")]

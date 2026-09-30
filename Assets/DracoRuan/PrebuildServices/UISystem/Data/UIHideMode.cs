@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.Data
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data
 {
     /// <summary>How a KeepAlive view is hidden without destroying it.</summary>
     public enum UIHideMode

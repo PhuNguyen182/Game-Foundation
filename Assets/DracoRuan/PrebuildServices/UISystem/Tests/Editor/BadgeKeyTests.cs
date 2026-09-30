@@ -1,4 +1,4 @@
-using DracoRuan.PrebuildServices.UISystem.Logic.Badge;
+using DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Badge;
 using NUnit.Framework;
 
 namespace DracoRuan.PrebuildServices.UISystem.Tests

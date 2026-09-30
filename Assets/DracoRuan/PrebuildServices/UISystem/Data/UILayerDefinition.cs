@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Data
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data
 {
     /// <summary>
     /// One layer in the UI stack (e.g. Screen, Popup, System). Each layer becomes its own

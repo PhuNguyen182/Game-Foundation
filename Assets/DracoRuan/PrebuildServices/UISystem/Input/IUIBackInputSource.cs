@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.PrebuildServices.UISystem.Input
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Input
 {
     /// <summary>
     /// Fires whenever the game's "Back" gesture happens (Esc, gamepad B/Circle, Android back).

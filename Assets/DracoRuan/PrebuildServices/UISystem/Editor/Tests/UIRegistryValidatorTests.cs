@@ -1,17 +1,16 @@
 using System.Collections.Generic;
 using System.Linq;
-using DracoRuan.PrebuildServices.UISystem.Binding;
-using DracoRuan.PrebuildServices.UISystem.Data;
-using DracoRuan.PrebuildServices.UISystem.Editor.Validation;
-using DracoRuan.PrebuildServices.UISystem.MVVM;
-using DracoRuan.PrebuildServices.UISystem.Testing;
-using DracoRuan.PrebuildServices.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Binding;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.Validation;
+using DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DracoRuan.PrebuildServices.UISystem.Editor.Tests
+namespace DracoRuan.PrebuildServices.UISystem.Editor.Tests.DracoRuan.PrebuildServices.UISystem.Editor.Tests
 {
     public class UIRegistryValidatorTests
     {

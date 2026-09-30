@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.Components
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Components
 {
     /// <summary>
     /// Extension hook for UIButton: implement on any component on the same GameObject to get

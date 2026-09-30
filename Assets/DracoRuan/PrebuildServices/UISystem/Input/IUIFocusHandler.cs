@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DracoRuan.PrebuildServices.UISystem.Input
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Input
 {
     /// <summary>
     /// Engine-agnostic seam UIService attaches to for PC/Console focus behavior (REWRITE_PLAN.md

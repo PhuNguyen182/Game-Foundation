@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using DracoRuan.PrebuildServices.UISystem.MVVM;
+using DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM.Commands;
 using NUnit.Framework;
 
 namespace DracoRuan.PrebuildServices.UISystem.Tests

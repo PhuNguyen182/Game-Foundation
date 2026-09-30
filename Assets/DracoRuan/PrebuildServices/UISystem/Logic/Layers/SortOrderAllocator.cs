@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DracoRuan.PrebuildServices.UISystem.Logic
+namespace DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Layers
 {
     /// <summary>
     /// Hands out increasing sort-order slots for nested canvases within a UI layer.
@@ -13,8 +13,8 @@ namespace DracoRuan.PrebuildServices.UISystem.Logic
     {
         private readonly int _baseSortOrder;
         private readonly int _step;
-        private readonly List<int> _freeSlots = new List<int>();
-        private readonly HashSet<int> _allocated = new HashSet<int>();
+        private readonly List<int> _freeSlots = new();
+        private readonly HashSet<int> _allocated = new();
         private int _nextSlot;
 
         public SortOrderAllocator(int baseSortOrder, int step)

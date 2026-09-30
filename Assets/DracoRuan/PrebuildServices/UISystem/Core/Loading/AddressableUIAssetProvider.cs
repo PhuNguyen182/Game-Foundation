@@ -2,15 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DracoRuan.PrebuildServices.UISystem.Data;
-using DracoRuan.PrebuildServices.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views;
 using UnityEngine;
-#if USE_EXTENDED_ADDRESSABLE
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-#endif
 
-namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Core.Loading
 {
     /// <summary>
     /// Addressables-backed IUIAssetProvider (REWRITE_PLAN.md 2.5/6): lease + refcount per
@@ -60,7 +58,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
                 return;
 
             UIViewBase prefab = await this.AcquireAsync(definition, ct);
-            if (prefab == null)
+            if (!prefab)
                 return;
 
             if (!this._leases.TryGetValue(definition, out UIPrefabLease lease))
@@ -96,7 +94,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
         {
             if (this._leases.TryGetValue(definition, out UIPrefabLease existing))
             {
-                if (existing.Prefab != null)
+                if (existing.Prefab)
                 {
                     existing.RefCount++;
                     return existing.Prefab;
@@ -105,7 +103,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
                 if (existing.Pending != null)
                 {
                     UIViewBase shared = await existing.Pending.Task.AttachExternalCancellation(ct);
-                    if (shared != null)
+                    if (shared)
                         existing.RefCount++;
 
                     return shared;
@@ -129,7 +127,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
             {
                 lease.Pending.TrySetResult(null);
                 lease.Pending = null;
-                if (lease.RefCount <= 0 && !lease.IsPinned && lease.Prefab == null)
+                if (lease.RefCount <= 0 && !lease.IsPinned && !lease.Prefab)
                     this.Unload(definition, lease);
                 throw;
             }
@@ -138,7 +136,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
                 Debug.LogError($"[UISystem] Failed to load Addressable prefab for '{definition.ViewModelType?.Name}': {exception.Message}");
                 lease.Pending.TrySetResult(null);
                 lease.Pending = null;
-                if (lease.RefCount <= 0 && !lease.IsPinned && lease.Prefab == null)
+                if (lease.RefCount <= 0 && !lease.IsPinned && !lease.Prefab)
                     this.Unload(definition, lease);
                 return null;
             }

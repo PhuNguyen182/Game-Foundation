@@ -5,11 +5,13 @@ using System.Diagnostics;
 using System.Text;
 using Cysharp.Threading.Tasks;
 using DracoRuan.PrebuildServices.UISystem.Motion;
+using DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion;
 using DracoRuan.PrebuildServices.UISystem.Motion.Logic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Debug = UnityEngine.Debug;
+using UIMotion = DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion.UIMotion;
 
 namespace DracoRuan.PrebuildServices.UISystem.Tests
 {
@@ -61,7 +63,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
                     to = new Vector4(1f, 0f, 0f, 0f),
                     duration = 1f,
                 };
-                motion.ConfigureForTest(new[] { show }, new UIMotionTrack[0], trigger: UIMotionTrigger.Manual);
+                motion.ConfigureForTest(new[] { show }, new UIMotionTrack[0], motionTrigger: UIMotionTrigger.Manual);
                 motions[i] = motion;
             }
 

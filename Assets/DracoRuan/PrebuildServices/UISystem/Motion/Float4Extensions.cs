@@ -1,7 +1,8 @@
 using DracoRuan.PrebuildServices.UISystem.Motion.Logic;
+using DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic;
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Motion
+namespace DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion
 {
     /// <summary>
     /// Bridges UnityEngine.Vector4 and the engine-agnostic Float4 used by

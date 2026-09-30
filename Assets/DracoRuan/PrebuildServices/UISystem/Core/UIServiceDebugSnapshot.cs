@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DracoRuan.PrebuildServices.UISystem.Core
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Core
 {
     /// <summary>Read-only introspection data for UISystem.Editor's UI Debugger window
     /// (REWRITE_PLAN.md mục 5 bước 8) - not part of IUINavigator, since ordinary game code has

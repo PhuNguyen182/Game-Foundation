@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.Motion.Logic
+namespace DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic
 {
     // Numbered explicitly and append-only: values are serialized on UIMotionTrack.
     public enum UIMotionValueMode

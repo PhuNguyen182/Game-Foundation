@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 using System.Threading;
 using DracoRuan.PrebuildServices.UISystem.Motion;
+using DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion;
 using DracoRuan.PrebuildServices.UISystem.Motion.Logic;
+using DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic;
 using NUnit.Framework;
 using UnityEngine;
+using UIMotion = DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion.UIMotion;
 
 namespace DracoRuan.PrebuildServices.UISystem.Tests
 {
@@ -173,7 +176,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
                 to = new Vector4(1f, 0, 0, 0),
                 duration = 0f,
             };
-            motion.ConfigureForTest(new[] { show }, new UIMotionTrack[0], mirrorHide: true);
+            motion.ConfigureForTest(new[] { show }, new UIMotionTrack[0], shouldMirrorHide: true);
 
             // Mirror Hide does not depend on Show ever having played for a
             // useStartValue track - call Hide directly on a fresh motion.
@@ -199,7 +202,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
                 to = new Vector4(100f, 0f, 0f, 0f),
                 duration = 0f,
             };
-            motion.ConfigureForTest(new[] { show }, new UIMotionTrack[0], mirrorHide: true);
+            motion.ConfigureForTest(new[] { show }, new UIMotionTrack[0], shouldMirrorHide: true);
 
             // Simulate the object already being displaced when Show starts, so the
             // runtime snapshot (50,0) differs from both rest (0,0) and Show's target (100,0).
@@ -228,7 +231,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
                 to = new Vector4(100f, 0f, 0f, 0f),
                 duration = 0f,
             };
-            motion.ConfigureForTest(new[] { show }, new UIMotionTrack[0], mirrorHide: true);
+            motion.ConfigureForTest(new[] { show }, new UIMotionTrack[0], shouldMirrorHide: true);
 
             rt.anchoredPosition = new Vector2(30f, 0f);
             motion.PlayHideAsync().GetAwaiter().GetResult();
@@ -820,7 +823,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         {
             UIMotion motion = this.NewMotion(out GameObject go);
             var image = go.AddComponent<UnityEngine.UI.Image>();
-            motion.ConfigureForTest(new[] { FadeTo(go, 0.2f) }, new UIMotionTrack[0], mirrorHide: true);
+            motion.ConfigureForTest(new[] { FadeTo(go, 0.2f) }, new UIMotionTrack[0], shouldMirrorHide: true);
 
             motion.PlayShowAsync().GetAwaiter().GetResult();
             Assert.That(image.color.a, Is.EqualTo(0.2f).Within(0.0001f));

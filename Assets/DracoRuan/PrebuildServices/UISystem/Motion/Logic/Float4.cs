@@ -1,6 +1,6 @@
 using System;
 
-namespace DracoRuan.PrebuildServices.UISystem.Motion.Logic
+namespace DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic
 {
     /// <summary>
     /// Engine-agnostic stand-in for UnityEngine.Vector4, wide enough to carry a track's

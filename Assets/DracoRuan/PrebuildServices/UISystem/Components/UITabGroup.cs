@@ -1,20 +1,18 @@
 using System;
+using DracoRuan.PrebuildServices.UISystem.Input;
 using R3;
 using UnityEngine;
-#if UISYSTEM_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
 
-namespace DracoRuan.PrebuildServices.UISystem.Components
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Components
 {
     /// <summary>
     /// A row of tabs (REWRITE_PLAN.md 2.5/mục 5 bước 7): purely a view-side selector - which
     /// tab is selected is state owned by the screen's own VM (bound via UIBinder.TwoWay-style
     /// wiring, same as a Toggle group), not by UITabGroup itself. Each tab is a UIButton (for
     /// click) whose associated content GameObject this component shows/hides on selection.
-    /// Gamepad LB/RB: SelectNext/SelectPrevious are the wiring point; AttachGamepadNavigation
-    /// binds them to InputAction callbacks (mirrors InputSystemBackInputSource's own-or-borrow
-    /// action pattern) when UISYSTEM_INPUT_SYSTEM is defined.
+    /// Gamepad LB/RB: SelectNext/SelectPrevious are the wiring point; AttachNavigation
+    /// subscribes them to any IUITabNavigationSource (InputSystemTabNavigationSource ships in
+    /// the UISystem.InputSystem adapter assembly).
     /// </summary>
     public sealed class UITabGroup : MonoBehaviour
     {
@@ -52,9 +50,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
         {
             this._selectedIndex.Dispose();
             this._clickSubscriptions.Dispose();
-#if UISYSTEM_INPUT_SYSTEM
-            this.DetachGamepadNavigation();
-#endif
+this.DetachNavigation();
         }
 
         private void EnsurePrepared()
@@ -120,62 +116,30 @@ namespace DracoRuan.PrebuildServices.UISystem.Components
             this.EnsurePrepared();
         }
 
-#if UISYSTEM_INPUT_SYSTEM
-        private InputAction _previousTabAction;
-        private InputAction _nextTabAction;
-        private bool _ownsTabActions;
+        private IUITabNavigationSource _navigationSource;
 
-        /// <summary>
-        /// Binds gamepad LB/RB (and, since these are ordinary InputActions, whatever else the
-        /// bindings include) to SelectPrevious/SelectNext. Pass existing actions from the
-        /// project's own action asset to share their enable/disable lifecycle with the rest of
-        /// the game's input; omit either to fall back to a private action bound to the gamepad
-        /// shoulder buttons directly, owned and disposed by this call's matching Detach.
-        /// </summary>
-        public void AttachGamepadNavigation(InputAction previousTabAction = null, InputAction nextTabAction = null)
+        /// <summary>Subscribes SelectPrevious/SelectNext to the source. The source is borrowed:
+        /// the caller keeps ownership and disposes it.</summary>
+        public void AttachNavigation(IUITabNavigationSource source)
         {
-            this.DetachGamepadNavigation();
+            this.DetachNavigation();
 
-            if (previousTabAction != null && nextTabAction != null)
-            {
-                this._previousTabAction = previousTabAction;
-                this._nextTabAction = nextTabAction;
-                this._ownsTabActions = false;
-            }
-            else
-            {
-                this._previousTabAction = new InputAction("UITabGroup/Previous", InputActionType.Button, "<Gamepad>/leftShoulder");
-                this._nextTabAction = new InputAction("UITabGroup/Next", InputActionType.Button, "<Gamepad>/rightShoulder");
-                this._previousTabAction.Enable();
-                this._nextTabAction.Enable();
-                this._ownsTabActions = true;
-            }
+            if (source == null)
+                return;
 
-            this._previousTabAction.performed += this.OnPreviousTabPerformed;
-            this._nextTabAction.performed += this.OnNextTabPerformed;
+            this._navigationSource = source;
+            source.Previous += this.SelectPrevious;
+            source.Next += this.SelectNext;
         }
 
-        public void DetachGamepadNavigation()
+        public void DetachNavigation()
         {
-            if (this._previousTabAction != null)
-                this._previousTabAction.performed -= this.OnPreviousTabPerformed;
-            if (this._nextTabAction != null)
-                this._nextTabAction.performed -= this.OnNextTabPerformed;
+            if (this._navigationSource == null)
+                return;
 
-            if (this._ownsTabActions)
-            {
-                this._previousTabAction?.Dispose();
-                this._nextTabAction?.Dispose();
-            }
-
-            this._previousTabAction = null;
-            this._nextTabAction = null;
-            this._ownsTabActions = false;
+            this._navigationSource.Previous -= this.SelectPrevious;
+            this._navigationSource.Next -= this.SelectNext;
+            this._navigationSource = null;
         }
-
-        private void OnPreviousTabPerformed(InputAction.CallbackContext context) => this.SelectPrevious();
-
-        private void OnNextTabPerformed(InputAction.CallbackContext context) => this.SelectNext();
-#endif
     }
 }

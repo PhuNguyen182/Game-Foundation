@@ -2,12 +2,13 @@
 using System;
 using DracoRuan.PrebuildServices.PlayerLoopSystem.Core.Handlers;
 using DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Input;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-namespace DracoRuan.PrebuildServices.UISystem.Input
+namespace DracoRuan.PrebuildServices.UISystem.Input.DracoRuan.PrebuildServices.UISystem.InputSystem
 {
     /// <summary>
     /// PC/Console focus behavior (REWRITE_PLAN.md 2.5, "Focus (PC/Console)"): remembers

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Tutorial
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Tutorial
 {
     /// <summary>
     /// Base tutorial controller (REWRITE_PLAN.md mục 5 bước 10 + user instruction: "1 base

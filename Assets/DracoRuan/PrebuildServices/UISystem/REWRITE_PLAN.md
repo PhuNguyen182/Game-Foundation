@@ -1,6 +1,8 @@
 # UISystem: review và plan viết lại
 
 > Tổng hợp phiên review ngày 2026-09-24. **Chưa sửa dòng code nào.** Phiên sau bắt đầu từ mục 5 (Thứ tự triển khai), phase 1.
+>
+> **Plan bổ sung (2026-09-30):** [CAMERA_INPUT_PLAN.md](CAMERA_INPUT_PLAN.md) gồm UI camera sống suốt game, render mode mặc định Overlay, EventSystem và input dựng từ `InputActionReference`, tách asmdef adapter cho URP/InputSystem để chuẩn bị lên OpenUPM.
 
 **Mục tiêu:** base UI tái sử dụng cho các game từ mid-core trở lên. Chạy trên **Mobile + PC/Console**, dùng **uGUI**, theo mô hình **MVVM ViewModel-first**.
 
@@ -158,7 +160,7 @@ Bản 2 gọi là MVVM nhưng thực chất là **view-first/MVP**. API `OpenAsy
 | B4 | **`UIBinder`**: binding bằng code, strongly-typed, không reflection. Gồm one-way, two-way (slider/toggle/input field), command, collection, widget | Refactor-safe và nhanh. Mọi binding được thu về một chỗ để dispose khi unbind |
 | B5 | **Collection binding**: `ObservableList<T>` + `ISynchronizedView` → `UIRecycleList`, có Add/Remove/Move/Reset từng phần tử | Inventory, shop, leaderboard là nhu cầu bắt buộc của mid-core |
 | B6 | **`UIWidget<TVM>`**: bindable component không đi qua router, dùng cho sub-view, list item, widget dùng lại (CurrencyBar, TimerLabel) | MVVM cần cây VM lồng nhau, không phải view nào cũng là screen/popup |
-| B7 | **UI scope theo `LifetimeScope`**: scene scope gọi `builder.AddUIScope(sceneRegistry)`. VM của scope đó được resolve từ scope đó. Scope bị dispose thì view của nó bị đóng và release | Additive scene: VM trong scene gameplay cần service của scene đó |
+| B7 | **UI scope theo `LifetimeScope`**: scene scope gọi `builder.AddUIScope(sceneRegistry)`. VM của scope đó được resolve từ scope đó. Scope bị dispose thì view của nó bị đóng và release. Scope có thể mang thêm `UIScopeOverrides` (CanvasScaler theo scene, hoàn tác khi dispose) và base camera của scene (xem [CAMERA_INPUT_PLAN.md](CAMERA_INPUT_PLAN.md)) | Additive scene: VM trong scene gameplay cần service của scene đó |
 | B8 | **Quy tắc concurrency**: `reopenPolicy` (BringToFront / Ignore / AllowMultiple). Open trong lúc Close thì chờ Close xong. Open trùng khi đang load thì trả về cùng task. Load lỗi thì ném exception cho caller và tự nhả input lock | Bản 2 chỉ nói "chống re-entrance" chung chung |
 | B9 | **`Application.lowMemory`** → release các view KeepAlive đang ẩn | Mobile mid-core có nhiều popup nặng |
 | B10 | **UI Debugger** (Editor window ở Play mode): stack, queue, input lock, VM đang active, binding count | Debug navigation phức tạp |
@@ -185,6 +187,8 @@ Bản 2 gọi là MVVM nhưng thực chất là **view-first/MVP**. API `OpenAsy
 | `…UISystem.Motion` | `Motion/` | Có | `UIMotion`, `UIMotionTrack`, `UIEase`, `UIMotionRunner`, `IUIMotionTriggerSource`, `IUIMotionCustomTrack`. **Không reference UISystem runtime.** Chỉ phụ thuộc UniTask + `PlayerLoopSystem.UpdateServices` |
 | `…UISystem.Motion.Editor` | `Motion/Editor/` | Editor | Inspector timeline, preview/scrub bằng `AnimationMode`, bake Animator track, validator |
 | `…UISystem` | `Data/ Core/ Core/Loading/ Views/ Binding/ Components/ Focus/ Input/ Installer/` | Có | Runtime uGUI trực tiếp: `IUIService : IUINavigator`, registry, router, VM factory/scope, layer root, `UIView<TVM>`, `UIWidget<TVM>`, `UIBinder`, components, focus, back input, installer. Reference `Motion` (chiều ngược lại thì không) |
+| `…UISystem.InputSystem` | `InputSystem/` | Có | Adapter Input System, chỉ compile khi có package `com.unity.inputsystem`: `InputSystemBackInputSource`, `UIFocusController`, `InputSystemTabNavigationSource`, `UIInputActions`, `UIInputSystemInstaller`, `AddUIInputSystem` |
+| `…UISystem.URP` | `URP/` | Có | Adapter URP, chỉ compile khi có `com.unity.render-pipelines.universal`: `URPCameraStacker` (tự đăng ký lúc khởi động) |
 | `…UISystem.Editor` | `Editor/` | Editor | Registry window, VM type picker, validator + build validator, UI Debugger |
 | `…UISystem.Tests` | `Tests/Editor/` | Editor | EditMode test cho Logic + MVVM |
 | `…UISystem.PlayModeTests` | `Tests/Runtime/` | | Smoke test runtime |
@@ -192,7 +196,7 @@ Bản 2 gọi là MVVM nhưng thực chất là **view-first/MVP**. API `OpenAsy
 Dependencies của runtime:
 - UniTask (+ `UniTask.Addressables`), VContainer, R3 + `R3.Unity`, ObservableCollections(+`.R3`), `Unity.ugui`, TextMeshPro.
 - UISystem **không** phụ thuộc thư viện tween nào (kể cả DOTween). Phần còn lại của game vẫn dùng DOTween bình thường nếu muốn.
-- Input System qua `versionDefines` → `UISYSTEM_INPUT_SYSTEM`.
+- Lõi **không** reference `Unity.InputSystem` hay URP. Input System và URP nằm trong hai asmdef adapter riêng (`versionDefines` + `defineConstraints`); lõi chỉ giữ các interface `IUIBackInputSource`, `IUIFocusHandler`, `IUITabNavigationSource`, `IUICameraStacker`.
 - Addressables sau `USE_EXTENDED_ADDRESSABLE`.
 - `DracoRuan.Foundation.Initializers`.
 
@@ -202,7 +206,7 @@ Dependencies của runtime:
 
 ### 2.2 Data (ScriptableObject)
 - `UILayerDefinition`: name, `baseSortOrder`, `sortStep` (khoảng trống để particle/sub-canvas của view chen vào), kind (Screen / Popup / Overlay / Toast / System / Tutorial), `applySafeArea`, `blocksInputBelow`. Có asset mặc định, game tự thêm layer được. Thay cho enum `CanvasCategory`.
-- `UIRootConfig`: danh sách layer, `CanvasScaler` (reference resolution, match), render mode (Overlay hoặc Screen Space Camera với UI camera), plane distance, `pixelPerfect`, giới hạn UI scale. Được áp dụng **lúc runtime** khi dựng layer root.
+- `UIRootConfig`: danh sách layer, `CanvasScaler` (reference resolution, match), render mode (mặc định Overlay; Screen Space Camera là opt-in), `uiCameraPrefab` (optional, trống thì service tự tạo camera mặc định), plane distance, `pixelPerfect` (áp lên Canvas), `manageEventSystem`. Được áp dụng **lúc runtime** khi dựng layer root. `minUIScale`/`maxUIScale` đã bị bỏ vì không có chỗ dùng.
 - `UIViewDefinition` (entry trong `UIRegistry`):
   - **Key = ViewModel Type**, chọn qua type picker. Validator kiểm tra prefab có `UIView<TVM>` với đúng VM đó.
   - Layer, **`preset`** (xem bảng bên dưới).
@@ -344,6 +348,7 @@ protected override void Bind(ref UIBinder b, ShopViewModel vm) {
 - **Result**: `OpenForResultAsync` trả kết quả khi VM gọi `Complete(result)`. Nếu view đóng theo đường khác (Back, backdrop, CloseAll, scope dispose) thì trả `default`, hoặc giá trị VM override.
 - **Focus (PC/Console)**:
   - Khi blur thì nhớ `EventSystem.currentSelectedGameObject`, khi lộ lại thì khôi phục.
+  - **EventSystem do UISystem sở hữu** (dưới GameObject `UISystem`, DontDestroyOnLoad). Mọi EventSystem khác trong scene vừa load bị tắt kèm cảnh báo. `AddUIInputSystem` gắn `InputSystemUIInputModule` cấu hình từ `UIInputActions` (các `InputActionReference` theo GUID nên đổi tên map/action không hỏng), hỗ trợ `PlayerInput` qua `runtimeAsset`.
   - Chỉ select khi thiết bị cuối cùng là gamepad hoặc bàn phím. Dùng chuột/touch thì bỏ select.
   - Chặn navigation thoát ra khỏi view modal.
 - **Transition**: UIView gọi `UIMotion.PlayShowAsync` / `PlayHideAsync` và **await Hide xong mới** ẩn, despawn hoặc release. UIView implement `IUIMotionTriggerSource`, để các `UIMotion` con có trigger OnParentShow chạy theo. Luôn dùng unscaled time. Trong transition, input bị lock và `CanvasGroup.blocksRaycasts = false`. Hủy qua `CancellationToken` của view (hủy thì snap về pose cuối). Chi tiết ở **mục 2.7**.
@@ -370,7 +375,12 @@ protected override void Bind(ref UIBinder b, ShopViewModel vm) {
 - **Cô lập rebuild**: mỗi view có Canvas riêng. Phần đổi liên tục như timer, currency, progress bar thì tách **sub-canvas**. Sample có minh hoạ.
 - **Raycast hygiene**: validator cảnh báo `raycastTarget` thừa trên Image/TMP không có component tương tác. Mỗi Canvas view có đúng một `GraphicRaycaster`. Layer không tương tác thì tắt raycaster.
 - **Layout hygiene**: validator cảnh báo `LayoutGroup` lồng sâu, và `ContentSizeFitter` nằm trong `LayoutGroup`. Khuyến nghị dùng `RectMask2D` thay cho `Mask`.
-- **URP camera stacking**: hỗ trợ `Screen Space - Camera` với UI camera dạng Overlay trong stack của main camera, dùng cho particle và model 3D trong UI.
+- **Camera và render mode** (đã làm, chi tiết trong [CAMERA_INPUT_PLAN.md](CAMERA_INPUT_PLAN.md)):
+  - Mặc định `Screen Space - Overlay`: vẽ sau bước upscale nên UI luôn nét khi game hạ `renderScale` hoặc bật FSR/dynamic resolution.
+  - `Screen Space - Camera` là opt-in. Một UI camera do UISystem sở hữu, sống suốt game (không dùng `Camera.main` của scene), nên `Canvas.worldCamera` không bao giờ null hay đổi giữa các scene.
+  - UI camera là Overlay trong `cameraStack` của base camera hiện tại (URP), hoặc camera depth cao hơn (Built-in). Base camera đăng ký qua `UIBaseCameraBinder` hoặc `AddUIScope(overrides, baseCamera, ...)`, giữ theo stack. Không có base camera thì UI camera tự thành Base nền đen để loading screen vẫn render. `Camera.main` chỉ được dùng làm fallback một lần mỗi lần đổi scene.
+  - HDRP không có camera stacking: `UICameraStackerProvider` trả null, service cảnh báo và fallback về Overlay.
+  - Model 3D trong Overlay dùng `UIModelPreview` (camera riêng render ra RenderTexture). Particle dùng `UIParticleSortingBinder` (chế độ Camera) hoặc adapter UI-particle của bên thứ ba (chưa kèm theo).
 - **Particle trong UI**: `UIParticleSortingBinder` gán `sortingOrder` của renderer = `canvas.sortingOrder + offset`, nằm trong khoảng `sortStep`.
 - **Không alloc khi bind**: TMP dùng `SetText`. Binder là `ref struct` + `DisposableBuilder`, không dùng `CompositeDisposable`. Collection binding cập nhật theo từng phần tử, không rebuild cả list.
 - (Ngoài scope, chỉ để link) Sprite atlas, TMP font fallback.
@@ -578,6 +588,8 @@ UISystem/
   Motion/       Runtime/ Tracks/ Easing/ Editor/                     (.Motion + .Motion.Editor, độc lập với UIView)
   Data/ Core/ Core/Loading/ Views/ Binding/
   Components/ Focus/ Input/ Installer/                                       (runtime asmdef ở root UISystem)
+  InputSystem/  (+ Tests/)                                                   (.InputSystem, adapter)
+  URP/          (+ Tests/)                                                   (.URP, adapter)
   Editor/       Windows/ Drawers/ Validation/ Debugger/                      (.Editor)
   Tests/Editor/  Tests/Runtime/
   Samples/      Confirm (result), Toast, Loading, 2 screen, Inventory (list + widget), Settings (two-way)

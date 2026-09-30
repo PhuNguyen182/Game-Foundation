@@ -4,18 +4,28 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using DracoRuan.Foundation.Initializers.Interfaces;
-using DracoRuan.PrebuildServices.UISystem.Core.Loading;
-using DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Components;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Core.Loading;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Input;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views;
 using DracoRuan.PrebuildServices.UISystem.Input;
 using DracoRuan.PrebuildServices.UISystem.Logic;
+using DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Input;
+using DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Layers;
+using DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Navigation;
+using DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Queue;
 using DracoRuan.PrebuildServices.UISystem.Motion;
 using DracoRuan.PrebuildServices.UISystem.MVVM;
-using DracoRuan.PrebuildServices.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using VContainer;
+using UIMotion = DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion.UIMotion;
 
-namespace DracoRuan.PrebuildServices.UISystem.Core
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Core
 {
     /// <summary>
     /// Root implementation of IUINavigator. Owns the layer roots, the screen/popup stacks, the
@@ -41,6 +51,10 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         private readonly Dictionary<Type, ViewInstance> _openByType = new();
         private readonly Dictionary<Type, UIViewBase> _keepAliveCache = new();
         private readonly List<UIScope> _scopes = new();
+
+        private EventSystem _eventSystem;
+        private UICameraController _cameraController;
+        private UIRenderMode _effectiveRenderMode;
 
         private readonly UIRegistry _rootRegistry;
         private readonly IObjectResolver _rootResolver;
@@ -68,6 +82,12 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             var rootGo = new GameObject("UISystem");
             UnityEngine.Object.DontDestroyOnLoad(rootGo);
             this._rootTransform = rootGo.transform;
+
+            this.SetupCamera();
+            this.SetupEventSystem();
+
+            SceneManager.sceneLoaded += this.OnSceneLoaded;
+            SceneManager.activeSceneChanged += this.OnActiveSceneChanged;
 
             foreach (UILayerDefinition layerDefinition in rootConfig.Layers)
             {
@@ -117,6 +137,13 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                 UnityEngine.Object.Destroy(cached.gameObject);
             }
         }
+
+        /// <summary>The single EventSystem owned by UISystem (null when UIRootConfig.ManageEventSystem
+        /// is off). An input adapter attaches its input module to this object.</summary>
+        public EventSystem EventSystem => this._eventSystem;
+
+        /// <summary>The always-alive UI camera controller; null in Screen Space Overlay mode.</summary>
+        public UICameraController CameraController => this._cameraController;
 
         public bool IsInitialized() => this._isInitialized;
 
@@ -220,6 +247,89 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         }
 
         // ---------------------------------------------------------------
+        // Camera + EventSystem
+        // ---------------------------------------------------------------
+
+        private void SetupCamera()
+        {
+            this._effectiveRenderMode = this._rootConfig.RenderMode;
+            if (this._effectiveRenderMode != UIRenderMode.ScreenSpaceCamera)
+                return;
+
+            IUICameraStacker stacker = UICameraStackerProvider.Resolve();
+            if (stacker == null)
+            {
+                Debug.LogWarning("[UISystem] No camera stacker supports the active render pipeline " +
+                                 "(e.g. HDRP has no camera stacking); falling back to Screen Space - Overlay.");
+                this._effectiveRenderMode = UIRenderMode.ScreenSpaceOverlay;
+                return;
+            }
+
+            Camera camera = this._rootConfig.UICameraPrefab
+                ? UnityEngine.Object.Instantiate(this._rootConfig.UICameraPrefab, this._rootTransform)
+                : CreateDefaultUICamera(this._rootTransform);
+            camera.gameObject.name = "UICamera";
+
+            this._cameraController = new UICameraController(camera, stacker);
+            this._cameraController.ResolveFallback();
+        }
+
+        private static Camera CreateDefaultUICamera(Transform parent)
+        {
+            var go = new GameObject("UICamera", typeof(Camera));
+            go.transform.SetParent(parent, false);
+
+            var camera = go.GetComponent<Camera>();
+            camera.orthographic = true;
+            camera.cullingMask = 1 << LayerMask.NameToLayer("UI");
+            camera.clearFlags = CameraClearFlags.Depth;
+            camera.nearClipPlane = 0.1f;
+            camera.farClipPlane = 1000f;
+            return camera;
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            this._cameraController?.ResolveFallback();
+            this.EnforceSingleEventSystem();
+        }
+
+        private void OnActiveSceneChanged(Scene previous, Scene next) => this._cameraController?.ResolveFallback();
+
+        private void SetupEventSystem()
+        {
+            if (!this._rootConfig.ManageEventSystem)
+                return;
+
+            var go = new GameObject("EventSystem", typeof(EventSystem));
+            go.transform.SetParent(this._rootTransform, false);
+            this._eventSystem = go.GetComponent<EventSystem>();
+#if ENABLE_LEGACY_INPUT_MANAGER
+            // Only when the legacy input manager is active; Input System projects get their
+            // module from the UISystem.InputSystem adapter (AddUIInputSystem).
+            go.AddComponent<StandaloneInputModule>();
+#endif
+            this.EnforceSingleEventSystem();
+        }
+
+        /// <summary>Disables every EventSystem that is not the one UISystem owns, so scenes
+        /// (including additive ones) never leave two active.</summary>
+        internal void EnforceSingleEventSystem()
+        {
+            if (!this._eventSystem)
+                return;
+
+            foreach (EventSystem other in UnityEngine.Object.FindObjectsByType<EventSystem>(FindObjectsSortMode.None))
+            {
+                if (other == this._eventSystem)
+                    continue;
+
+                Debug.LogWarning($"[UISystem] Disabling scene EventSystem {other.name}: UISystem owns the only EventSystem.", other);
+                other.gameObject.SetActive(false);
+            }
+        }
+
+        // ---------------------------------------------------------------
         // Layer roots
         // ---------------------------------------------------------------
 
@@ -236,13 +346,17 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
             rect.offsetMax = Vector2.zero;
 
             var canvas = go.GetComponent<Canvas>();
-            canvas.renderMode = this._rootConfig.RenderMode == UIRenderMode.ScreenSpaceOverlay
-                ? RenderMode.ScreenSpaceOverlay
-                : RenderMode.ScreenSpaceCamera;
-            if (canvas.renderMode == RenderMode.ScreenSpaceCamera)
+            canvas.pixelPerfect = this._rootConfig.PixelPerfect;
+            if (this._effectiveRenderMode == UIRenderMode.ScreenSpaceCamera)
             {
-                canvas.worldCamera = this._rootConfig.UICamera;
+                // The camera goes first: a ScreenSpaceCamera canvas without one reads back as Overlay.
+                canvas.worldCamera = this._cameraController.Camera;
+                canvas.renderMode = RenderMode.ScreenSpaceCamera;
                 canvas.planeDistance = this._rootConfig.PlaneDistance;
+            }
+            else
+            {
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             }
 
             canvas.sortingOrder = definition.BaseSortOrder;
@@ -277,7 +391,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                 contentRect.anchorMax = Vector2.one;
                 contentRect.offsetMin = Vector2.zero;
                 contentRect.offsetMax = Vector2.zero;
-                safeAreaGo.AddComponent<Components.SafeAreaFitter>();
+                safeAreaGo.AddComponent<SafeAreaFitter>();
             }
 
             return new UILayerRoot
@@ -297,16 +411,48 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         // Scopes
         // ---------------------------------------------------------------
 
-        public UIScope RegisterScope(UIRegistry registry, IObjectResolver resolver)
+        public UIScope RegisterScope(UIRegistry registry, IObjectResolver resolver,
+            UIScopeOverrides overrides = null, Camera baseCamera = null)
         {
-            var scope = new UIScope(this, registry, resolver);
+            var scope = new UIScope(this, registry, resolver, overrides, baseCamera);
             this._scopes.Add(scope);
+            if (overrides)
+                this.ApplyScalerSettings();
+
             return scope;
+        }
+
+        /// <summary>Pushes the winning scaler settings (newest scope with overrides, else the
+        /// root config) onto every layer's CanvasScaler.</summary>
+        internal void ApplyScalerSettings()
+        {
+            Vector2 resolution = this._rootConfig.ReferenceResolution;
+            float match = this._rootConfig.MatchWidthOrHeight;
+
+            for (int i = this._scopes.Count - 1; i >= 0; i--)
+            {
+                UIScopeOverrides overrides = this._scopes[i].Overrides;
+                if (!overrides)
+                    continue;
+
+                resolution = overrides.ResolveReferenceResolution(resolution);
+                match = overrides.ResolveMatch(match);
+                break;
+            }
+
+            foreach (UILayerRoot layerRoot in this._layerRoots.Values)
+            {
+                var scaler = layerRoot.Canvas.GetComponent<CanvasScaler>();
+                scaler.referenceResolution = resolution;
+                scaler.matchWidthOrHeight = match;
+            }
         }
 
         internal void UnregisterScope(UIScope scope)
         {
             this._scopes.Remove(scope);
+            if (scope.Overrides)
+                this.ApplyScalerSettings();
 
             // Force-close (no transition) any views opened under this scope.
             var toClose = new List<ViewInstance>();
@@ -550,7 +696,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
                     ViewModel = viewModel,
                     ViewModelType = vmType,
                     OwningScope = owningScope,
-                    UnbindView = () => view.UnbindViewModel(),
+                    UnbindView = view.UnbindViewModel,
                 };
                 instance.StateMachine.TryBeginShow();
 
@@ -959,6 +1105,9 @@ namespace DracoRuan.PrebuildServices.UISystem.Core
         public void Dispose()
         {
             Application.lowMemory -= this.ReleaseHiddenKeepAliveViews;
+            SceneManager.sceneLoaded -= this.OnSceneLoaded;
+            SceneManager.activeSceneChanged -= this.OnActiveSceneChanged;
+            this._cameraController?.Dispose();
 
             if (Current == this)
                 Current = null;

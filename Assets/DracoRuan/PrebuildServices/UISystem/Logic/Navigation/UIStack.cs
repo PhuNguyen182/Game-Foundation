@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DracoRuan.PrebuildServices.UISystem.Logic
+namespace DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Navigation
 {
     /// <summary>
     /// Generic push/pop/replace/popToRoot stack for screen navigation. Engine-agnostic:
@@ -9,7 +9,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Logic
     /// </summary>
     public sealed class UIStack<T>
     {
-        private readonly List<T> _items = new List<T>();
+        private readonly List<T> _items = new();
 
         public int Count => this._items.Count;
         public bool IsEmpty => this._items.Count == 0;
@@ -23,7 +23,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Logic
                 return false;
             }
 
-            current = this._items[this._items.Count - 1];
+            current = this._items[^1];
             return true;
         }
 

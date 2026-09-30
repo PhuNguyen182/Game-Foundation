@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.Tutorial
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Tutorial
 {
     /// <summary>How a UITutorialStep hands control to the next step.</summary>
     public enum UITutorialAdvanceMode

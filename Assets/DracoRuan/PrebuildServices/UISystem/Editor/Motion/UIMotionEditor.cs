@@ -1,7 +1,9 @@
 using DracoRuan.PrebuildServices.UISystem.Motion;
+using DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
+using UIMotion = DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion.UIMotion;
 
 namespace DracoRuan.PrebuildServices.UISystem.Editor.MotionTools
 {

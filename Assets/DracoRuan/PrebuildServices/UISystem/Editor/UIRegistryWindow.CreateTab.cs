@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views;
 using DracoRuan.PrebuildServices.UISystem.Editor.Registry;
-using DracoRuan.PrebuildServices.UISystem.Views;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
-namespace DracoRuan.PrebuildServices.UISystem.Editor
+namespace DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor
 {
     /// <summary>Create tab: author a new UIViewDefinition around an existing UIView prefab.</summary>
     public sealed partial class UIRegistryWindow
@@ -23,7 +24,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
             if (this._draft != null)
                 return;
 
-            this._draft = CreateInstance<UIViewDefinition>();
+            this._draft = ScriptableObject.CreateInstance<UIViewDefinition>();
             this._draft.hideFlags = HideFlags.DontSave;
             this._draftSerialized = new SerializedObject(this._draft);
             this.RecomputeDraftMissing();
@@ -32,7 +33,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
         private void DestroyDraft()
         {
             if (this._draft != null)
-                DestroyImmediate(this._draft);
+                Object.DestroyImmediate(this._draft);
 
             this._draft = null;
             this._draftSerialized = null;
@@ -88,7 +89,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     if (GUILayout.Button("Apply preset defaults"))
-                        ApplyPresetDefaults(this._draftSerialized);
+                        global::DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.UIRegistryWindow.ApplyPresetDefaults(this._draftSerialized);
 
                     using (new EditorGUI.DisabledScope(this._draftMissing.Count > 0 || needsCollection))
                     {
@@ -105,7 +106,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
         {
             var view = this._draftSerialized.FindProperty("viewPrefab").objectReferenceValue as UIViewBase;
             string folder = this._addToCollection && this._targetCollection != null
-                ? Path.GetDirectoryName(AssetDatabase.GetAssetPath(this._targetCollection))
+                ? Path.GetDirectoryName(AssetDatabase.GetAssetPath((Object)this._targetCollection))
                 : "Assets";
 
             string path = EditorUtility.SaveFilePanelInProject("Create UIViewDefinition",
@@ -133,7 +134,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
 
             if (this.SelectDefinition(created))
             {
-                this._tab = Tab.Registry;
+                this._tab = global::DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.UIRegistryWindow.Tab.Registry;
                 this.GoToPageOf(created);
             }
 

@@ -1,13 +1,14 @@
 using System;
-using DracoRuan.PrebuildServices.UISystem.Components;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Components;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views;
 using DracoRuan.PrebuildServices.UISystem.MVVM;
-using DracoRuan.PrebuildServices.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM.Commands;
 using R3;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DracoRuan.PrebuildServices.UISystem.Binding
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Binding
 {
     /// <summary>
     /// Collects one Bind() call's worth of subscriptions. A ref struct wrapping an R3

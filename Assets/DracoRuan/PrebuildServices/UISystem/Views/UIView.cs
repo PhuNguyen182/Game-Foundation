@@ -1,9 +1,10 @@
 using System;
-using DracoRuan.PrebuildServices.UISystem.Binding;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Binding;
 using DracoRuan.PrebuildServices.UISystem.MVVM;
+using DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM;
 using UnityEngine.UI;
 
-namespace DracoRuan.PrebuildServices.UISystem.Views
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views
 {
     /// <summary>
     /// Root component of a routed view's prefab (Screen/Popup/HUD/... — all the same entity,

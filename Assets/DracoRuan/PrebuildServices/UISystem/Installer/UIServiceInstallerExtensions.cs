@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using DracoRuan.Foundation.Initializers.Interfaces;
-using DracoRuan.PrebuildServices.UISystem.Core;
-using DracoRuan.PrebuildServices.UISystem.Core.Loading;
-using DracoRuan.PrebuildServices.UISystem.Data;
-using DracoRuan.PrebuildServices.UISystem.MVVM;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Core;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Core.Loading;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM;
+using UnityEngine;
 using VContainer;
 
-namespace DracoRuan.PrebuildServices.UISystem.Installer
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Installer
 {
     public static class UIServiceInstallerExtensions
     {
@@ -49,13 +50,23 @@ namespace DracoRuan.PrebuildServices.UISystem.Installer
         public static void AddUIScope(this IContainerBuilder builder, params UIViewCollection[] viewCollections) =>
             builder.AddUIScope((IEnumerable<UIViewCollection>)viewCollections);
 
-        public static void AddUIScope(this IContainerBuilder builder, IEnumerable<UIViewCollection> viewCollections)
+        public static void AddUIScope(this IContainerBuilder builder, IEnumerable<UIViewCollection> viewCollections) =>
+            builder.AddUIScope(null, null, viewCollections);
+
+        /// <summary>
+        /// Scope with optional extras: <paramref name="overrides"/> retunes the CanvasScalers for as long
+        /// as the scope lives (e.g. a landscape scene), <paramref name="baseCamera"/> registers the
+        /// scene camera the UI camera stacks on (same effect as a UIBaseCameraBinder on it).
+        /// </summary>
+        public static void AddUIScope(this IContainerBuilder builder, UIScopeOverrides overrides, Camera baseCamera,
+            IEnumerable<UIViewCollection> viewCollections)
         {
             List<UIViewDefinition> definitions = MergeDefinitions(viewCollections);
 
             var registry = new UIRegistry(definitions);
             builder.RegisterInstance(registry);
-            builder.Register<UIScope>(resolver => resolver.Resolve<UIService>().RegisterScope(registry, resolver),
+            builder.Register(
+                resolver => resolver.Resolve<UIService>().RegisterScope(registry, resolver, overrides, baseCamera),
                 Lifetime.Scoped);
 
             RegisterViewModels(builder, definitions);

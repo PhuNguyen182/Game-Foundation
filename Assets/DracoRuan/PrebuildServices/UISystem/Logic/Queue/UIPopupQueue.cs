@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace DracoRuan.PrebuildServices.UISystem.Logic
+namespace DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Queue
 {
     /// <summary>
     /// Priority queue with FIFO tie-breaking: higher priority dequeues first, and items
@@ -16,7 +16,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Logic
             public long Sequence;
         }
 
-        private readonly List<Entry> _entries = new List<Entry>();
+        private readonly List<Entry> _entries = new();
         private long _sequenceCounter;
 
         public bool IsPaused { get; private set; }

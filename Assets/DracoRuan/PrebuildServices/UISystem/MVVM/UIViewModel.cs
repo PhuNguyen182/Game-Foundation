@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using R3;
 
-namespace DracoRuan.PrebuildServices.UISystem.MVVM
+namespace DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM
 {
     /// <summary>
     /// Base class for every routed and non-routed view model. Created fresh (Transient) per

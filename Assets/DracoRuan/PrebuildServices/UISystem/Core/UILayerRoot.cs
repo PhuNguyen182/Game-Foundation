@@ -1,9 +1,10 @@
-using DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
 using DracoRuan.PrebuildServices.UISystem.Logic;
+using DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Layers;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DracoRuan.PrebuildServices.UISystem.Core
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Core
 {
     /// <summary>Runtime state for one built layer (its root Canvas, sort allocator, shared backdrop).</summary>
     internal sealed class UILayerRoot

@@ -1,9 +1,10 @@
 using System;
 using DracoRuan.PrebuildServices.UISystem.Editor.MotionTools;
-using DracoRuan.PrebuildServices.UISystem.Motion;
+using DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion;
+using DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic;
 using NUnit.Framework;
 
-namespace DracoRuan.PrebuildServices.UISystem.Editor.Tests
+namespace DracoRuan.PrebuildServices.UISystem.Editor.Tests.DracoRuan.PrebuildServices.UISystem.Editor.Tests
 {
     [TestFixture]
     public sealed class UIMotionTrackFieldVisibilityTests
@@ -228,16 +229,11 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor.Tests
             var fadeTo = UIMotionTrackFieldVisibility.AllowedModes(UIMotionTrackKind.Fade,
                 UIMotionRectProperty.AnchoredPosition, forTarget: true);
 
-            Assert.That(from,
-                Has.No.Member(DracoRuan.PrebuildServices.UISystem.Motion.Logic.UIMotionValueMode.RelativeToStart));
-            Assert.That(from,
-                Has.Member(DracoRuan.PrebuildServices.UISystem.Motion.Logic.UIMotionValueMode.FractionOfParent));
-            Assert.That(to,
-                Has.Member(DracoRuan.PrebuildServices.UISystem.Motion.Logic.UIMotionValueMode.RelativeToStart));
-            Assert.That(fadeTo,
-                Has.No.Member(DracoRuan.PrebuildServices.UISystem.Motion.Logic.UIMotionValueMode.FractionOfParent));
-            Assert.That(from[0],
-                Is.EqualTo(DracoRuan.PrebuildServices.UISystem.Motion.Logic.UIMotionValueMode.Absolute));
+            Assert.That(from, Has.No.Member(UIMotionValueMode.RelativeToStart));
+            Assert.That(from, Has.Member(UIMotionValueMode.FractionOfParent));
+            Assert.That(to, Has.Member(UIMotionValueMode.RelativeToStart));
+            Assert.That(fadeTo, Has.No.Member(UIMotionValueMode.FractionOfParent));
+            Assert.That(from[0], Is.EqualTo(UIMotionValueMode.Absolute));
         }
     }
 }

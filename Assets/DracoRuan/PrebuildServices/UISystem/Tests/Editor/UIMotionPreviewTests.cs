@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 using DracoRuan.PrebuildServices.UISystem.Motion;
+using DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion;
 using DracoRuan.PrebuildServices.UISystem.Motion.Logic;
+using DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UIMotion = DracoRuan.PrebuildServices.UISystem.Motion.DracoRuan.PrebuildServices.UISystem.Motion.UIMotion;
 
 namespace DracoRuan.PrebuildServices.UISystem.Tests
 {
@@ -115,7 +118,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
             UIMotion motion = this.NewMotion(out GameObject go);
             CanvasGroup cg = go.AddComponent<CanvasGroup>();
             cg.alpha = 1f;
-            motion.ConfigureForTest(new[] { LinearFade(cg, 0f, 1f, 2f) }, new UIMotionTrack[0], mirrorHide: true);
+            motion.ConfigureForTest(new[] { LinearFade(cg, 0f, 1f, 2f) }, new UIMotionTrack[0], shouldMirrorHide: true);
 
             motion.PreviewBegin(show: false);
             motion.PreviewSeek(0f);
@@ -149,7 +152,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Tests
         {
             UIMotion motion = this.NewMotion(out GameObject go);
             CanvasGroup cg = go.AddComponent<CanvasGroup>();
-            motion.ConfigureForTest(new[] { LinearFade(cg, 0f, 1f, 2f) }, new UIMotionTrack[0], speedOverride: 2f);
+            motion.ConfigureForTest(new[] { LinearFade(cg, 0f, 1f, 2f) }, new UIMotionTrack[0], uiSpeedOverride: 2f);
 
             Assert.That(motion.PreviewSpeed, Is.EqualTo(2f));
         }

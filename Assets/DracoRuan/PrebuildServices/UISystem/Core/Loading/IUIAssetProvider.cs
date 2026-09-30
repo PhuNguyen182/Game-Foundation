@@ -1,9 +1,9 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DracoRuan.PrebuildServices.UISystem.Data;
-using DracoRuan.PrebuildServices.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views;
 
-namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Core.Loading
 {
     /// <summary>Resolves a view definition's prefab (its root UIViewBase). Direct or Addressables, per definition.</summary>
     public interface IUIAssetProvider

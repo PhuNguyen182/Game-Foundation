@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views;
 using DracoRuan.PrebuildServices.UISystem.MVVM;
-using DracoRuan.PrebuildServices.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM;
 using UnityEngine;
-#if USE_EXTENDED_ADDRESSABLE
-using UnityEngine.AddressableAssets;
-#endif
 
-namespace DracoRuan.PrebuildServices.UISystem.Data
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data
 {
     /// <summary>
     /// One entry in a UIViewCollection: everything the router needs to open a view model's

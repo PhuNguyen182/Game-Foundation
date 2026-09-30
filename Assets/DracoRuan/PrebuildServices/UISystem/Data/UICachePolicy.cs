@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.Data
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data
 {
     /// <summary>What happens to a view's spawned instance when it closes.</summary>
     public enum UICachePolicy

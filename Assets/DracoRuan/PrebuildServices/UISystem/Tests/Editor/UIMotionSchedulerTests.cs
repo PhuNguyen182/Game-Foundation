@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DracoRuan.PrebuildServices.UISystem.Motion.Logic;
+using DracoRuan.PrebuildServices.UISystem.Motion.Logic.DracoRuan.PrebuildServices.UISystem.Motion.Logic;
 using NUnit.Framework;
 
 namespace DracoRuan.PrebuildServices.UISystem.Tests

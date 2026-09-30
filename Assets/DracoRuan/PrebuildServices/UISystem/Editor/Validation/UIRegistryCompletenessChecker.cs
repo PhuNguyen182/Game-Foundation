@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
 
-namespace DracoRuan.PrebuildServices.UISystem.Editor.Validation
+namespace DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.Validation
 {
     /// <summary>Cross-collection registration checks that UIRegistryValidator (one definition
     /// set at a time) cannot see: the same view model registered in several collections, and

@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using R3;
 
-namespace DracoRuan.PrebuildServices.UISystem.MVVM
+namespace DracoRuan.PrebuildServices.UISystem.MVVM.DracoRuan.PrebuildServices.UISystem.MVVM.Commands
 {
     /// <summary>
     /// Async command bindable to a button. Re-entrant Execute() calls made while a previous

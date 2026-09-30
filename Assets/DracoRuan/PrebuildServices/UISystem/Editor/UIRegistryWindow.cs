@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.Validation;
 using DracoRuan.PrebuildServices.UISystem.Editor.Registry;
-using DracoRuan.PrebuildServices.UISystem.Editor.Validation;
-using DracoRuan.PrebuildServices.UISystem.Views;
 using UnityEditor;
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Editor
+namespace DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor
 {
     /// <summary>
     /// Registry tool, two tabs: Create (register an existing UIView prefab as a new
@@ -52,7 +52,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
         private string _summary = string.Empty;
 
         [MenuItem("Tools/DracoRuan/UISystem/Registry Window")]
-        private static void Open() => GetWindow<UIRegistryWindow>("UISystem Registry");
+        private static void Open() => GetWindow<DracoRuan.PrebuildServices.UISystem.Editor.UIRegistryWindow>("UISystem Registry");
 
         private void OnEnable()
         {

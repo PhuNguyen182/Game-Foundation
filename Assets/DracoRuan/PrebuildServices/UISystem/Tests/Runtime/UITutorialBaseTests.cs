@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
-using DracoRuan.PrebuildServices.UISystem.Tutorial;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Tutorial;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;

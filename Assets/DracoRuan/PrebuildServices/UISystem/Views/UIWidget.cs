@@ -1,7 +1,7 @@
 using System;
-using DracoRuan.PrebuildServices.UISystem.Binding;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Binding;
 
-namespace DracoRuan.PrebuildServices.UISystem.Views
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views
 {
     /// <summary>
     /// A bindable component that does NOT go through the router: a sub-view, list item, or

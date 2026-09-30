@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Editor.Validation
+namespace DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.Validation
 {
     /// <summary>One issue found by UIRegistryValidator, ready to render in an Editor window or
     /// fail a build.</summary>

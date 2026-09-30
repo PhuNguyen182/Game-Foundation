@@ -1,8 +1,8 @@
-using DracoRuan.PrebuildServices.UISystem.Logic.Badge;
+using DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Badge;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DracoRuan.PrebuildServices.UISystem.Components
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Components
 {
     /// <summary>
     /// The UI-facing adapter for IBadgeService (REWRITE_PLAN.md mục 5 bước 10): shows/hides a

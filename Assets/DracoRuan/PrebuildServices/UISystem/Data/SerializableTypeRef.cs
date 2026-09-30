@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Data
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data
 {
     /// <summary>
     /// Serializes a System.Type by assembly-qualified name. A proper type-picker Inspector

@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.Data
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data
 {
     /// <summary>
     /// A preset only fills in default values for a UIViewDefinition's flags (layer, hidesBelow,

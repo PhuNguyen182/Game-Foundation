@@ -1,4 +1,4 @@
-namespace DracoRuan.PrebuildServices.UISystem.Data
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data
 {
     /// <summary>
     /// Whether a popup belongs to the current screen (closed automatically when the screen

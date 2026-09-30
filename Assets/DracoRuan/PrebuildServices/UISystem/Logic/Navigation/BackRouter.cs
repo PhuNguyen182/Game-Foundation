@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DracoRuan.PrebuildServices.UISystem.Logic
+namespace DracoRuan.PrebuildServices.UISystem.Logic.DracoRuan.PrebuildServices.UISystem.Logic.Navigation
 {
     /// <summary>
     /// Routes a Back/Esc request through UI layers from highest to lowest
@@ -12,7 +12,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Logic
     /// </summary>
     public sealed class BackRouter
     {
-        private readonly List<Func<UIBackResult>> _layers = new List<Func<UIBackResult>>();
+        private readonly List<Func<UIBackResult>> _layers = new();
 
         public event Action BackAtRoot;
 

@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
-using DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.Validation;
 using DracoRuan.PrebuildServices.UISystem.Editor.Registry;
-using DracoRuan.PrebuildServices.UISystem.Editor.Validation;
 using UnityEditor;
 using UnityEngine;
 
-namespace DracoRuan.PrebuildServices.UISystem.Editor
+namespace DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor
 {
     /// <summary>Registry tab: filterable, paged list on the left; buffered editor for the
     /// selected definition on the right (changes reach the asset only through Apply).</summary>
@@ -22,7 +22,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
         private int _filterIndex;
         private string _search = string.Empty;
         private string _searchLower = string.Empty;
-        private List<RowInfo> _filtered = new();
+        private List<global::DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.UIRegistryWindow.RowInfo> _filtered = new();
         private int _page;
         private Vector2 _listScroll;
         private Vector2 _detailScroll;
@@ -45,7 +45,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
                 this._filterIndex = 0;
         }
 
-        private bool PassesFilter(RowInfo row)
+        private bool PassesFilter(global::DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.UIRegistryWindow.RowInfo row)
         {
             if (this._filterIndex == 1 && row.Owners.Count > 0)
                 return false;
@@ -59,7 +59,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
         private void RebuildFiltered()
         {
             this._searchLower = this._search.ToLowerInvariant();
-            this._filtered = this._rows.Where(this.PassesFilter).ToList();
+            this._filtered = Enumerable.Where<global::DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.UIRegistryWindow.RowInfo>(this._rows, this.PassesFilter).ToList();
             this._page = Mathf.Clamp(this._page, 0, this.PageCount() - 1);
         }
 
@@ -231,7 +231,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
 
         /// <summary>Fixed-height rect drawn by hand: no nested layout groups per row, which is
         /// what keeps a page of rows cheap to lay out and repaint.</summary>
-        private void DrawRow(RowInfo row)
+        private void DrawRow(global::DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.UIRegistryWindow.RowInfo row)
         {
             Rect rect = GUILayoutUtility.GetRect(0f, RowHeight, GUILayout.ExpandWidth(true));
             bool selected = row.Definition == this._selected;
@@ -240,11 +240,11 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
                 EditorGUI.DrawRect(rect, SelectedColor);
 
             string title = selected && this._hasPending ? row.Name + " *" : row.Name;
-            GUI.Label(new Rect(rect.x + 6f, rect.y + 2f, rect.width - 30f, 18f), title, _nameStyle);
-            GUI.Label(new Rect(rect.x + 6f, rect.y + 19f, rect.width - 12f, 16f), row.VmName, _vmStyle);
+            GUI.Label(new Rect(rect.x + 6f, rect.y + 2f, rect.width - 30f, 18f), title, global::DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.UIRegistryWindow._nameStyle);
+            GUI.Label(new Rect(rect.x + 6f, rect.y + 19f, rect.width - 12f, 16f), row.VmName, global::DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.UIRegistryWindow._vmStyle);
 
             if (row.Errors.Count > 0)
-                GUI.Label(new Rect(rect.xMax - 26f, rect.y + 2f, 20f, 18f), "●", _badgeStyle);
+                GUI.Label(new Rect(rect.xMax - 26f, rect.y + 2f, 20f, 18f), "●", global::DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.UIRegistryWindow._badgeStyle);
 
             Event e = Event.current;
             if (e.type == EventType.MouseDown && e.button == 0 && rect.Contains(e.mousePosition))
@@ -289,7 +289,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
             using (new EditorGUILayout.VerticalScope(GUILayout.ExpandWidth(true)))
             {
                 if (this._selected == null || this._selectedSerialized == null ||
-                    !this._rowByDefinition.TryGetValue(this._selected, out RowInfo row))
+                    !this._rowByDefinition.TryGetValue(this._selected, out global::DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.UIRegistryWindow.RowInfo row))
                 {
                     EditorGUILayout.HelpBox("Select a definition from the list.", MessageType.Info);
                     return;
@@ -307,7 +307,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
 
                 if (GUILayout.Button("Apply preset defaults", GUILayout.Width(160)))
                 {
-                    ApplyPresetDefaults(this._selectedSerialized);
+                    global::DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.UIRegistryWindow.ApplyPresetDefaults(this._selectedSerialized);
                     this._hasPending = true;
                 }
 
@@ -315,7 +315,7 @@ namespace DracoRuan.PrebuildServices.UISystem.Editor
             }
         }
 
-        private void DrawDetailHeader(RowInfo row)
+        private void DrawDetailHeader(global::DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.UIRegistryWindow.RowInfo row)
         {
             using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
             {

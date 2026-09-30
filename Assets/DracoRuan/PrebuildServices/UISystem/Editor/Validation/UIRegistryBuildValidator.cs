@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
-using DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 
-namespace DracoRuan.PrebuildServices.UISystem.Editor.Validation
+namespace DracoRuan.PrebuildServices.UISystem.Editor.DracoRuan.PrebuildServices.UISystem.Editor.Validation
 {
     /// <summary>Fails the build if UIRegistryValidator finds an Error-severity issue in any
     /// UIViewCollection asset in the project - REWRITE_PLAN.md mục 5 bước 8, "build

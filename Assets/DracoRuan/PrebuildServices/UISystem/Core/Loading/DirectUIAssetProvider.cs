@@ -1,9 +1,9 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DracoRuan.PrebuildServices.UISystem.Data;
-using DracoRuan.PrebuildServices.UISystem.Views;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Data;
+using DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Views;
 
-namespace DracoRuan.PrebuildServices.UISystem.Core.Loading
+namespace DracoRuan.PrebuildServices.UISystem.DracoRuan.PrebuildServices.UISystem.Core.Loading
 {
     /// <summary>Returns the prefab reference the definition already holds. No loading, no refcounting.</summary>
     public sealed class DirectUIAssetProvider : IUIAssetProvider
