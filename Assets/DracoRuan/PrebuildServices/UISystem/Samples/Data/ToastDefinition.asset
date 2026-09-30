@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6b4877d3f1103a4ebbd0dcdff8629e0, type: 3}
+  m_Name: ToastDefinition
+  m_EditorClassIdentifier: DracoRuan.PrebuildServices.UISystem::DracoRuan.PrebuildServices.UISystem.Data.UIViewDefinition
+  viewModelType:
+    assemblyQualifiedName: DracoRuan.PrebuildServices.UISystem.Samples.Toast.ToastViewModel,
+      DracoRuan.PrebuildServices.UISystem.Samples, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+  layer: {fileID: 11400000, guid: bd839be063cb7a044a744c564a95d35d, type: 2}
+  preset: 3
+  viewPrefab: {fileID: 8001469983935330455, guid: df9a932e1e4e3c44eb7d67bdb8bcf4be, type: 3}
+  prefab: {fileID: 0}
+  addressablePrefab:
+    m_AssetGUID: 
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  cachePolicy: 0
+  preload: 0
+  hideMode: 0
+  reopenPolicy: 0
+  modal: 0
+  closeOnBackdrop: 1
+  defaultPriority: 0
+  scope: 0
+  hidesBelow: 0
+  history: 1
+  participatesInStack: 0
+  speedOverride: 1
+  visibleOnScreens: []

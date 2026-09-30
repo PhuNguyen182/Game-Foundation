@@ -1,0 +1,34 @@
+{
+    "name": "DracoRuan.PrebuildServices.UISystem.InputSystem.Tests",
+    "rootNamespace": "DracoRuan.PrebuildServices.UISystem.Tests",
+    "references": [
+        "DracoRuan.PrebuildServices.UISystem",
+        "DracoRuan.PrebuildServices.UISystem.InputSystem",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "UISYSTEM_INPUT_SYSTEM"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "UISYSTEM_INPUT_SYSTEM"
+        }
+    ],
+    "noEngineReferences": false
+}

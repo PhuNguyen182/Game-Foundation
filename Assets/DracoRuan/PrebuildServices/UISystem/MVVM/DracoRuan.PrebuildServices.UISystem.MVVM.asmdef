@@ -1,0 +1,16 @@
+{
+    "name": "DracoRuan.PrebuildServices.UISystem.MVVM",
+    "rootNamespace": "DracoRuan.PrebuildServices.UISystem.MVVM",
+    "references": [
+        "R3.Unity"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

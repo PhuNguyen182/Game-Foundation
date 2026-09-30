@@ -1,0 +1,25 @@
+{
+    "name": "DracoRuan.PrebuildServices.UISystem.URP",
+    "rootNamespace": "DracoRuan.PrebuildServices.UISystem.URP",
+    "references": [
+        "DracoRuan.PrebuildServices.UISystem",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UISYSTEM_URP"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "",
+            "define": "UISYSTEM_URP"
+        }
+    ],
+    "noEngineReferences": false
+}

@@ -101,3 +101,5 @@ InitTestScene*.unity*
 #Security
 /[Aa]ssets/[Ee]ditor/credentials.json
 /[Aa]ssets/[Ii]gnore/
+.worktrees/
+.superpowers/

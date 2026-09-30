@@ -1,0 +1,16 @@
+{
+    "name": "DracoRuan.PrebuildServices.UISystem.Testing",
+    "rootNamespace": "DracoRuan.PrebuildServices.UISystem.Testing",
+    "references": [
+        "DracoRuan.PrebuildServices.UISystem.MVVM"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

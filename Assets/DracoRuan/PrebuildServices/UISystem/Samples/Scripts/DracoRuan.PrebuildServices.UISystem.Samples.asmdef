@@ -1,0 +1,23 @@
+{
+    "name": "DracoRuan.PrebuildServices.UISystem.Samples",
+    "rootNamespace": "DracoRuan.PrebuildServices.UISystem.Samples",
+    "references": [
+        "DracoRuan.PrebuildServices.UISystem.Logic",
+        "DracoRuan.PrebuildServices.UISystem.MVVM",
+        "DracoRuan.PrebuildServices.UISystem",
+        "DracoRuan.Foundation.Initializers",
+        "UniTask",
+        "VContainer",
+        "R3.Unity",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

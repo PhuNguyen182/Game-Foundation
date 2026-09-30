@@ -1,0 +1,20 @@
+{
+    "name": "DracoRuan.PrebuildServices.UISystem.Motion",
+    "rootNamespace": "DracoRuan.PrebuildServices.UISystem.Motion",
+    "references": [
+        "DracoRuan.PrebuildServices.UISystem.Motion.Logic",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.Handlers",
+        "UniTask",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,33 @@
+{
+    "name": "DracoRuan.PrebuildServices.UISystem.URP.Tests",
+    "rootNamespace": "DracoRuan.PrebuildServices.UISystem.Tests",
+    "references": [
+        "DracoRuan.PrebuildServices.UISystem",
+        "DracoRuan.PrebuildServices.UISystem.URP",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "UISYSTEM_URP"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "",
+            "define": "UISYSTEM_URP"
+        }
+    ],
+    "noEngineReferences": false
+}

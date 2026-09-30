@@ -1,0 +1,31 @@
+{
+    "name": "DracoRuan.PrebuildServices.UISystem",
+    "rootNamespace": "DracoRuan.PrebuildServices.UISystem",
+    "references": [
+        "DracoRuan.PrebuildServices.UISystem.Logic",
+        "DracoRuan.PrebuildServices.UISystem.MVVM",
+        "DracoRuan.PrebuildServices.UISystem.Motion",
+        "DracoRuan.PrebuildServices.UISystem.Motion.Logic",
+        "DracoRuan.Foundation.Initializers",
+        "UniTask",
+        "VContainer",
+        "R3.Unity",
+        "R3.Unity.TextMeshPro",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "Unity.Addressables",
+        "Unity.ResourceManager",
+        "UniTask.Addressables",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.UpdateServices",
+        "DracoRuan.PrebuildServices.PlayerLoopSystem.Handlers"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
